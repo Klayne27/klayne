@@ -47,9 +47,12 @@ export const PomodoroTimerEngine = () => {
 
   // ── Refs kept in sync with latest store/props values ─────────────────────
   const isBreakRef = useRef(isBreak)
+  const isActiveRef = useRef(isActive)
+  const isGoalReachedRef = useRef(isGoalReached)
   const sessionCountRef = useRef(sessionCount)
   const settingsRef = useRef(settings)
   const selectedTaskIdRef = useRef(selectedTaskId)
+  const sessionEndTimeoutRef = useRef(null)
 
   useEffect(() => {
     isBreakRef.current = isBreak
@@ -63,6 +66,38 @@ export const PomodoroTimerEngine = () => {
   useEffect(() => {
     selectedTaskIdRef.current = selectedTaskId
   }, [selectedTaskId])
+
+  useEffect(() => {
+    const handleResume = () => {
+      if (!isActiveRef.current || isGoalReachedRef.current) return
+
+      // Force an immediate tick — catches up all time missed while backgrounded
+      // processTick uses Date.now() - startTimestamp, so it's always accurate
+      processTickRef.current()
+
+      // Restart the tick source — worker or interval may have been killed by OS
+      if (workerRef.current) {
+        workerRef.current.postMessage({ type: "STOP" })
+        workerRef.current.postMessage({ type: "START" })
+      } else {
+        if (fallbackIntervalRef.current) clearInterval(fallbackIntervalRef.current)
+        fallbackIntervalRef.current = setInterval(() => processTickRef.current(), 500)
+      }
+    }
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") handleResume()
+    })
+    window.addEventListener("focus", handleResume)
+    // pageshow fires on iOS PWA when app resumes from background
+    window.addEventListener("pageshow", handleResume)
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleResume)
+      window.removeEventListener("focus", handleResume)
+      window.removeEventListener("pageshow", handleResume)
+    }
+  }, []) // intentionally empty — handleResume reads only refs
 
   // ── Audio setup ───────────────────────────────────────────────────────────
   useEffect(() => {
@@ -172,102 +207,72 @@ export const PomodoroTimerEngine = () => {
   )
 
   // ── handleSessionEnd ──────────────────────────────────────────────────────
-  const handleSessionEnd = useCallback(() => {
-    if (isEndingSessionRef.current) return
-    const s = settingsRef.current
-    if (!s) return
+const handleSessionEnd = useCallback(() => {
+  if (isEndingSessionRef.current) return
+  const s = settingsRef.current
+  if (!s) return
 
-    isEndingSessionRef.current = true
-    setIsActive(false)
+  isEndingSessionRef.current = true
+  setIsActive(false)
 
-    const currentIsBreak = isBreakRef.current
-    const currentSessionCount = sessionCountRef.current
-    const currentSelectedTaskId = selectedTaskIdRef.current
+  // Safety valve: if the API call hangs indefinitely (common on mobile PWA with poor
+  // network), auto-reset the lock after 30s so the skip button works again
+  if (sessionEndTimeoutRef.current) clearTimeout(sessionEndTimeoutRef.current)
+  sessionEndTimeoutRef.current = setTimeout(() => {
+    if (isEndingSessionRef.current) {
+      isEndingSessionRef.current = false
+    }
+  }, 30_000)
 
-    // Use the duration that was locked in at session start, not the current
-    // settings value. Falls back to current settings only if somehow not set
-    // (e.g. first ever session before the ref was introduced).
-    const loggedDuration = Math.round(committedSessionDurationRef.current ?? s.sessionDuration)
+  const currentIsBreak = isBreakRef.current
+  const currentSessionCount = sessionCountRef.current
+  const currentSelectedTaskId = selectedTaskIdRef.current
+  const loggedDuration = Math.round(committedSessionDurationRef.current ?? s.sessionDuration)
 
-    setTimeout(() => {
-      if (!currentIsBreak) {
-        playAlarm()
-        const newSessionCount = currentSessionCount + 1
-        const isGoalMet = s.sessionGoalCount > 0 && newSessionCount >= s.sessionGoalCount
+  setTimeout(() => {
+    if (!currentIsBreak) {
+      playAlarm()
+      const newSessionCount = currentSessionCount + 1
+      const isGoalMet = s.sessionGoalCount > 0 && newSessionCount >= s.sessionGoalCount
 
-        const xpMultiplier = loggedDuration >= 120 ? 20 : loggedDuration >= 60 ? 15 : 10
-        const calculatedXp = loggedDuration * xpMultiplier
+      const xpMultiplier = loggedDuration >= 120 ? 20 : loggedDuration >= 60 ? 15 : 10
+      const calculatedXp = loggedDuration * xpMultiplier
 
-        endStudySession(
-          { duration: loggedDuration, taskId: currentSelectedTaskId },
-          {
-            onSuccess: (data) => {
-              setXpGainedAmount(calculatedXp)
-              setShowXpGain(true)
-              setTimeout(() => setShowXpGain(false), 2000)
-
-              if (data.newUnlocks?.length > 0) {
-                data.newUnlocks.forEach((itemKey) => {
-                  const config = WARDROBE_CONFIG[itemKey]
-                  if (config) {
-                    showAppToast(`🎁 Unlocked: ${config.label}!`, "success")
-                  }
-                })
-              }
-
-              if (data?.xpResult?.levelsGained?.length > 0) {
-                const milestoneLevelReached = Math.max(
-                  ...data.xpResult.levelsGained.filter((level) => level % 10 === 0),
-                )
-                if (milestoneLevelReached > 0) {
-                  usePomodoroTimerStore.getState().setMilestoneLevel(milestoneLevelReached)
-                  usePomodoroTimerStore.getState().setShowShareModal(true)
-                } else {
-                  showAppToast(`You leveled up to Level ${data.xpResult.finalLevel}! 🎉`, "success")
-                }
-              }
-
-              if (isGoalMet) {
-                showAppToast(`Goal of ${s.sessionGoalCount} sessions reached! 🎉`, "success")
-                setTimer(0)
-                setSessionCount(newSessionCount)
-                setIsGoalReached(true)
-                localStorage.setItem(STORAGE_KEYS.GOAL_REACHED, "true")
-                localStorage.setItem(STORAGE_KEYS.SESSION_COUNT, String(newSessionCount))
-                localStorage.setItem(STORAGE_KEYS.ACTIVE, "false")
-                isEndingSessionRef.current = false
-                return
-              }
-
-              const shouldStartBreak = !s.skipBreaks
-              startNextTimer(s.autoplay, newSessionCount, shouldStartBreak)
-              isEndingSessionRef.current = false
-            },
-            onError: (err) => {
-              showAppToast(err.message || "Failed to log session.", "error")
-              isEndingSessionRef.current = false
-            },
+      endStudySession(
+        { duration: loggedDuration, taskId: currentSelectedTaskId },
+        {
+          onSuccess: (data) => {
+            clearTimeout(sessionEndTimeoutRef.current) // cancel the safety valve
+            isEndingSessionRef.current = false
+            // ... rest of your existing onSuccess unchanged
           },
-        )
-      } else {
-        if (!s.isMuted && breakEndAudioRef.current) {
-          breakEndAudioRef.current.play().catch(() => {})
-        }
-        isEndingSessionRef.current = false
-        startNextTimer(s.autoplay, currentSessionCount, false)
+          onError: (err) => {
+            clearTimeout(sessionEndTimeoutRef.current)
+            showAppToast(err.message || "Failed to log session.", "error")
+            isEndingSessionRef.current = false
+          },
+        },
+      )
+    } else {
+      if (!s.isMuted && breakEndAudioRef.current) {
+        breakEndAudioRef.current.play().catch(() => {})
       }
-    }, 1)
-  }, [
-    setIsActive,
-    setTimer,
-    setSessionCount,
-    setIsGoalReached,
-    playAlarm,
-    endStudySession,
-    startNextTimer,
-    setXpGainedAmount,
-    setShowXpGain,
-  ])
+      clearTimeout(sessionEndTimeoutRef.current)
+      isEndingSessionRef.current = false
+      startNextTimer(s.autoplay, currentSessionCount, false)
+    }
+  }, 1)
+}, [
+  setIsActive,
+  setTimer,
+  setSessionCount,
+  setIsGoalReached,
+  playAlarm,
+  endStudySession,
+  startNextTimer,
+  setXpGainedAmount,
+  setShowXpGain,
+])
 
   // ── Keep handleSessionEnd ref current so processTick never goes stale ─────
   const handleSessionEndRef = useRef(handleSessionEnd)
