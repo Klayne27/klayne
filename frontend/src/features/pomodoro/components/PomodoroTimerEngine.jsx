@@ -156,16 +156,29 @@ export const PomodoroTimerEngine = () => {
     }
   }, [timer, isActive, isBreak, isGoalReached, isInitialized])
 
-  const playAlarm = useCallback(() => {
-    const s = settingsRef.current
-    if (s && !s.isMuted && alarmAudioRef.current) {
-      alarmAudioRef.current.currentTime = 0
-      alarmAudioRef.current.play().catch(() => {})
-    }
+const playAlarm = useCallback(() => {
+  const s = settingsRef.current
+  if (s && !s.isMuted && alarmAudioRef.current) {
+    alarmAudioRef.current.currentTime = 0
+    alarmAudioRef.current.play().catch(() => {})
+  }
+
+  try {
     if (typeof Notification !== "undefined" && Notification.permission === "granted") {
-      new Notification("Pomodoro", { body: "Session complete! Time for a break." })
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.ready.then((reg) => {
+          reg
+            .showNotification("Pomodoro", { body: "Session complete! Time for a break." })
+            .catch((e) => console.warn(e))
+        })
+      } else {
+        new Notification("Pomodoro", { body: "Session complete! Time for a break." })
+      }
     }
-  }, [])
+  } catch (error) {
+    console.warn("PWA Notification blocked:", error)
+  }
+}, [])
 
   // ── startNextTimer ────────────────────────────────────────────────────────
   const startNextTimer = useCallback(
