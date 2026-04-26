@@ -226,7 +226,7 @@ const handleSessionEndManual = useCallback(() => {
   return (
     <>
       <main
-        className="template container mx-auto flex min-h-screen w-full max-w-2xl flex-col items-center border-accent bg-base-100 font-sans md:border-x"
+        className="template container mx-auto flex min-h-screen w-full max-w-2xl flex-col items-center border-accent bg-base-100 pb-28 font-sans md:border-x md:pb-10"
         style={{
           background: `radial-gradient(circle at 50% 35%, ${timerState.glow} 0%, transparent 45%)`,
         }}
