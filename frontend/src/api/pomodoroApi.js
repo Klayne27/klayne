@@ -22,18 +22,39 @@ export const updatePomodoroSettingsApi = async (settings) => {
   return res.json()
 }
 
-export const endStudySessionApi = async ({ duration }) => {
-  const res = await fetch(`${BASE_URL}/session/end`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ duration }),
-  })
-  if (!res.ok) {
-    throw new Error("Failed to end study session")
+// export const endStudySessionApi = async ({ duration }) => {
+//   const res = await fetch(`${BASE_URL}/session/end`, {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "application/json",
+//     },
+//     body: JSON.stringify({ duration }),
+//   })
+//   if (!res.ok) {
+//     throw new Error("Failed to end study session")
+//   }
+//   return res.json()
+// }
+
+export const endStudySessionApi = async ({duration}) => {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 10_000) // 10s max per attempt
+
+  try {
+    const res = await fetch(`${BASE_URL}/session/end`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({duration}),
+      signal: controller.signal,
+    })
+    clearTimeout(timeoutId)
+    const json = await res.json()
+    if (!res.ok) throw new Error(json.error || "Failed to save session")
+    return json
+  } catch (err) {
+    clearTimeout(timeoutId)
+    throw err
   }
-  return res.json()
 }
 
 export const getStudyActivityFeedApi = async (page = 1) => {

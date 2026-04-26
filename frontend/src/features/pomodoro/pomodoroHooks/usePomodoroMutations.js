@@ -10,6 +10,8 @@ export const useEndStudySession = () => {
 
   const { mutate: endStudySession } = useMutation({
     mutationFn: endStudySessionApi,
+    retry: 2, // 3 total attempts
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 5000),
     onMutate: async ({ duration }) => {
       await queryClient.cancelQueries({ queryKey: userKeys.auth() })
       await queryClient.cancelQueries({ queryKey: pomodoroKeys.leaderboard })

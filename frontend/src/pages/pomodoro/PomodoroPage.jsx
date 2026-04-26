@@ -186,10 +186,16 @@ const PomodoroPage = () => {
     showAppToast("Break skipped!", "info")
   }, [isBreak, sessionCount, setIsActive, engineActions])
 
-  const handleSessionEndManual = useCallback(() => {
-    if (engineActions?.isEndingSessionRef) engineActions.isEndingSessionRef.current = false
-    engineActions?.handleSessionEnd()
-  }, [engineActions])
+const handleSessionEndManual = useCallback(() => {
+  if (!engineActions) return
+  // forceEnd closes over the engine's actual refs, guaranteeing the reset works
+  if (engineActions.forceEnd) {
+    engineActions.forceEnd()
+  } else {
+    if (engineActions.isEndingSessionRef) engineActions.isEndingSessionRef.current = false
+    engineActions.handleSessionEnd?.()
+  }
+}, [engineActions])
 
   const handleComplete = useCallback(
     (todoId, e) => {

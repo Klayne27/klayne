@@ -72,7 +72,7 @@ export const performWeeklyReset = async () => {
 
     // ── Step 4: Break streak for users who didn't study this week ─────────
     await User.updateMany(
-      { _id: { $nin: allActiveIds } },
+      { _id: { $nin: allActiveIds }, isVacationMode: { $ne: true } },
       { $set: { studyStreak: 0, lastStudyDate: null } },
     );
 

@@ -3,7 +3,6 @@ import MonthlyWinners from "../models/monthlyWinners.model.js";
 import User from "../models/user.model.js";
 import WeeklyWinners from "../models/weeklyWinners.model.js";
 
-
 export const getWeeklyLeaderboard = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -14,12 +13,10 @@ export const getWeeklyLeaderboard = async (req, res) => {
 
     const totalCount = await User.countDocuments({
       "weeklyStats.studyDuration": { $gt: 0 },
-      "weeklyStats.weekStart": currentWeekStart,
     });
 
     const leaderboard = await User.find({
       "weeklyStats.studyDuration": { $gt: 0 },
-      "weeklyStats.weekStart": currentWeekStart,
     })
       .sort({ "weeklyStats.studyDuration": -1 })
       .skip(skipIndex)
@@ -58,7 +55,7 @@ export const getPreviousWeekWinners = async (req, res) => {
     // 2. Get the Monday of the PREVIOUS week (the one the cron just processed)
     const lastWeekDate = new Date(currentMonday);
     lastWeekDate.setUTCDate(lastWeekDate.getUTCDate() - 7);
-    const lastWeekStart = getMondayOfWeek(lastWeekDate);
+    const lastWeekStart = lastWeekDate.toISOString().split("T")[0];
 
     const previousWinners = await WeeklyWinners.findOne({
       weekStart: lastWeekStart,

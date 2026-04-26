@@ -207,7 +207,7 @@ const StudyActivityPage = () => {
                         onClick={() => handlePageChange(p)}
                         className={`h-9 w-9 rounded-xl text-xs font-bold transition-all duration-300 ${
                           p === page
-                            ? `scale-105 bg-primary text-white shadow-lg shadow-primary/40`
+                            ? `scale-105 bg-primary ${shouldTextBeWhite(theme)} shadow-lg shadow-primary/40`
                             : "text-slate-400 hover:bg-white/10 hover:text-white"
                         }`}
                       >
