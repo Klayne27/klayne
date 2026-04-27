@@ -282,11 +282,11 @@ export const xpForLevel = (level) => {
 export const handleXPAndLeveling = async (user, duration) => {
   let xpGained;
   if (duration >= 120) {
-    xpGained = duration * 20; // 20 XP for sessions 2 hours (120 duration) or more
+    xpGained = duration * 40; // 20 XP for sessions 2 hours (120 duration) or more
   } else if (duration >= 60) {
-    xpGained = duration * 15; // 15 XP for sessions over 60 duration
+    xpGained = duration * 30; // 15 XP for sessions over 60 duration
   } else {
-    xpGained = duration * 10; // 10 XP for all other sessions
+    xpGained = duration * 20; // 10 XP for all other sessions
   }
   const initialLevel = user.pomodoroLevel;
 
