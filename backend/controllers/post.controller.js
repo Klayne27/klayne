@@ -13,23 +13,23 @@ import {
   io,
   onlineUsersMap,
 } from "../lib/socket.js";
-import { extractAndValidateMentions, getBlockingUsers } from "../lib/utils/helpers.js";
+import { extractAndValidateMentions, getBlockingUsers, getMutedUsers, isBlockedOrBlockedBy } from "../lib/utils/helpers.js";
 import Image from "../models/image.model.js";
 
-const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
-  if (!currentUserId || !targetUserId) return false;
-  if (currentUserId.toString() === targetUserId.toString()) return false;
+// const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
+//   if (!currentUserId || !targetUserId) return false;
+//   if (currentUserId.toString() === targetUserId.toString()) return false;
 
-  const currentUser = await User.findById(currentUserId).select("blockedUsers blockedBy");
-  const targetUser = await User.findById(targetUserId).select("blockedUsers blockedBy");
+//   const currentUser = await User.findById(currentUserId).select("blockedUsers blockedBy");
+//   const targetUser = await User.findById(targetUserId).select("blockedUsers blockedBy");
 
-  if (!currentUser || !targetUser) return false;
+//   if (!currentUser || !targetUser) return false;
 
-  return (
-    currentUser.blockedUsers.includes(targetUserId) ||
-    targetUser.blockedUsers.includes(currentUserId)
-  );
-};
+//   return (
+//     currentUser.blockedUsers.includes(targetUserId) ||
+//     targetUser.blockedUsers.includes(currentUserId)
+//   );
+// };
 
 export const getPostThread = async (req, res) => {
   try {
@@ -83,18 +83,22 @@ export const getPostReplies = async (req, res) => {
 
     const userId = req.user._id;
     const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
+const { all: mutedUserIds } = await getMutedUsers(userId);
+const mutedObjectIds = mutedUserIds.map((id) => new mongoose.Types.ObjectId(id));
+
+
     const blockedIds = [...new Set([...blockedByMe, ...blockedMe])].map(
       (id) => new mongoose.Types.ObjectId(id),
     );
 
     const totalReplies = await Post.countDocuments({
       parentPost: postId,
-      user: { $nin: blockedIds },
+      user: { $nin: [...blockedIds,...mutedObjectIds] },
     });
 
     const replies = await Post.find({
       parentPost: postId,
-      user: { $nin: blockedIds },
+      user: { $nin: [...blockedIds, ...mutedObjectIds] },
     })
       .populate({
         path: "user",
@@ -115,7 +119,7 @@ export const getPostReplies = async (req, res) => {
 
         const firstChild = await Post.findOne({
           parentPost: reply._id,
-          user: { $nin: blockedIds },
+          user: { $nin: [...blockedIds, ...mutedObjectIds] },
         })
           .populate({
             path: "user",
@@ -268,7 +272,7 @@ export const createReply = async (req, res) => {
         isAnonymousInteraction: finalIsAnonymous, // ← was isOwnerReplyingAnonymously
       });
     }
- 
+
     // Notify mentioned users (excluding the reply author and the parent owner who already got a reply notif)
     const mentionNotificationPromises = mentionedUsersIds
       .filter((mentionedId) => mentionedId.toString() !== userId.toString())
@@ -283,7 +287,6 @@ export const createReply = async (req, res) => {
       );
 
     await Promise.all(mentionNotificationPromises);
-    
 
     const populatedReply = await Post.findById(newReply._id)
       .populate({
@@ -330,6 +333,8 @@ export const getAllPosts = async (req, res) => {
     }
 
     const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
+    const { all: mutedUserIds } = await getMutedUsers(userId);
+    const mutedObjectIds = mutedUserIds.map((id) => new mongoose.Types.ObjectId(id));
 
     const blockedAndBlockingObjectIds = [
       ...new Set([
@@ -392,7 +397,7 @@ export const getAllPosts = async (req, res) => {
 
       "deletedFor.user": { $ne: userId },
       ...scheduledPostConditions,
-      user: { $nin: blockedAndBlockingObjectIds },
+      user: { $nin: [...blockedAndBlockingObjectIds, ...mutedObjectIds] },
     };
 
     const totalPostsResult = await Post.aggregate([
@@ -415,7 +420,7 @@ export const getAllPosts = async (req, res) => {
 
           "deletedFor.user": { $ne: userId },
           ...scheduledPostConditions,
-          user: { $nin: blockedAndBlockingObjectIds },
+          user: { $nin: [...blockedAndBlockingObjectIds, ...mutedObjectIds] },
           "repostedFromPostData.isVent": { $ne: true },
           "repostedFromPostData.isIC": { $ne: true },
         },
@@ -450,7 +455,11 @@ export const getAllPosts = async (req, res) => {
             {
               $and: [
                 { repostedFrom: { $ne: null } },
-                { "repostedFrom.user._id": { $nin: blockedAndBlockingObjectIds } },
+                {
+                  "repostedFrom.user._id": {
+                    $nin: [...blockedAndBlockingObjectIds, ...mutedObjectIds],
+                  },
+                },
                 {
                   $or: [
                     { "repostedFrom.isScheduled": { $ne: true } },
@@ -492,7 +501,7 @@ export const getAllPosts = async (req, res) => {
 
           "deletedFor.user": { $ne: userId },
           ...scheduledPostConditions,
-          user: { $nin: blockedAndBlockingObjectIds },
+          user: { $nin: [...blockedAndBlockingObjectIds, ...mutedObjectIds] },
           "repostedFromPostData.isVent": { $ne: true },
           "repostedFromPostData.isIC": { $ne: true },
         },
@@ -581,7 +590,11 @@ export const getAllPosts = async (req, res) => {
               $and: [
                 { repostedFrom: { $ne: null } },
                 { "repostedFrom.user": { $ne: null } },
-                { "repostedFrom.user._id": { $nin: blockedAndBlockingObjectIds } },
+                {
+                  "repostedFrom.user._id": {
+                    $nin: [...blockedAndBlockingObjectIds, ...mutedObjectIds],
+                  },
+                },
                 {
                   $or: [
                     { "repostedFrom.isScheduled": { $ne: true } },
@@ -687,6 +700,8 @@ export const getICPosts = async (req, res) => {
     }
 
     const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
+    const { all: mutedUserIds } = await getMutedUsers(userId);
+    const mutedObjectIds = mutedUserIds.map((id) => new mongoose.Types.ObjectId(id));
 
     const blockedAndBlockingObjectIds = [
       ...new Set([
@@ -746,7 +761,7 @@ export const getICPosts = async (req, res) => {
       parentPost: null,
       "deletedFor.user": { $ne: userId },
       ...scheduledPostConditions,
-      user: { $nin: blockedAndBlockingObjectIds },
+      user: { $nin: [...blockedAndBlockingObjectIds, ...mutedObjectIds] },
     };
 
     const totalPostsResult = await Post.aggregate([
@@ -768,7 +783,7 @@ export const getICPosts = async (req, res) => {
           "deletedFor.user": { $ne: userId },
           parentPost: null,
           ...scheduledPostConditions,
-          user: { $nin: blockedAndBlockingObjectIds },
+          user: { $nin: [...blockedAndBlockingObjectIds, ...mutedObjectIds] },
           "repostedFromPostData.isVent": { $ne: true },
         },
       },
@@ -802,7 +817,11 @@ export const getICPosts = async (req, res) => {
             {
               $and: [
                 { repostedFrom: { $ne: null } },
-                { "repostedFrom.user._id": { $nin: blockedAndBlockingObjectIds } },
+                {
+                  "repostedFrom.user._id": {
+                    $nin: [...blockedAndBlockingObjectIds, ...mutedObjectIds],
+                  },
+                },
                 {
                   $or: [
                     { "repostedFrom.isScheduled": { $ne: true } },
@@ -843,7 +862,7 @@ export const getICPosts = async (req, res) => {
           "deletedFor.user": { $ne: userId },
           parentPost: null,
           ...scheduledPostConditions,
-          user: { $nin: blockedAndBlockingObjectIds },
+          user: { $nin: [...blockedAndBlockingObjectIds, ...mutedObjectIds] },
           "repostedFromPostData.isVent": { $ne: true },
         },
       },
@@ -931,7 +950,11 @@ export const getICPosts = async (req, res) => {
               $and: [
                 { repostedFrom: { $ne: null } },
                 { "repostedFrom.user": { $ne: null } },
-                { "repostedFrom.user._id": { $nin: blockedAndBlockingObjectIds } },
+                {
+                  "repostedFrom.user._id": {
+                    $nin: [...blockedAndBlockingObjectIds, ...mutedObjectIds],
+                  },
+                },
                 {
                   $or: [
                     { "repostedFrom.isScheduled": { $ne: true } },
@@ -1214,11 +1237,15 @@ export const getLikedPosts = async (req, res) => {
       {
         $match: {
           $and: [
-            { "user._id": { $nin: blockedAndBlockingObjectIds } },
+            { "user._id": { $nin: [...blockedAndBlockingObjectIds, ...mutedObjectIds] } },
             {
               $or: [
                 { repostedFrom: null },
-                { "repostedFrom.user._id": { $nin: blockedAndBlockingObjectIds } },
+                {
+                  "repostedFrom.user._id": {
+                    $nin: [...blockedAndBlockingObjectIds, ...mutedObjectIds],
+                  },
+                },
               ],
             },
             { "repostedFrom.repostedFrom": { $eq: null } },
@@ -1271,6 +1298,9 @@ export const getFollowingPosts = async (req, res) => {
     if (!user) return res.status(404).json({ error: "User not found" });
 
     const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
+    const { all: mutedUserIds } = await getMutedUsers(userId);
+    const mutedObjectIds = mutedUserIds.map((id) => new mongoose.Types.ObjectId(id));
+
     const blockedAndBlockingObjectIds = [
       ...new Set([
         ...blockedByMe.map((id) => new mongoose.Types.ObjectId(id)),
@@ -1320,7 +1350,11 @@ export const getFollowingPosts = async (req, res) => {
               $and: [
                 { user: { $in: effectiveFollowing } },
                 { repostedFrom: { $ne: null } },
-                { "repostedFrom.user": { $nin: blockedAndBlockingObjectIds } },
+                {
+                  "repostedFrom.user": {
+                    $nin: [...blockedAndBlockingObjectIds, ...mutedObjectIds],
+                  },
+                },
                 {
                   $or: [
                     { "repostedFrom.isScheduled": { $ne: true } },
@@ -1478,7 +1512,11 @@ export const getUserPosts = async (req, res) => {
               $and: [
                 { user: user._id },
                 { repostedFrom: { $ne: null } },
-                { "repostedFrom.user": { $nin: blockedAndBlockingObjectIds } },
+                {
+                  "repostedFrom.user": {
+                    $nin: blockedAndBlockingObjectIds,
+                  },
+                },
                 {
                   $or: [
                     { "repostedFrom.isScheduled": { $ne: true } },
@@ -2984,6 +3022,9 @@ export const getVentPosts = async (req, res) => {
     }
 
     const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
+    const { all: mutedUserIds } = await getMutedUsers(userId);
+    const mutedObjectIds = mutedUserIds.map((id) => new mongoose.Types.ObjectId(id));
+
     const blockedAndBlockingObjectIds = [
       ...new Set([
         ...blockedByMe.map((id) => new mongoose.Types.ObjectId(id)),
@@ -2995,7 +3036,7 @@ export const getVentPosts = async (req, res) => {
       isVent: true,
       parentPost: null,
       "deletedFor.user": { $ne: userId },
-      user: { $nin: blockedAndBlockingObjectIds },
+      user: { $nin: [...blockedAndBlockingObjectIds, ...mutedObjectIds] },
     };
 
     const totalCount = await Post.countDocuments(matchConditions);
@@ -3137,7 +3178,7 @@ export const getVentPosts = async (req, res) => {
                 isCha: false,
                 isVerified: false,
                 isGoldVerified: false,
-                
+
                 badges: [],
                 preferredBadge: null,
               },
@@ -3152,7 +3193,7 @@ export const getVentPosts = async (req, res) => {
                 nameColor: "$author.nameColor",
                 badges: "$author.badges",
                 preferredBadge: "$author.preferredBadge",
-                equipped: "$author.equipped"
+                equipped: "$author.equipped",
               },
             },
           },

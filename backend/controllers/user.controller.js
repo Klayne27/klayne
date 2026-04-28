@@ -8,7 +8,7 @@ import Message from "../models/message.model.js";
 import { createAndSendNotification } from "../lib/socket.js";
 import mongoose from "mongoose";
 import PublicChatMessage from "../models/publicMessage.model.js";
-import { getBlockingUsers } from "../lib/utils/helpers.js";
+import { getBlockingUsers, getMutedUsers } from "../lib/utils/helpers.js";
 import Image from "../models/image.model.js";
 import { admin } from "../config/firebaseAdmin.js";
 import PushSubscription from "../models/pushSubscription.js";
@@ -215,16 +215,21 @@ export const getSuggestedUsers = async (req, res) => {
     }
 
     const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
+const { total: totalMutedIds } = await getMutedUsers(userId);
+const totalMutedObjectIds = totalMutedIds.map((id) => new mongoose.Types.ObjectId(id));
+
+
     const blockedAndBlockingUsers = [...new Set([...blockedByMe, ...blockedMe])];
 
     const currentUserDoc = await User.findById(userId).select("following").lean();
     const usersFollowedByMe = currentUserDoc?.following?.map((id) => id.toString()) || [];
 
-    const excludeUserIds = [
-      new mongoose.Types.ObjectId(userId),
-      ...usersFollowedByMe.map((id) => new mongoose.Types.ObjectId(id)),
-      ...blockedAndBlockingUsers.map((id) => new mongoose.Types.ObjectId(id)),
-    ];
+const excludeUserIds = [
+  new mongoose.Types.ObjectId(userId),
+  ...usersFollowedByMe.map((id) => new mongoose.Types.ObjectId(id)),
+  ...blockedAndBlockingUsers.map((id) => new mongoose.Types.ObjectId(id)),
+  ...totalMutedObjectIds, // ← ADD
+];
 
     const suggestedUsers = await User.aggregate([
       {
@@ -983,6 +988,84 @@ export const getUserStats = async (req, res) => {
     res.status(200).json(stats);
   } catch (error) {
     console.error("Error in getUserStats:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const muteUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { muteType } = req.body; // "standard" | "total"
+    const currentUserId = req.user._id;
+
+    if (currentUserId.toString() === userId.toString()) {
+      return res.status(400).json({ error: "You cannot mute yourself." });
+    }
+
+    if (!["standard", "total"].includes(muteType)) {
+      return res.status(400).json({ error: "Invalid mute type." });
+    }
+
+    const currentUser = await User.findById(currentUserId).select("following mutedUsers");
+
+    const isFollowing = currentUser.following.some(
+      (id) => id.toString() === userId.toString(),
+    );
+    if (!isFollowing) {
+      return res
+        .status(400)
+        .json({ error: "You must follow a user before muting them." });
+    }
+
+    const existingIdx = currentUser.mutedUsers.findIndex(
+      (m) => m.user.toString() === userId.toString(),
+    );
+
+    if (existingIdx !== -1) {
+      currentUser.mutedUsers[existingIdx].muteType = muteType;
+    } else {
+      currentUser.mutedUsers.push({ user: userId, muteType });
+    }
+
+    await currentUser.save();
+    res.status(200).json({ isMuted: true, muteType });
+  } catch (error) {
+    console.error("Error in muteUser:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const unmuteUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const currentUserId = req.user._id;
+
+    await User.findByIdAndUpdate(currentUserId, {
+      $pull: { mutedUsers: { user: new mongoose.Types.ObjectId(userId) } },
+    });
+
+    res.status(200).json({ isMuted: false, muteType: null });
+  } catch (error) {
+    console.error("Error in unmuteUser:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const getMuteStatus = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const currentUserId = req.user._id;
+
+    const currentUser = await User.findById(currentUserId).select("mutedUsers").lean();
+    const mute = currentUser?.mutedUsers?.find(
+      (m) => m.user.toString() === userId.toString(),
+    );
+
+    res.status(200).json({
+      isMuted: !!mute,
+      muteType: mute?.muteType || null,
+    });
+  } catch (error) {
     res.status(500).json({ error: "Internal server error" });
   }
 };

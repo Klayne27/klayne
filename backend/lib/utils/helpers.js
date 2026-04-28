@@ -12,6 +12,38 @@ export const getBlockingUsers = async (userId) => {
   };
 };
 
+export const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
+  if (!currentUserId || !targetUserId) return false;
+
+  const currentIdStr = currentUserId.toString();
+  const targetIdStr = targetUserId.toString();
+
+  if (currentIdStr === targetIdStr) return false;
+
+  // Single DB trip
+  const users = await User.find({
+    _id: { $in: [currentUserId, targetUserId] },
+  })
+    .select("blockedUsers")
+    .lean();
+
+  // Ensure both users exist
+  if (users.length < 2) return false;
+
+  // Correctly identify users from the result array
+  const currentUser = users.find((u) => u._id.toString() === currentIdStr);
+  const targetUser = users.find((u) => u._id.toString() === targetIdStr);
+
+  const currentUserBlockedTarget = (currentUser.blockedUsers || []).some(
+    (id) => id.toString() === targetIdStr,
+  );
+  const targetUserBlockedCurrentUser = (targetUser.blockedUsers || []).some(
+    (id) => id.toString() === currentIdStr,
+  );
+
+  return currentUserBlockedTarget || targetUserBlockedCurrentUser;
+};
+
 export const extractAndValidateMentions = async (text) => {
   const mentionRegex = /@([a-zA-Z0-9](?:[a-zA-Z0-9._-]{0,28}[a-zA-Z0-9])?)/g;
   let match;
@@ -323,4 +355,13 @@ export const handleXPAndLeveling = async (user, duration) => {
     finalXP: user.pomodoroXP,
     xpNeededForNext: xpNeededForCurrentLevel,
   };
+};
+
+// lib/utils/helpers.js
+export const getMutedUsers = async (userId) => {
+  const user = await User.findById(userId).select("mutedUsers").lean();
+  const all     = user?.mutedUsers || [];
+  const standard = all.filter(m => m.muteType === "standard").map(m => m.user.toString());
+  const total    = all.filter(m => m.muteType === "total").map(m => m.user.toString());
+  return { standard, total, all: [...new Set([...standard, ...total])] };
 };

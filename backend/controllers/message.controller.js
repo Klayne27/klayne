@@ -10,52 +10,52 @@ import { v2 as cloudinary } from "cloudinary";
 import User from "../models/user.model.js";
 import mongoose from "mongoose";
 import Image from "../models/image.model.js";
-import { getPublicIdFromUrl, transformCloudinaryUrl } from "../lib/utils/helpers.js";
+import { getPublicIdFromUrl, isBlockedOrBlockedBy, transformCloudinaryUrl } from "../lib/utils/helpers.js";
 import { sendPushNotification } from "../lib/utils/sendPush.js";
 
 const BASE_URL = process.env.RENDER_EXTERNAL_URL;
 
-const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
-  if (!currentUserId || !targetUserId) {
-    return false;
-  }
-  if (currentUserId.toString() === targetUserId.toString()) {
-    return false;
-  }
+// const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
+//   if (!currentUserId || !targetUserId) {
+//     return false;
+//   }
+//   if (currentUserId.toString() === targetUserId.toString()) {
+//     return false;
+//   }
 
-  const currentUser = await User.findById(currentUserId)
-    .select("blockedUsers blockedBy")
-    .lean();
-  const targetUser = await User.findById(targetUserId)
-    .select("blockedUsers blockedBy")
-    .lean();
+//   const currentUser = await User.findById(currentUserId)
+//     .select("blockedUsers blockedBy")
+//     .lean();
+//   const targetUser = await User.findById(targetUserId)
+//     .select("blockedUsers blockedBy")
+//     .lean();
 
-  if (!currentUser || !targetUser) {
-    return false;
-  }
+//   if (!currentUser || !targetUser) {
+//     return false;
+//   }
 
-  let currentUserBlockedTarget;
-  try {
-    currentUserBlockedTarget = (currentUser.blockedUsers || []).some((id) => {
-      const result = id.toString() === targetUserId.toString();
-      return result;
-    });
-  } catch (e) {
-    throw e;
-  }
+//   let currentUserBlockedTarget;
+//   try {
+//     currentUserBlockedTarget = (currentUser.blockedUsers || []).some((id) => {
+//       const result = id.toString() === targetUserId.toString();
+//       return result;
+//     });
+//   } catch (e) {
+//     throw e;
+//   }
 
-  let targetUserBlockedCurrentUser;
-  try {
-    targetUserBlockedCurrentUser = (targetUser.blockedUsers || []).some((id) => {
-      const result = id.toString() === currentUserId.toString();
-      return result;
-    });
-  } catch (e) {
-    throw e;
-  }
+//   let targetUserBlockedCurrentUser;
+//   try {
+//     targetUserBlockedCurrentUser = (targetUser.blockedUsers || []).some((id) => {
+//       const result = id.toString() === currentUserId.toString();
+//       return result;
+//     });
+//   } catch (e) {
+//     throw e;
+//   }
 
-  return currentUserBlockedTarget || targetUserBlockedCurrentUser;
-};
+//   return currentUserBlockedTarget || targetUserBlockedCurrentUser;
+// };
 
 export const getMessagesByConversationId = async (req, res) => {
   const { conversationId } = req.params;
@@ -468,6 +468,18 @@ export const sendMessage = async (req, res) => {
       }
     }
 
+    if (!isGroup && recipientId) {
+      const recipientDoc = await User.findById(recipientId).select("mutedUsers").lean();
+      const muteEntry = recipientDoc?.mutedUsers?.find(
+        (m) => m.user.toString() === senderId.toString(),
+      );
+      if (muteEntry?.muteType === "total") {
+        // Save the message but don't emit socket or push — sender doesn't know
+        // (fall through to save normally, just skip emit at the end)
+        req._silencedByTotalMute = true;
+      }
+    }
+
     if (conversation.hiddenFor && conversation.hiddenFor.length > 0) {
       conversation.hiddenFor = [];
     }
@@ -674,6 +686,7 @@ export const sendMessage = async (req, res) => {
         }
       });
     } else {
+      if (!req._silencedByTotalMute) {
       if (recipientSocketIds.length > 0) {
         io.to(recipientSocketIds).emit("newMessage", newMessage.toObject());
       }
@@ -702,7 +715,7 @@ export const sendMessage = async (req, res) => {
 
       await emitUnreadMessageStatus(recipientId.toString());
     }
-
+  }
     res.status(201).json(newMessage.toObject());
   } catch (error) {
     console.error("Error in sendMessage controller:", error.message);

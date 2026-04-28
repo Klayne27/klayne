@@ -8,13 +8,16 @@ import {
   followUnfollowUser,
   getFollowers,
   getFollowingUsers,
+  getMuteStatus,
   getSuggestedUsers,
   getUserProfile,
   getUserStats,
   getVacationModeStatus,
+  muteUser,
   searchUsers,
   toggleLikedFeedPrivacy,
   toggleVacationMode,
+  unmuteUser,
   updateNameColor,
   updatePreferredBadge,
   updateStatusPreference,
@@ -37,6 +40,9 @@ router.get("/followers/:userId", getFollowers);
 router.get("/following/:userId", getFollowingUsers);
 router.post("/block/:userToBlockId", blockUnblockUser);
 router.get("/stats/:username", getUserStats);
+router.post("/mute/:userId", protectRoute, muteUser);
+router.delete("/mute/:userId", protectRoute, unmuteUser);
+router.get("/mute/:userId", protectRoute, getMuteStatus);
 
 // --- SETTINGS & PRIVACY ---
 router.get("/vacation-mode", getVacationModeStatus);

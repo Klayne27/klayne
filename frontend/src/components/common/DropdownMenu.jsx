@@ -1,7 +1,7 @@
 import useDropdownMenu from "../../hooks/customHooks/useDropdownMenu"
 
 const DropdownMenu = ({ children, icon }) => {
-  const { showMenu, toggleMenu, menuRef, setShowMenu } = useDropdownMenu()
+  const { showMenu, toggleMenu, menuRef } = useDropdownMenu()
 
   return (
     <span

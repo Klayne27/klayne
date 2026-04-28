@@ -1,5 +1,11 @@
 import { useQuery } from "@tanstack/react-query"
-import { getSuggestedUsersApi, getUserProfileApi, getUsersApi, getUserStatsApi } from "../../../api/usersApi"
+import {
+  getMuteStatusApi,
+  getSuggestedUsersApi,
+  getUserProfileApi,
+  getUsersApi,
+  getUserStatsApi,
+} from "../../../api/usersApi"
 import { userKeys } from "./userKeys"
 
 export const useGetUserProfile = (username) => {
@@ -50,20 +56,19 @@ export const useGetSuggestedUsers = () => {
     staleTime: 1000 * 60 * 30,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-  });
-  
+  })
 
-  return { suggestedUsers, isLoading, refetch, isRefetching };
-};
+  return { suggestedUsers, isLoading, refetch, isRefetching }
+}
 
 export const useGetFollowList = (userId, type) => {
   const endpoint = userId
     ? type === "following"
       ? `/api/users/following/${userId}`
       : `/api/users/followers/${userId}`
-    : null;
+    : null
 
-  const enabled = !!userId && !!endpoint;
+  const enabled = !!userId && !!endpoint
 
   const {
     data: users = [],
@@ -80,14 +85,14 @@ export const useGetFollowList = (userId, type) => {
     cacheTime: 10 * 60 * 1000,
     retry: (failureCount, err) => {
       if (err?.status === 403 || err?.status === 404) {
-        return false;
+        return false
       }
-      return failureCount < 3;
+      return failureCount < 3
     },
-  });
+  })
 
-  return { users, isLoading, error, isError, refetch, isRefetching };
-};
+  return { users, isLoading, error, isError, refetch, isRefetching }
+}
 
 export const useGetUserStats = (username) => {
   const { data, isLoading } = useQuery({
@@ -101,5 +106,20 @@ export const useGetUserStats = (username) => {
     totalLikes: data?.totalLikes ?? 0,
     totalReposts: data?.totalReposts ?? 0,
     isLoadingStats: isLoading,
+  }
+}
+
+export const useGetMuteStatus = (userId) => {
+  const { data, isLoading } = useQuery({
+    queryKey: ["muteStatus", userId],
+    queryFn: () => getMuteStatusApi(userId),
+    enabled: !!userId,
+    staleTime: 2 * 60 * 1000,
+  })
+
+  return {
+    isMuted: data?.isMuted ?? false,
+    muteType: data?.muteType ?? null,
+    isLoading,
   }
 }

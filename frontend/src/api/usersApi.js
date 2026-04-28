@@ -223,3 +223,28 @@ export const getUserStatsApi = async (username) => {
   if (!res.ok) throw new Error(data.error || "Failed to fetch user stats")
   return data
 }
+
+export const muteUserApi = async ({ userId, muteType }) => {
+  const res = await fetch(`${BASE_URL}/mute/${userId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ muteType }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Failed to mute user")
+  return data
+}
+
+export const unmuteUserApi = async (userId) => {
+  const res = await fetch(`${BASE_URL}/mute/${userId}`, { method: "DELETE" })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Failed to unmute user")
+  return data
+}
+
+export const getMuteStatusApi = async (userId) => {
+  const res = await fetch(`${BASE_URL}/mute/${userId}`)
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Failed to get mute status")
+  return data
+}

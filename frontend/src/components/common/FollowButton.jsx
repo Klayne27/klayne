@@ -49,7 +49,7 @@ const FollowButton = ({
         !isCurrentlyFollowing
           ? "bg-primary hover:bg-primary/80 transition duration-200"
           :
-            "bg-secondary/40 transition duration-200 md:hover:bg-secondary"
+            "transition duration-200"
       } ${
         isCurrentlyFollowing && isHoveringUnfollow && !isTouchDevice
           ? "border-red-600 bg-red-700/20 text-red-600"

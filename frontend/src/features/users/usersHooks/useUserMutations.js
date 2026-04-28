@@ -1,5 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { blockUnblockUserApi, deleteUserAccountAdminApi, deleteUserAccountApi, followApi, getVacationModeStatusApi, searchUsersApi, toggleLikedFeedPrivacyApi, toggleVacationModeApi, updateNameColorApi, updatePreferredBadgeApi, updateStatusPreferenceApi, updateUserProfileApi } from "../../../api/usersApi"
+import {
+  blockUnblockUserApi,
+  deleteUserAccountAdminApi,
+  deleteUserAccountApi,
+  followApi,
+  getVacationModeStatusApi,
+  muteUserApi,
+  searchUsersApi,
+  toggleLikedFeedPrivacyApi,
+  toggleVacationModeApi,
+  unmuteUserApi,
+  updateNameColorApi,
+  updatePreferredBadgeApi,
+  updateStatusPreferenceApi,
+  updateUserProfileApi,
+} from "../../../api/usersApi"
 import { useState } from "react"
 import { userKeys } from "./userKeys"
 import { showAppToast } from "../../../utils/showAppToast"
@@ -42,7 +57,7 @@ export const useUpdateUserProfile = () => {
 
 export const useFollow = () => {
   const queryClient = useQueryClient()
-//   const { authUser } = useAuthUser()
+  //   const { authUser } = useAuthUser()
   const {
     mutate: follow,
     isPending,
@@ -136,23 +151,21 @@ export const useToggleLikedFeedPrivacy = () => {
   return { toggleLikedFeedPrivacy, isTogglingPrivacy }
 }
 
-
 export const useDeleteAccount = () => {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
 
   const { mutateAsync: deleteAccount, isPending: isDeletingAccount } = useMutation({
     mutationFn: ({ userId }) => deleteUserAccountApi(userId),
     onSuccess: () => {
-      showAppToast("Account deleted successfully!", "success");
-      localStorage.removeItem("authUser");
-      queryClient.removeQueries();
-      window.location.href = "/login";
+      showAppToast("Account deleted successfully!", "success")
+      localStorage.removeItem("authUser")
+      queryClient.removeQueries()
+      window.location.href = "/login"
     },
-  });
+  })
 
-  return { deleteAccount, isDeletingAccount };
-};
-
+  return { deleteAccount, isDeletingAccount }
+}
 
 export const useAdminDeleteUser = () => {
   const queryClient = useQueryClient()
@@ -264,7 +277,6 @@ export const useSearchUsers = (query) => {
   return { suggestedUsers, isLoadingSuggestedUsers, isError, error, isFetching }
 }
 
-
 export const useUpdatePreferredBadge = () => {
   const queryClient = useQueryClient()
 
@@ -375,4 +387,40 @@ export const useUpdateNameColor = () => {
   })
 
   return { updateNameColor, isUpdatingNameColor }
+}
+
+export const useMuteUser = (userId) => {
+  const queryClient = useQueryClient()
+
+  const { mutate: muteUser, isPending: isMuting } = useMutation({
+    mutationFn: ({ muteType }) => muteUserApi({ userId, muteType }),
+    onSuccess: (data) => {
+      queryClient.setQueryData(["muteStatus", userId], data)
+      queryClient.invalidateQueries(
+        { queryKey: postKeys.all },
+        showAppToast("User muted.", "success"),
+      )
+    },
+    onError: (err) => showAppToast(err.message, "error"),
+  })
+
+  return { muteUser, isMuting }
+}
+
+export const useUnmuteUser = (userId) => {
+  const queryClient = useQueryClient()
+
+  const { mutate: unmuteUser, isPending: isUnmuting } = useMutation({
+    mutationFn: () => unmuteUserApi(userId),
+    onSuccess: (data) => {
+      queryClient.setQueryData(["muteStatus", userId], data)
+      queryClient.invalidateQueries(
+        { queryKey: postKeys.all },
+        showAppToast("User unmuted.", "success"),
+      )
+    },
+    onError: (err) => showAppToast(err.message, "error"),
+  })
+
+  return { unmuteUser, isUnmuting }
 }

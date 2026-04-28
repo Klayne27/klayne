@@ -34,15 +34,26 @@ import {
   useAdminDeleteUser,
   useBlockUnblockUser,
   useFollow,
+  useMuteUser,
+  useUnmuteUser,
   useUpdateUserProfile,
 } from "../features/users/usersHooks/useUserMutations.js"
-import { useGetUserProfile, useGetUserStats } from "../features/users/usersHooks/useUserQueries.js"
+import {
+  useGetMuteStatus,
+  useGetUserProfile,
+  useGetUserStats,
+} from "../features/users/usersHooks/useUserQueries.js"
 import { useGetPinnedPosts } from "../features/posts/postsHooks/usePostsQueries.js"
 import { useLightboxStore } from "../store/useLightboxStore.js"
 import { WARDROBE_CONFIG } from "../features/wardrobe/wardrobeConfig.js"
 import UserAvatar from "../components/common/UserAvatar.jsx"
 import { useEffect } from "react"
 import { loadGoogleFont } from "../features/wardrobe/StyleWrapper.jsx"
+import MuteButton from "../components/common/MuteButton.jsx"
+import DropdownMenu from "../components/common/DropdownMenu.jsx"
+import { BsThreeDots, BsVolumeMute, BsVolumeUp } from "react-icons/bs"
+import MuteOptionsModal from "../components/common/MuteOptionsModal.jsx"
+import useDropdownMenu from "../hooks/customHooks/useDropdownMenu.js"
 
 const formatStudyTime = (totalMinutes) => {
   const hours = Math.floor(totalMinutes / 60)
@@ -62,12 +73,11 @@ const formatHeatmapDate = (dateString) => {
   }).format(date)
 }
 
+const getOverlayClass = (wardrobeConfig, equippedOverlayKey) => {
+  if (!equippedOverlayKey || !wardrobeConfig[equippedOverlayKey]) return ""
 
- const getOverlayClass = (wardrobeConfig, equippedOverlayKey) => {
-  if (!equippedOverlayKey || !wardrobeConfig[equippedOverlayKey]) return "";
-  
-  return wardrobeConfig[equippedOverlayKey].overlayClass || "";
-};
+  return wardrobeConfig[equippedOverlayKey].overlayClass || ""
+}
 
 const ProfilePage = ({ feedType, setFeedType }) => {
   const openProfileImageModal = useAppStore((state) => state.openProfileImageModal)
@@ -81,11 +91,14 @@ const ProfilePage = ({ feedType, setFeedType }) => {
   const navigate = useNavigate()
 
   const [userPostsCount, setUserPostsCount] = useState(0)
+  const [isMuteModalOpen, setIsMuteModalOpen] = useState(false)
+  const [isUnmuteConfirmOpen, setIsUnmuteConfirmOpen] = useState(false)
 
   const coverImgRef = useRef(null)
   const profileImgRef = useRef(null)
 
   const { username } = useParams()
+  const { toggleMenu } = useDropdownMenu()
 
   const { authUser } = useAuthUser()
   const { follow, isPending } = useFollow()
@@ -93,7 +106,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
   const { blockUnblockUser, isBlocking } = useBlockUnblockUser()
   const { adminDeleteUser, isPending: isDeletingUser } = useAdminDeleteUser()
   const { totalLikes, totalReposts } = useGetUserStats(username)
-
 
   const { userProfile, isLoading, isRefetching, isError, error, isBlockedByYou, hasBlockedYou } =
     useGetUserProfile(username)
@@ -143,6 +155,11 @@ const ProfilePage = ({ feedType, setFeedType }) => {
 
   const { updateProfile, isUpdatingProfile } = useUpdateUserProfile()
   const { getOrCreateConversation, isCreatingConversation } = useGetOrCreateConversation()
+  const [showMuteMenu, setShowMuteMenu] = useState(false)
+
+  const { isMuted, muteType } = useGetMuteStatus(userProfile?._id)
+  const { muteUser, isMuting } = useMuteUser(userProfile?._id)
+  const { unmuteUser, isUnmuting } = useUnmuteUser(userProfile?._id)
 
   const isMyProfile = authUser?._id === userProfile?._id
   const amIFollowing = authUser?.following?.includes(userProfile?._id)
@@ -259,25 +276,30 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     setUserPostsCount(count)
   }
 
-useEffect(() => {
-  const fontKey = userProfile?.equipped?.font
-  const config = WARDROBE_CONFIG[fontKey]
-  
-  if (config?.googleFont) {
-    loadGoogleFont(config.googleFont)
-  }
-  
-  // Apply the variable to the profile container or root
-  if (config?.cssVars) {
-    const root = document.documentElement
-    Object.entries(config.cssVars).forEach(([k, v]) => root.style.setProperty(k, v))
+  const handleUnmute = () => {
+    unmuteUser()
+    setIsUnmuteConfirmOpen(false)
   }
 
-  // Cleanup: Reset the font variable when leaving the profile
-  return () => {
-    document.documentElement.style.removeProperty("--user-font")
-  }
-}, [userProfile?.equipped?.font])
+  useEffect(() => {
+    const fontKey = userProfile?.equipped?.font
+    const config = WARDROBE_CONFIG[fontKey]
+
+    if (config?.googleFont) {
+      loadGoogleFont(config.googleFont)
+    }
+
+    // Apply the variable to the profile container or root
+    if (config?.cssVars) {
+      const root = document.documentElement
+      Object.entries(config.cssVars).forEach(([k, v]) => root.style.setProperty(k, v))
+    }
+
+    // Cleanup: Reset the font variable when leaving the profile
+    return () => {
+      document.documentElement.style.removeProperty("--user-font")
+    }
+  }, [userProfile?.equipped?.font])
 
   let displayMessage = ""
   let showFullProfileHeader = false
@@ -310,7 +332,6 @@ useEffect(() => {
     message = `They will not be able to see your public posts and will no longer be able to engage with them. @${username} 
     will also not be able to follow or message you, and you will not see notifications from them.`
   }
-
 
   return (
     <>
@@ -431,6 +452,51 @@ useEffect(() => {
             </div>
 
             <div className="mt-5 flex justify-end gap-2 px-4">
+              {!isMyProfile && (
+                <DropdownMenu icon={<BsThreeDots size={20} />}>
+                  {/* MUTE ACTION */}
+                  {amIFollowing && (
+                    <button
+                      className="flex w-full items-center gap-3 px-4 py-3 text-sm font-bold transition hover:bg-white/10"
+                      onClick={() => {
+                        if (isMuted) {
+                          unmuteUser()
+                        } else {
+                          setIsMuteModalOpen(true)
+                          toggleMenu(false)
+                        }
+                      }}
+                    >
+                      {isMuted ? <BsVolumeUp size={18} /> : <BsVolumeMute size={18} />}
+                      {isMuted ? "Unmute" : "Mute"}
+                    </button>
+                  )}
+
+                  {/* BLOCK ACTION */}
+                  {!hasBlockedYou && (
+                    <button
+                      className="flex w-full items-center gap-3 px-4 py-3 text-sm font-bold text-error transition hover:bg-white/10"
+                      onClick={openBlockConfirmationModal}
+                    >
+                      <MdBlock size={18} />
+                      {isBlockedByYou
+                        ? `Unblock @${userProfile?.username}`
+                        : `Block @${userProfile?.username}`}
+                    </button>
+                  )}
+
+                  {/* ADMIN DELETE */}
+                  {isAdminUser && (
+                    <button
+                      className="flex w-full items-center gap-3 px-4 py-3 text-sm font-bold text-error transition hover:bg-white/10"
+                      onClick={openDeleteUserModal}
+                    >
+                      <MdDeleteForever size={18} />
+                      Delete User
+                    </button>
+                  )}
+                </DropdownMenu>
+              )}
               {authUser.username === username && (
                 <button
                   className="rounded-full border border-secondary px-4 py-1.5 transition duration-200 hover:bg-secondary"
@@ -439,7 +505,7 @@ useEffect(() => {
                   Edit profile
                 </button>
               )}
-              {isAdminUser && !isMyProfile && userProfile && (
+              {/* {isAdminUser && !isMyProfile && userProfile && (
                 <button
                   onClick={openDeleteUserModal}
                   className="btn btn-error btn-sm absolute top-4 flex items-center gap-1 rounded-full py-1 text-xs text-white transition duration-200 hover:scale-105 md:px-3 md:text-base"
@@ -447,9 +513,9 @@ useEffect(() => {
                 >
                   <MdDeleteForever size={20} />
                 </button>
-              )}
+              )} */}
 
-              {!isMyProfile && !hasBlockedYou && (
+              {/* {!isMyProfile && !hasBlockedYou && (
                 <button
                   className={`absolute top-20 flex items-center gap-1 rounded-full border border-red-700 px-1.5 py-1 text-xs font-bold transition duration-200 md:px-3 md:text-base ${
                     isBlockedByYou ? "bg-red-700 hover:bg-red-800" : "bg-red-700 hover:bg-red-800"
@@ -460,12 +526,14 @@ useEffect(() => {
                   {!isBlockedByYou && <MdBlock size={20} />}
                   {isBlocking ? "Loading..." : isBlockedByYou ? "Unblock" : "Block"}
                 </button>
-              )}
+              )} */}
+
+              {/* <MuteButton profileUser={userProfile} /> */}
 
               {!isMyProfile && amIFollowing && !isBlockingRelationship && (
                 <button
                   onClick={handleMessageClick}
-                  className="z-1 rounded-full border border-accent px-2 transition duration-200 hover:bg-secondary"
+                  className="z-1 rounded-full border border-accent px-2 transition duration-200 hover:bg-primary/20"
                   disabled={
                     isLoadingConversationStatus ||
                     isCreatingConversation ||
@@ -509,6 +577,27 @@ useEffect(() => {
                   {isUpdatingProfile ? "Updating..." : "Update"}
                 </button>
               )}
+
+              <MuteOptionsModal
+                isOpen={isMuteModalOpen}
+                onClose={() => setIsMuteModalOpen(false)}
+                username={userProfile?.username}
+                isLoading={isMuting}
+                onMute={(data) => {
+                  muteUser(data)
+                  setIsMuteModalOpen(false)
+                }}
+              />
+              <ConfirmationModal
+                isOpen={isUnmuteConfirmOpen}
+                onClose={() => setIsUnmuteConfirmOpen(false)}
+                onConfirm={handleUnmute}
+                modalTitle={`Unmute @${userProfile?.username}?`}
+                message="Posts from this account will now be allowed in your Home timeline."
+                confirmButtonText="Unmute"
+                danger={false} // Blue/White theme
+                isLoading={isUnmuting}
+              />
             </div>
           </>
         )}
@@ -606,24 +695,32 @@ useEffect(() => {
                     className="flex cursor-pointer items-center gap-1 hover:underline"
                     onClick={() => openFollowListModal("following")}
                   >
-                    <span className="text-sm font-bold">{formatCount(userProfile?.following?.length)}</span>
+                    <span className="text-sm font-bold">
+                      {formatCount(userProfile?.following?.length)}
+                    </span>
                     <span className="text-sm text-slate-500">Following</span>
                   </div>
                   <div
                     className="flex cursor-pointer items-center gap-1 hover:underline"
                     onClick={() => openFollowListModal("followers")}
                   >
-                    <span className="text-sm font-bold">{formatCount(userProfile?.followers?.length)}</span>
+                    <span className="text-sm font-bold">
+                      {formatCount(userProfile?.followers?.length)}
+                    </span>
                     <span className="text-sm text-slate-500">Followers</span>
                   </div>
 
                   {/* NEW */}
                   <div className="flex items-center gap-1">
-                    <span className="text-sm font-bold">{formatCount(totalLikes.toLocaleString())}</span>
+                    <span className="text-sm font-bold">
+                      {formatCount(totalLikes.toLocaleString())}
+                    </span>
                     <span className="text-sm text-slate-500">Likes</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <span className="text-sm font-bold">{formatCount(totalReposts.toLocaleString())}</span>
+                    <span className="text-sm font-bold">
+                      {formatCount(totalReposts.toLocaleString())}
+                    </span>
                     <span className="text-sm text-slate-500">Reposts</span>
                   </div>
                 </div>
@@ -716,6 +813,20 @@ useEffect(() => {
               </div>
             </div>
 
+            {!isMyProfile && isMuted && (
+              <div className="mt-4 px-4 py-3 transition">
+                <p className="text-sm text-slate-500">
+                  You have muted posts from this account.{" "}
+                  <button
+                    onClick={() => setIsUnmuteConfirmOpen(true)}
+                    className="font-bold text-primary hover:underline"
+                  >
+                    Unmute
+                  </button>
+                </p>
+              </div>
+            )}
+
             <div className="mt-4 flex w-full border-b border-accent">
               {/* Posts Tab */}
               <div
@@ -776,7 +887,7 @@ useEffect(() => {
                 )}
               </div>
               {/* Likes Tab */}
-              {(
+              {
                 <div
                   className={`relative flex flex-1 cursor-pointer justify-center p-3 transition duration-150 ${!isTouchDevice ? "hover:bg-secondary" : ""} ${
                     isTouchDevice && activeButtonId === "likes" ? "bg-secondary bg-opacity-50" : ""
@@ -795,7 +906,7 @@ useEffect(() => {
                     <div className="absolute bottom-0 h-1 w-10 rounded-full bg-primary" />
                   )}
                 </div>
-              )}
+              }
             </div>
             {isMyProfile && feedType === "likes" && authUser?.isLikedFeedPrivate && (
               <div className="m-1 flex flex-col items-start rounded-lg bg-[#02113D] px-4 py-2.5">

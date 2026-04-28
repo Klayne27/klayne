@@ -10,6 +10,49 @@ import {
   io,
   onlineUsersMap,
 } from "../lib/socket.js";
+import { getBlockingUsers, getMutedUsers, isBlockedOrBlockedBy } from "../lib/utils/helpers.js";
+
+// const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
+//   if (!currentUserId || !targetUserId) {
+//     return false;
+//   }
+//   if (currentUserId.toString() === targetUserId.toString()) {
+//     return false;
+//   }
+
+//   const currentUser = await User.findById(currentUserId)
+//     .select("blockedUsers blockedBy")
+//     .lean();
+//   const targetUser = await User.findById(targetUserId)
+//     .select("blockedUsers blockedBy")
+//     .lean();
+
+//   if (!currentUser || !targetUser) {
+//     return false;
+//   }
+
+//   let currentUserBlockedTarget;
+//   try {
+//     currentUserBlockedTarget = (currentUser.blockedUsers || []).some((id) => {
+//       const result = id.toString() === targetUserId.toString();
+//       return result;
+//     });
+//   } catch (e) {
+//     throw e;
+//   }
+
+//   let targetUserBlockedCurrentUser;
+//   try {
+//     targetUserBlockedCurrentUser = (targetUser.blockedUsers || []).some((id) => {
+//       const result = id.toString() === currentUserId.toString();
+//       return result;
+//     });
+//   } catch (e) {
+//     throw e;
+//   }
+
+//   return currentUserBlockedTarget || targetUserBlockedCurrentUser;
+// };
 
 const userProjection = {
   _id: 1,
@@ -222,10 +265,24 @@ export const getBoardPosts = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 12;
     const skip = (page - 1) * limit;
+    const userId = req.user._id;
 
-    const totalCount = await BoardPost.countDocuments();
+    const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
+    const blockedAndBlocking = [...new Set([...blockedByMe, ...blockedMe])];
+    const blockedObjectIds = blockedAndBlocking.map(
+      (id) => new mongoose.Types.ObjectId(id),
+    );
 
-    const posts = await BoardPost.find()
+    const { all: mutedUserIds } = await getMutedUsers(userId);
+    const mutedObjectIds = mutedUserIds.map((id) => new mongoose.Types.ObjectId(id));
+
+    const excludeUserIds = [...blockedObjectIds, ...mutedObjectIds];
+
+    const filter = excludeUserIds.length > 0 ? { user: { $nin: excludeUserIds } } : {};
+
+    const totalCount = await BoardPost.countDocuments(filter);
+
+    const posts = await BoardPost.find(filter)
       .sort({ isPinned: -1, updatedAt: -1 })
       .skip(skip)
       .limit(limit)
@@ -244,10 +301,20 @@ export const getBoardPosts = async (req, res) => {
 export const getBoardPost = async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.user._id;
 
     const post = await BoardPost.findById(id).populate(boardPostPopulate).lean();
-
     if (!post) return res.status(404).json({ error: "Board post not found." });
+
+    // Block check — return 404 so the muted user doesn't know the post exists
+    if (await isBlockedOrBlockedBy(userId, post.user._id)) {
+      return res.status(404).json({ error: "Board post not found." });
+    }
+
+    const { all: mutedUserIds } = await getMutedUsers(userId);
+    if (mutedUserIds.includes(post.user._id.toString())) {
+      return res.status(404).json({ error: "Board post not found." });
+    }
 
     res.status(200).json(post);
   } catch (error) {
@@ -255,6 +322,21 @@ export const getBoardPost = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+// export const getBoardPost = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+
+//     const post = await BoardPost.findById(id).populate(boardPostPopulate).lean();
+
+//     if (!post) return res.status(404).json({ error: "Board post not found." });
+
+//     res.status(200).json(post);
+//   } catch (error) {
+//     console.error("Error in getBoardPost:", error);
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// };
 
 // ── REACT to board post ──────────────────────────────────────────────────────
 export const reactToBoardPost = async (req, res) => {
@@ -318,10 +400,27 @@ export const getBoardComments = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
     const skip = (page - 1) * limit;
+    const userId = req.user._id;
 
-    const totalCount = await BoardComment.countDocuments({ boardPost: id });
+    const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
+    const blockedAndBlocking = [...new Set([...blockedByMe, ...blockedMe])];
+    const blockedObjectIds = blockedAndBlocking.map(
+      (id) => new mongoose.Types.ObjectId(id),
+    );
 
-    const comments = await BoardComment.find({ boardPost: id })
+    const { all: mutedUserIds } = await getMutedUsers(userId);
+    const mutedObjectIds = mutedUserIds.map((id) => new mongoose.Types.ObjectId(id));
+
+    const excludeUserIds = [...blockedObjectIds, ...mutedObjectIds];
+
+    const filter = {
+      boardPost: id,
+      ...(excludeUserIds.length > 0 && { user: { $nin: excludeUserIds } }),
+    };
+
+    const totalCount = await BoardComment.countDocuments(filter);
+
+    const comments = await BoardComment.find(filter)
       .sort({ createdAt: 1 })
       .skip(skip)
       .limit(limit)

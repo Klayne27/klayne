@@ -72,6 +72,22 @@ const userSchema = new mongoose.Schema(
         default: [],
       },
     ],
+    mutedUsers: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        muteType: {
+          type: String,
+          enum: ["standard", "total"],
+          default: "standard",
+        },
+        mutedAt: { type: Date, default: Date.now },
+        _id: false,
+      },
+    ],
     forceBlackTheme: {
       type: Boolean,
       default: false,
