@@ -4,7 +4,7 @@
 
 [class*="np-"] {
   position: relative;
-  isolation: isolate;
+  /* isolation: isolate; */
 }
 
 [class*="np-"]::before,

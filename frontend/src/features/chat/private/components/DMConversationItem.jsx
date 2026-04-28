@@ -4,7 +4,7 @@ import React, { useState } from "react"
 import { FaTrashCan } from "react-icons/fa6"
 import { FaBroom } from "react-icons/fa6"
 import { TbUser, TbUserMinus } from "react-icons/tb"
-import { BsThreeDots } from "react-icons/bs"
+import { BsThreeDots, BsVolumeMute, BsVolumeUp } from "react-icons/bs"
 import { PiMicrophoneStageFill } from "react-icons/pi"
 import { useAuthUser } from "../../../auth/authHooks/useAuthUser"
 import { useSocket } from "../../../../context/SocketContext"
@@ -22,11 +22,17 @@ import {
   useDeleteConversation,
   useToggleConversationVisibility,
 } from "../privateChatHooks/usePrivateChatMutations"
-import { useBlockUnblockUser } from "../../../users/usersHooks/useUserMutations"
+import {
+  useBlockUnblockUser,
+  useMuteUser,
+  useUnmuteUser,
+} from "../../../users/usersHooks/useUserMutations"
 import UserAvatar from "../../../../components/common/UserAvatar"
 import { getNameplateClass } from "../../../../utils/getNameplateClass"
 import { WARDROBE_CONFIG } from "../../../wardrobe/wardrobeConfig"
 import UserFullName from "../../../../components/common/UserFullname"
+import { useGetMuteStatus } from "../../../users/usersHooks/useUserQueries"
+import MuteOptionsModal from "../../../../components/common/MuteOptionsModal"
 
 function DMConversationItem({ conv }) {
   const { authUser: currentUser } = useAuthUser()
@@ -40,6 +46,8 @@ function DMConversationItem({ conv }) {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showOneSidedDeleteModal, setShowOneSidedDeleteModal] = useState(false)
   const [showBlockConfirmationModal, setShowBlockConfirmationModal] = useState(false)
+  const [isMuteModalOpen, setIsMuteModalOpen] = useState(false)
+  const [isUnmuteConfirmOpen, setIsUnmuteConfirmOpen] = useState(false)
 
   const [isHovered, setIsHovered] = useState(false)
 
@@ -53,6 +61,11 @@ function DMConversationItem({ conv }) {
   const { deleteConversation } = useDeleteConversation()
   const { deleteAllMessages } = useDeleteAllMessagesOnMySide() // Use the new hook
   const { blockUnblockUser, isBlocking } = useBlockUnblockUser()
+
+
+  const { isMuted, muteType } = useGetMuteStatus(otherUser?._id)
+  const { muteUser, isMuting } = useMuteUser(otherUser?._id)
+  const { unmuteUser, isUnmuting } = useUnmuteUser(otherUser?._id)
 
   const isOnline = onlineUsers.includes(otherUser?._id)
 
@@ -175,7 +188,7 @@ function DMConversationItem({ conv }) {
   }
   return (
     <div
-      className={`relative flex cursor-pointer items-center gap-1 p-3 transition-colors duration-300 ${isHovered && nameplateClass ? nameplateClass : "hover:bg-secondary/60"} ${isSelected && nameplateClass ? nameplateClass : isSelected && !nameplateClass ? "border-r-2 border-r-primary" : "" }`}
+      className={`relative flex cursor-pointer items-center gap-1 p-3 transition-colors duration-300 ${isHovered && nameplateClass ? nameplateClass : "hover:bg-secondary/60"} ${isSelected && nameplateClass ? nameplateClass : isSelected && !nameplateClass ? "border-r-2 border-r-primary" : ""}`}
       onClick={handleSelectConversation}
       onTouchStart={handleTouchStartWithId}
       onTouchEnd={handleTouchEnd}
@@ -260,6 +273,19 @@ function DMConversationItem({ conv }) {
           >
             <TbUserMinus />
             Hide conversation
+          </button>
+          <button
+            className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
+            onClick={() => {
+              if (isMuted) {
+                unmuteUser()
+              } else {
+                setIsMuteModalOpen(true)
+              }
+            }}
+          >
+            {isMuted ? <BsVolumeUp /> : <BsVolumeMute />}
+            {isMuted ? "Unmute" : "Mute"}
           </button>
           <button
             className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
@@ -398,6 +424,17 @@ function DMConversationItem({ conv }) {
         message={`They will not be able to see your public posts and will no longer be able to engage with them. @${otherUser?.username} will also not be able to follow or message you, and you will not see notifications from them.`}
         confirmButtonText={"Block"}
         modalTitle={`Block @${otherUser?.username}?`}
+      />
+
+      <MuteOptionsModal
+        isOpen={isMuteModalOpen}
+        onClose={() => setIsMuteModalOpen(false)}
+        username={otherUser?.username}
+        isLoading={isMuting}
+        onMute={(data) => {
+          muteUser(data)
+          setIsMuteModalOpen(false)
+        }}
       />
     </div>
   )

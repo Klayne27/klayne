@@ -98,7 +98,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
   const profileImgRef = useRef(null)
 
   const { username } = useParams()
-  const { toggleMenu } = useDropdownMenu()
 
   const { authUser } = useAuthUser()
   const { follow, isPending } = useFollow()
@@ -463,7 +462,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                           unmuteUser()
                         } else {
                           setIsMuteModalOpen(true)
-                          toggleMenu(false)
                         }
                       }}
                     >
@@ -983,7 +981,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               Delete account of <p>@{userProfile?.username}?</p>
             </>
           }
-          // modalTitle="Delete User Account?"
           message="This action is irreversible and will permanently delete all of their posts,
             replies, likes, messages, and followers."
           confirmButtonText="Delete Permanently"

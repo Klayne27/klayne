@@ -13,7 +13,12 @@ import {
   io,
   onlineUsersMap,
 } from "../lib/socket.js";
-import { extractAndValidateMentions, getBlockingUsers, getMutedUsers, isBlockedOrBlockedBy } from "../lib/utils/helpers.js";
+import {
+  extractAndValidateMentions,
+  getBlockingUsers,
+  getMutedUsers,
+  isBlockedOrBlockedBy,
+} from "../lib/utils/helpers.js";
 import Image from "../models/image.model.js";
 
 // const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
@@ -83,9 +88,8 @@ export const getPostReplies = async (req, res) => {
 
     const userId = req.user._id;
     const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
-const { all: mutedUserIds } = await getMutedUsers(userId);
-const mutedObjectIds = mutedUserIds.map((id) => new mongoose.Types.ObjectId(id));
-
+    const { all: mutedUserIds } = await getMutedUsers(userId);
+    const mutedObjectIds = mutedUserIds.map((id) => new mongoose.Types.ObjectId(id));
 
     const blockedIds = [...new Set([...blockedByMe, ...blockedMe])].map(
       (id) => new mongoose.Types.ObjectId(id),
@@ -93,7 +97,7 @@ const mutedObjectIds = mutedUserIds.map((id) => new mongoose.Types.ObjectId(id))
 
     const totalReplies = await Post.countDocuments({
       parentPost: postId,
-      user: { $nin: [...blockedIds,...mutedObjectIds] },
+      user: { $nin: [...blockedIds, ...mutedObjectIds] },
     });
 
     const replies = await Post.find({
@@ -1237,13 +1241,13 @@ export const getLikedPosts = async (req, res) => {
       {
         $match: {
           $and: [
-            { "user._id": { $nin: [...blockedAndBlockingObjectIds, ...mutedObjectIds] } },
+            { "user._id": { $nin: blockedAndBlockingObjectIds } },
             {
               $or: [
                 { repostedFrom: null },
                 {
                   "repostedFrom.user._id": {
-                    $nin: [...blockedAndBlockingObjectIds, ...mutedObjectIds],
+                    $nin: blockedAndBlockingObjectIds,
                   },
                 },
               ],
