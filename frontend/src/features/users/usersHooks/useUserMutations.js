@@ -394,14 +394,38 @@ export const useMuteUser = (userId) => {
 
   const { mutate: muteUser, isPending: isMuting } = useMutation({
     mutationFn: ({ muteType }) => muteUserApi({ userId, muteType }),
-    onSuccess: (data) => {
-      queryClient.setQueryData(["muteStatus", userId], data)
-      queryClient.invalidateQueries(
-        { queryKey: postKeys.all },
-        showAppToast("User muted.", "success"),
-      )
+
+    onMutate: async ({ muteType }) => {
+      // Cancel outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ["muteStatus", userId] })
+
+      // Snapshot the previous value
+      const previousStatus = queryClient.getQueryData(["muteStatus", userId])
+
+      // Optimistically update to the new state
+      queryClient.setQueryData(["muteStatus", userId], {
+        isMuted: true,
+        muteType: muteType,
+      })
+
+      return { previousStatus }
     },
-    onError: (err) => showAppToast(err.message, "error"),
+
+    onError: (err, variables, context) => {
+      // Rollback to the previous state if mutation fails
+      queryClient.setQueryData(["muteStatus", userId], context.previousStatus)
+      showAppToast(err.message, "error")
+    },
+
+    onSuccess: () => {
+      showAppToast("User muted.", "success")
+    },
+
+    onSettled: () => {
+      // Always refetch after error or success to ensure server sync
+      queryClient.invalidateQueries({ queryKey: ["muteStatus", userId] })
+      queryClient.invalidateQueries({ queryKey: postKeys.all })
+    },
   })
 
   return { muteUser, isMuting }
@@ -412,14 +436,34 @@ export const useUnmuteUser = (userId) => {
 
   const { mutate: unmuteUser, isPending: isUnmuting } = useMutation({
     mutationFn: () => unmuteUserApi(userId),
-    onSuccess: (data) => {
-      queryClient.setQueryData(["muteStatus", userId], data)
-      queryClient.invalidateQueries(
-        { queryKey: postKeys.all },
-        showAppToast("User unmuted.", "success"),
-      )
+
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["muteStatus", userId] })
+
+      const previousStatus = queryClient.getQueryData(["muteStatus", userId])
+
+      // Optimistically set muted to false
+      queryClient.setQueryData(["muteStatus", userId], {
+        isMuted: false,
+        muteType: null,
+      })
+
+      return { previousStatus }
     },
-    onError: (err) => showAppToast(err.message, "error"),
+
+    onError: (err, variables, context) => {
+      queryClient.setQueryData(["muteStatus", userId], context.previousStatus)
+      showAppToast(err.message, "error")
+    },
+
+    onSuccess: () => {
+      showAppToast("User unmuted.", "success")
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["muteStatus", userId] })
+      queryClient.invalidateQueries({ queryKey: postKeys.all })
+    },
   })
 
   return { unmuteUser, isUnmuting }
