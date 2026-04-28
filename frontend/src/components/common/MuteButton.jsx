@@ -68,7 +68,7 @@ const MuteButton = ({ profileUser }) => {
             >
               <p className="font-semibold text-yellow-400">Total mute</p>
               <p className="mt-0.5 text-xs text-slate-500">
-                Hide posts, block messages and all notifications.
+                Hide posts, mute messages and all notifications.
               </p>
             </button>
           </div>

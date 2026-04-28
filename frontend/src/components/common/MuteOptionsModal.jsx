@@ -56,7 +56,7 @@ const MuteOptionsModal = ({
           >
             <p className="text-sm font-bold text-yellow-500">Total Mute</p>
             <p className="text-xs text-gray-500 group-hover:text-gray-400">
-              Hide posts, block messages and notifications.
+              Hide posts, mute messages and notifications.
             </p>
           </button>
 
