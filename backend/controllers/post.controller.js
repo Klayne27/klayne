@@ -20,6 +20,7 @@ import {
   isBlockedOrBlockedBy,
 } from "../lib/utils/helpers.js";
 import Image from "../models/image.model.js";
+import { extractHashtags, syncHashtagCounts } from "../lib/utils/hashtagUtils.js";
 
 // const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
 //   if (!currentUserId || !targetUserId) return false;
@@ -2136,9 +2137,6 @@ export const createPost = async (req, res) => {
 
     const userId = req.user._id.toString();
 
-    // const user = await User.findById(userId);
-    // if (!user) return res.status(404).json({ error: "User not found" });
-
     if (!text && !img && !video) {
       return res.status(400).json({ error: "Reply must have text, image, or video." });
     }
@@ -2192,11 +2190,15 @@ export const createPost = async (req, res) => {
 
     const mentionedUsersIds = await extractAndValidateMentions(text);
 
+    // ── Extract hashtags early so they can be stored on the post ──────────
+    const tags = extractHashtags(text);
+
     const isScheduled = !!scheduledAt;
     const newPostData = {
       user: userId,
       text,
       mentionedUsers: mentionedUsersIds,
+      hashtags: tags, // store on document from the start
       isScheduled,
       scheduledAt: isScheduled ? new Date(scheduledAt) : null,
       publishedAt: new Date(),
@@ -2233,7 +2235,6 @@ export const createPost = async (req, res) => {
     await newPost.save();
 
     let newImage = null;
-    let newVideo = null;
 
     if (img) {
       newImage = new Image({
@@ -2244,9 +2245,15 @@ export const createPost = async (req, res) => {
         publicId: imgPublicId,
       });
       await newImage.save();
-
       newPost.image = newImage._id;
       await newPost.save();
+    }
+
+    // ── Sync hashtag counts BEFORE responding ─────────────────────────────
+    // Previously this ran after res.json(), making it fire-and-forget and
+    // ensuring the response never reflected the saved hashtags.
+    if (tags.length) {
+      await syncHashtagCounts(tags, []);
     }
 
     const isAnonymousInteraction =
@@ -2285,24 +2292,15 @@ export const createPost = async (req, res) => {
       console.log(`Post scheduled for ${newPost.scheduledAt}`);
     }
 
-    // ✅ FIX 2: Populate the user and media fields before sending the response
     const populatedPost = await Post.findById(newPost._id)
       .populate({
         path: "user",
         select:
-          "username fullName isCha isVerified isGoldVerified  badges preferredBadge nameColor equipped",
-        populate: {
-          path: "profileImg",
-          select: "imageUrl",
-        },
+          "username fullName isCha isVerified isGoldVerified badges preferredBadge nameColor equipped",
+        populate: { path: "profileImg", select: "imageUrl" },
       })
-      .populate({
-        path: "image",
-        select: "imageUrl",
-      })
-      .populate({
-        path: "video",
-      })
+      .populate({ path: "image", select: "imageUrl" })
+      .populate({ path: "video" })
       .exec();
 
     res.status(201).json(populatedPost);
@@ -2315,6 +2313,101 @@ export const createPost = async (req, res) => {
   }
 };
 
+// ─── editPost ──────────────────────────────────────────────────────────────
+// FIX: diff old vs new hashtags, update post.hashtags, and sync counts so
+// the Hashtag collection stays accurate across edits.
+export const editPost = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const { text } = req.body;
+    const userId = req.user._id;
+
+    if (!text || text.trim() === "") {
+      return res.status(400).json({ error: "Post cannot be empty." });
+    }
+
+    const post = await Post.findById(postId);
+
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    if (post.user.toString() !== userId.toString()) {
+      return res.status(403).json({ error: "You are not authorized to edit this post." });
+    }
+
+    // No-op: text unchanged – return current state without touching hashtags.
+    if (post.text === text) {
+      const populatedPost = await Post.findById(post._id)
+        .populate({
+          path: "user",
+          select:
+            "username fullName isCha isVerified isGoldVerified badges preferredBadge nameColor equipped",
+          populate: { path: "profileImg", select: "imageUrl" },
+        })
+        .populate({
+          path: "repostedFrom",
+          populate: {
+            path: "user",
+            select:
+              "username fullName isCha isVerified isGoldVerified badges preferredBadge nameColor equipped",
+            populate: { path: "profileImg", select: "imageUrl" },
+          },
+        });
+      return res.status(200).json(populatedPost);
+    }
+
+    // ── Diff hashtags ───────────────────────────────────────────────────────
+    const oldTags = post.hashtags ?? []; // tags on the stored document
+    const newTags = extractHashtags(text); // tags in the incoming text
+
+    const oldSet = new Set(oldTags);
+    const newSet = new Set(newTags);
+
+    const added = newTags.filter((t) => !oldSet.has(t)); // net-new → increment
+    const removed = oldTags.filter((t) => !newSet.has(t)); // dropped  → decrement
+
+    post.editHistory.push({ text: post.text });
+    post.text = text;
+    post.updatedAt = new Date();
+    post.hashtags = newTags;
+    post.mentionedUsers = await extractAndValidateMentions(text);
+
+    await post.save();
+
+    // Persist count changes after the document is saved so we don't update
+    // counts if the save fails.
+    if (added.length || removed.length) {
+      await syncHashtagCounts(added, removed);
+    }
+
+    const populatedPost = await Post.findById(post._id)
+      .populate({
+        path: "user",
+        select:
+          "username fullName isCha isVerified isGoldVerified badges preferredBadge nameColor equipped",
+        populate: { path: "profileImg", select: "imageUrl" },
+      })
+      .populate({
+        path: "repostedFrom",
+        populate: {
+          path: "user",
+          select:
+            "username fullName isCha isVerified isGoldVerified badges preferredBadge nameColor equipped",
+          populate: { path: "profileImg", select: "imageUrl" },
+        },
+      });
+
+    res.status(200).json(populatedPost);
+  } catch (error) {
+    console.error("Error in editPost controller:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// ─── deletePost ────────────────────────────────────────────────────────────
+// FIX: decrement hashtag counts for every post being deleted (the root post
+// and all its descendants) so counts don't permanently inflate over time.
 export const deletePost = async (req, res) => {
   try {
     const { postId } = req.params;
@@ -2333,18 +2426,7 @@ export const deletePost = async (req, res) => {
     }
 
     if (!postToDelete.repostedFrom) {
-      if (postToDelete.imgPublicId) {
-        await cloudinary.uploader.destroy(postToDelete.imgPublicId);
-        await Image.deleteOne({ parentDocument: postToDelete._id });
-      }
-      if (postToDelete.videoPublicId) {
-        await cloudinary.uploader.destroy(postToDelete.videoPublicId, {
-          resource_type: "video",
-        });
-      }
-
-      await Post.deleteMany({ repostedFrom: postToDelete._id });
-
+      // ── Collect all descendant IDs (for cascade delete + hashtag cleanup) ─
       const idsToDelete = [postToDelete._id];
       let frontier = [postToDelete._id];
 
@@ -2359,11 +2441,59 @@ export const deletePost = async (req, res) => {
         frontier = childIds;
       }
 
+      // ── Decrement hashtag counts for all posts being deleted ─────────────
+      // Fetch hashtags from every post in the deletion set so we can tally
+      // how many times each tag will be removed.
+      const allDocsToDelete = await Post.find(
+        { _id: { $in: idsToDelete } },
+        { hashtags: 1 },
+      ).lean();
+
+      // Build a frequency map: tag → total decrement amount
+      const tagFrequency = {};
+      for (const doc of allDocsToDelete) {
+        for (const tag of doc.hashtags ?? []) {
+          tagFrequency[tag] = (tagFrequency[tag] ?? 0) + 1;
+        }
+      }
+
+      // Also include any reposts of the root post that we're wiping out.
+      // Reposts don't carry independent hashtags (they inherit from the original),
+      // so no extra count adjustment is needed for them.
+
+      if (Object.keys(tagFrequency).length > 0) {
+        const Hashtag = (await import("../models/hashtag.model.js")).default;
+        const ops = Object.entries(tagFrequency).map(([tag, freq]) => ({
+          updateOne: {
+            filter: { tag, count: { $gte: freq } },
+            update: { $inc: { count: -freq } },
+          },
+        }));
+        // Use { ordered: false } so a single tag miss doesn't abort the batch.
+        await Hashtag.bulkWrite(ops, { ordered: false });
+      }
+
+      // ── Media cleanup ─────────────────────────────────────────────────────
+      if (postToDelete.imgPublicId) {
+        await cloudinary.uploader.destroy(postToDelete.imgPublicId);
+        await Image.deleteOne({ parentDocument: postToDelete._id });
+      }
+      if (postToDelete.videoPublicId) {
+        await cloudinary.uploader.destroy(postToDelete.videoPublicId, {
+          resource_type: "video",
+        });
+      }
+
+      // ── Delete reposts of the root ─────────────────────────────────────
+      await Post.deleteMany({ repostedFrom: postToDelete._id });
+
+      // ── Delete descendants ────────────────────────────────────────────
       const descendantIds = idsToDelete.slice(1);
       if (descendantIds.length > 0) {
         await Post.deleteMany({ _id: { $in: descendantIds } });
       }
 
+      // ── Update parent reply count ─────────────────────────────────────
       if (postToDelete.parentPost) {
         await Post.findByIdAndUpdate(postToDelete.parentPost, {
           $inc: { repliesCount: -1 },
@@ -2372,6 +2502,8 @@ export const deletePost = async (req, res) => {
 
       await Post.deleteOne({ _id: postId });
     } else {
+      // Repost deletion: just decrement the original's repost counter.
+      // Reposts share the original's hashtags so no count adjustment needed.
       await Post.updateOne(
         { _id: postToDelete.repostedFrom },
         {
@@ -3218,78 +3350,7 @@ export const getVentPosts = async (req, res) => {
   }
 };
 
-export const editPost = async (req, res) => {
-  try {
-    const { postId } = req.params;
-    const { text } = req.body;
-    const userId = req.user._id;
 
-    if (!text || text.trim() === "") {
-      return res.status(400).json({ error: "Post cannot be empty." });
-    }
-
-    const post = await Post.findById(postId);
-
-    if (!post) {
-      return res.status(404).json({ error: "Post not found" });
-    }
-
-    if (post.user.toString() !== userId.toString()) {
-      return res.status(403).json({ error: "You are not authorized to edit this post." });
-    }
-
-    if (post.text === text) {
-      const populatedPost = await Post.findById(post._id)
-        .populate({
-          path: "user",
-          select:
-            "username fullName isCha isVerified isGoldVerified  badges preferredBadge nameColor equipped",
-          populate: { path: "profileImg", select: "imageUrl" },
-        })
-        .populate({
-          path: "repostedFrom",
-          populate: {
-            path: "user",
-            select:
-              "username fullName isCha isVerified isGoldVerified  badges preferredBadge nameColor equipped",
-            populate: { path: "profileImg", select: "imageUrl" },
-          },
-        });
-      return res.status(200).json(populatedPost);
-    }
-
-    post.editHistory.push({ text: post.text });
-
-    post.text = text;
-    post.updatedAt = new Date();
-
-    post.mentionedUsers = await extractAndValidateMentions(text);
-
-    await post.save();
-
-    const populatedPost = await Post.findById(post._id)
-      .populate({
-        path: "user",
-        select:
-          "username fullName isCha isVerified isGoldVerified  badges preferredBadge nameColor equipped",
-        populate: { path: "profileImg", select: "imageUrl" },
-      })
-      .populate({
-        path: "repostedFrom",
-        populate: {
-          path: "user",
-          select:
-            "username fullName isCha isVerified isGoldVerified  badges preferredBadge nameColor equipped",
-          populate: { path: "profileImg", select: "imageUrl" },
-        },
-      });
-
-    res.status(200).json(populatedPost);
-  } catch (error) {
-    console.error("Error in editPost controller:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
 
 export const getPostHistory = async (req, res) => {
   try {

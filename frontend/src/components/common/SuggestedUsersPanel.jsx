@@ -66,7 +66,7 @@ const SuggestedUsersPanel = () => {
             return (
               <Link
                 to={`/profile/${user.username}`}
-                className={`${nameplateClass} px-4 flex items-center justify-between gap-2`} // Added py-1 for vertical breathing room
+                className={`${nameplateClass} flex items-center justify-between gap-2 px-4 hover:bg-secondary/30`} // Added py-1 for vertical breathing room
                 key={user._id}
               >
                 <div className="flex min-w-0 flex-grow items-center gap-1">

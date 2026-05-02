@@ -357,7 +357,7 @@ const Post = ({
   return (
     <div
       className={`z-[1001] min-w-0 ${
-        showMenu ? "bg-base-100" : "hover:bg-gray-700/30"
+        showMenu ? "bg-base-100" : "hover:bg-secondary/30"
       } flex cursor-pointer flex-col gap-0 px-4 transition duration-500 ${
         index === 0 && "pt-3"
       } ${hasLineAbove ? "" : "pt-3"} ${hasLineBelow ? "" : "border-b border-accent pb-2"}`}

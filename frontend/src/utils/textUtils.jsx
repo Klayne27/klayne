@@ -6,9 +6,9 @@ export const renderClickableText = (text) => {
   const parts = []
   let lastIndex = 0
 
-  // const regex = /(https?:\/\/[^\s]+)|(#[\p{L}\p{N}_]+)|(?:^|(?<![\p{L}\p{N}_]))(@[\p{L}\p{N}_]+)/gu
-const regex =
-  /(https?:\/\/[^\s]+)|(#[\p{L}\p{N}_]+)|(?:^|(?<![\p{L}\p{N}_]))(@[\p{L}\p{N}](?:[\p{L}\p{N}._-]*[\p{L}\p{N}])?)/gu
+  // Added: (#[\p{L}\p{N}_]+) group for hashtags
+  const regex =
+    /(https?:\/\/[^\s]+)|(#[\p{L}\p{N}_]+)|(?:^|(?<![\p{L}\p{N}_]))(@[\p{L}\p{N}](?:[\p{L}\p{N}._-]*[\p{L}\p{N}])?)/gu
 
   let match
   while ((match = regex.exec(text)) !== null) {
@@ -32,11 +32,13 @@ const regex =
         </a>,
       )
     } else if (hashtag) {
+      // hashtag includes the # prefix, e.g. "#react"
+      const tagSlug = hashtag.slice(1).toLowerCase()
       parts.push(
         <Link
           key={match.index}
-          to={`/explore?hashtag=${hashtag.substring(1)}`}
-          className="text-blue-700 hover:underline"
+          to={`/hashtag/${tagSlug}`}
+          className="font-semibold text-primary hover:underline"
           onClick={(e) => e.stopPropagation()}
         >
           {hashtag}
@@ -55,6 +57,7 @@ const regex =
         </Link>,
       )
     }
+
     lastIndex = regex.lastIndex
   }
 

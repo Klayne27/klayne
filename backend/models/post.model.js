@@ -142,6 +142,11 @@ const postSchema = new mongoose.Schema(
         },
       },
     ],
+    hashtags: {
+      type: [String],
+      default: [],
+      index: true,
+    },
   },
   { timestamps: true },
 );
