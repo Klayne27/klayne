@@ -1,7 +1,8 @@
-import { useQuery } from "@tanstack/react-query"
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query"
 import {
   getMuteStatusApi,
   getSuggestedUsersApi,
+  getSuggestedUsersPageApi,
   getUserProfileApi,
   getUsersApi,
   getUserStatsApi,
@@ -122,4 +123,27 @@ export const useGetMuteStatus = (userId) => {
     muteType: data?.muteType ?? null,
     isLoading,
   }
+}
+
+export const useGetSuggestedUsersInfinite = () => {
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isError,
+    error,
+  } = useInfiniteQuery({
+    queryKey: ["suggestedUsersPage"],
+    queryFn: getSuggestedUsersPageApi,
+    getNextPageParam: (lastPage) => lastPage.nextPage ?? undefined,
+    staleTime: 2 * 60 * 1000,
+    gcTime:    5 * 60 * 1000,
+  })
+
+  // Flatten pages into a single array
+  const users = data?.pages.flatMap((p) => p.users) ?? []
+
+  return { users, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError, error }
 }

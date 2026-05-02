@@ -61,6 +61,42 @@ export const getTrendingHashtags = async (req, res) => {
   }
 };
 
+// GET /api/hashtags/panel-trending
+export const getPanelTrendingHashtags = async (req, res) => {
+  try {
+    const PANEL_LIMIT = 4;
+    // Look for tags used in the last 3 days for "fresher" trends
+    const recentWindow = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+
+    let trending = await Hashtag.find({
+      count: { $gt: 0 },
+      lastUsed: { $gte: recentWindow },
+    })
+      .sort({ count: -1, lastUsed: -1 })
+      .limit(PANEL_LIMIT)
+      .lean();
+
+    // Fallback: If not enough recent tags, fill with all-time popular tags
+    if (trending.length < PANEL_LIMIT) {
+      const existingTags = trending.map((t) => t.tag);
+      const fallback = await Hashtag.find({
+        count: { $gt: 0 },
+        tag: { $nin: existingTags },
+      })
+        .sort({ count: -1 })
+        .limit(PANEL_LIMIT - trending.length)
+        .lean();
+
+      trending = [...trending, ...fallback];
+    }
+
+    res.status(200).json(trending);
+  } catch (error) {
+    console.error("Error in getPanelTrendingHashtags:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 // GET /api/hashtags/:tag/posts?cursor=&limit=
 export const getPostsByHashtag = async (req, res) => {
   try {

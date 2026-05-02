@@ -1,20 +1,20 @@
 import { useNavigate } from "react-router-dom"
-import { FaHashtag } from "react-icons/fa"
-import { useGetTrendingHashtags } from "../../features/hashtag/useHashtagQueries"
+import { useGetPanelTrending, useGetTrendingHashtags } from "../../features/hashtag/useHashtagQueries"
 import RightPanelSkeleton from "../skeletons/RightPanelSkeleton"
+import { HiDotsHorizontal } from "react-icons/hi" // Closer to X's "more" icon
 
 const TrendingTagsPanel = () => {
   const navigate = useNavigate()
-  const { data: tags, isLoading } = useGetTrendingHashtags()
+  const { data: tags, isLoading } = useGetPanelTrending() // Use the new hook
 
   if (isLoading) {
     return (
-      <div className="mt-4 rounded-2xl border border-accent py-4">
-        <p className="mb-4 px-4 text-xl font-bold">Trending</p>
-        <div className="flex flex-col gap-2.5 px-4">
-          <RightPanelSkeleton />
-          <RightPanelSkeleton />
-          <RightPanelSkeleton />
+      <div className="mt-4 rounded-2xl border border-accent pt-4">
+        <p className="mb-4 px-4 text-xl font-bold">What's happening</p>
+        <div className="mb-4 flex flex-col gap-6 px-4">
+          {[...Array(4)].map((_, i) => (
+            <RightPanelSkeleton key={i} />
+          ))}
         </div>
       </div>
     )
@@ -23,44 +23,25 @@ const TrendingTagsPanel = () => {
   if (!tags?.length) return null
 
   return (
-    <div className="mt-4 rounded-2xl border border-accent py-4">
-      {/* Consistent Header with SuggestedUsersPanel */}
-      <p className="mb-4 px-4 text-xl font-bold">What's happening</p>
-
+    <div className="mt-4  rounded-2xl border border-accent pt-4">
+      <h2 className="mb-3 px-4 text-xl font-bold">What's happening</h2>
       <div className="flex flex-col">
-        {tags.map((item, i) => (
+        {tags.map((item) => (
           <button
             key={item.tag}
             onClick={() => navigate(`/hashtag/${item.tag}`)}
-            className="group flex w-full items-center justify-between px-4 py-3 transition hover:bg-secondary/30"
+            className="group flex w-full flex-col px-4 py-3 transition hover:bg-secondary/20"
           >
-            <div className="flex min-w-0 items-center gap-3">
-              {/* Rank indicator */}
-              <span className="w-4 shrink-0 text-sm font-medium text-slate-500">{i + 1}</span>
-
-              <div className="flex min-w-0 flex-col items-start">
-                <span className="flex items-center gap-1 font-bold text-base-content group-hover:underline">
-                  <FaHashtag size={12} className="shrink-0 text-primary" />
-                  <span className="truncate">{item.tag}</span>
-                </span>
-                <span className="text-xs text-slate-500">{item.count.toLocaleString()} Posts</span>
-              </div>
-            </div>
-
-            {/* Optional "Trending" badge or Arrow */}
-            <div className="flex-shrink-0">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 opacity-0 transition-opacity group-hover:opacity-100">
-                View
-              </span>
-            </div>
+            <p className="mt-0.5 text-left text-[15px] font-bold text-base-content">#{item.tag}</p>
+            <p className="mt-1 text-left text-[13px] text-slate-500">
+              {item.count.toLocaleString()} Posts
+            </p>
           </button>
         ))}
       </div>
-
-      {/* Consistent Footer Button Style */}
       <button
         onClick={() => navigate("/trending")}
-        className="mt-2 flex w-full items-center justify-center py-2 text-sm font-semibold text-primary transition"
+        className="flex w-full justify-start rounded-b-2xl px-4 py-4 text-[15px] text-primary transition hover:bg-secondary/20"
       >
         Show more
       </button>

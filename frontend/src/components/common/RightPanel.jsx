@@ -5,23 +5,33 @@ import FloatingPomodoroTimer from "../../features/pomodoro/components/FloatingPo
 import { useLocation } from "react-router-dom"
 import TrendingTagsPanel from "./TrendingTagsPanel"
 
-// Pages where trending tags are contextually useful
 const TRENDING_ROUTES = ["/", "/ic", "/vent", "/explore"]
 
 const RightPanel = () => {
   const { pathname } = useLocation()
   const isOnPomodoroPage = pathname === "/pomodoro"
-
-  // Show on feed-like pages and on hashtag pages themselves
   const showTrending = TRENDING_ROUTES.includes(pathname) || pathname.startsWith("/hashtag")
 
   return (
-    <div className="sticky top-0 hidden h-[100vh] w-[380px] flex-col overflow-y-auto border-l border-accent px-4 pt-4 lg:flex">
-      <SearchPanel />
-      <TrendingTagsPanel />
-      <SuggestedUsersPanel />
-      {!isOnPomodoroPage && <FloatingPomodoroTimer />}
-    </div>
+    <aside className="sticky top-0 hidden h-screen w-[380px] flex-shrink-0 flex-col self-start border-l border-accent lg:flex">
+      {/* ── Sticky search header — always visible at the top ── */}
+      <div className="sticky top-0 z-10 bg-base-100/80 px-4 pb-2 pt-3 backdrop-blur-md">
+        <SearchPanel />
+      </div>
+
+      {/* ── Scrollable content below the search bar ── */}
+      <div className="flex flex-1 flex-col overflow-y-auto scroll-smooth px-4 pb-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {showTrending && <TrendingTagsPanel />}
+        <SuggestedUsersPanel />
+        {!isOnPomodoroPage && <FloatingPomodoroTimer />}
+
+        <footer className="mt-4 flex flex-wrap gap-2 px-1 text-[13px] text-slate-500">
+          <span>Terms of Service</span>
+          <span>Privacy Policy</span>
+          <span>© 2026 Gemini Space</span>
+        </footer>
+      </div>
+    </aside>
   )
 }
 

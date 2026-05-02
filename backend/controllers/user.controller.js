@@ -238,8 +238,8 @@ const excludeUserIds = [
           blockedBy: { $nin: [new mongoose.Types.ObjectId(userId)] },
         },
       },
-      { $sample: { size: 4 } },
-      { $limit: 4 },
+      { $sample: { size: 3 } },
+      { $limit: 3 },
       {
         $lookup: {
           from: "images", // Name of your image collection
@@ -271,6 +271,59 @@ const excludeUserIds = [
     res.status(200).json(suggestedUsers);
   } catch (error) {
     console.error("Error in getSuggestedUsers: ", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+export const getSuggestedUsersPage = async (req, res) => {
+  try {
+    const userId = req.user?._id;
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.min(parseInt(req.query.limit) || 20, 50);
+    const skip = (page - 1) * limit;
+
+    if (!userId)
+      return res.status(200).json({ users: [], hasNextPage: false, nextPage: null });
+
+    // ── Re-use the same exclusion logic as getSuggestedUsers ─────────────
+    const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
+    const { total: totalMutedIds } = await getMutedUsers(userId);
+
+    const blockedAndBlocking = [...new Set([...blockedByMe, ...blockedMe])];
+    const currentUserDoc = await User.findById(userId).select("following").lean();
+    const usersFollowedByMe = currentUserDoc?.following?.map((id) => id.toString()) || [];
+
+    const excludeIds = [
+      new mongoose.Types.ObjectId(userId),
+      ...usersFollowedByMe.map((id) => new mongoose.Types.ObjectId(id)),
+      ...blockedAndBlocking.map((id) => new mongoose.Types.ObjectId(id)),
+      ...totalMutedIds.map((id) => new mongoose.Types.ObjectId(id)),
+    ];
+
+    // Fetch limit+1 so we can determine whether another page exists
+    const users = await User.find({
+      _id: { $nin: excludeIds },
+      blockedBy: { $nin: [new mongoose.Types.ObjectId(userId)] },
+    })
+      .sort({ followersCount: -1, createdAt: -1 })
+      .skip(skip)
+      .limit(limit + 1)
+      .populate({ path: "profileImg", select: "imageUrl" })
+      .select(
+        "username fullName bio profileImg isCha isVerified isGoldVerified badges preferredBadge nameColor equipped followersCount",
+      )
+      .lean();
+
+    const hasNextPage = users.length > limit;
+    const results = hasNextPage ? users.slice(0, limit) : users;
+
+    res.status(200).json({
+      users: results,
+      hasNextPage,
+      nextPage: hasNextPage ? page + 1 : null,
+    });
+  } catch (error) {
+    console.error("Error in getSuggestedUsersPage:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };

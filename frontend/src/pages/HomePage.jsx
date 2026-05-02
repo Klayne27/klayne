@@ -145,7 +145,7 @@ const HomePage = () => {
         >
           <div className="flex">
             <div
-              className={`flex flex-1 cursor-pointer justify-center p-3 ${
+              className={`flex flex-1 cursor-pointer justify-center p-3 py-3.5 ${
                 !isTouchDevice
                   ? "transition duration-300 hover:bg-secondary hover:bg-opacity-50"
                   : ""

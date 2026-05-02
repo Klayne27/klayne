@@ -107,6 +107,9 @@ body {
   transition: box-shadow 0.3s ease-in-out;
 }
 
+aside::-webkit-scrollbar { display: none; }
+aside { -ms-overflow-style: none; scrollbar-width: none; }
+
 @keyframes bounce-custom {
   0%,
   100% {

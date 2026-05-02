@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import RightPanelSkeleton from "../skeletons/RightPanelSkeleton"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { BiRefresh } from "react-icons/bi"
@@ -6,7 +6,6 @@ import React, { useState } from "react"
 import FollowButton from "./FollowButton"
 import ConfirmationModal from "./ConfirmationModal"
 import { useAppStore } from "../../store/useAppStore"
-import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
 import { useGetSuggestedUsers } from "../../features/users/usersHooks/useUserQueries"
 import { useFollow } from "../../features/users/usersHooks/useUserMutations"
 import { truncateText } from "../../utils/truncateText"
@@ -15,6 +14,7 @@ import UserFullName from "./UserFullname"
 import { getNameplateClass } from "../../utils/getNameplateClass"
 
 const SuggestedUsersPanel = () => {
+  const navigate = useNavigate()
   const showUnfollowModal = useAppStore((state) => state.showUnfollowModal)
   const setShowUnfollowModal = useAppStore((state) => state.setShowUnfollowModal)
   const { suggestedUsers, isLoading, refetch, isRefetching } = useGetSuggestedUsers()
@@ -22,20 +22,14 @@ const SuggestedUsersPanel = () => {
   const { authUser: currentUser } = useAuthUser()
   const [userToUnfollow, setUserToUnfollow] = useState(null)
 
-  const handleRefreshClick = () => {
-    refetch()
-  }
-
-  const openUnfollowModal = (userToUnfollow) => {
-    setUserToUnfollow(userToUnfollow)
+  const openUnfollowModal = (user) => {
+    setUserToUnfollow(user)
     setShowUnfollowModal(true)
   }
-
   const closeUnfollowModal = () => {
     setShowUnfollowModal(false)
     setUserToUnfollow(null)
   }
-
   const handleConfirmUnfollow = () => {
     if (userToUnfollow) {
       follow(userToUnfollow._id)
@@ -43,13 +37,12 @@ const SuggestedUsersPanel = () => {
     }
   }
 
-  if (!isLoading && !isRefetching && suggestedUsers?.length === 0) {
-    return null
-  }
+  if (!isLoading && !isRefetching && suggestedUsers?.length === 0) return null
 
   return (
-    <div className="rounded-2xl border border-accent py-4">
-      <p className="mb-4 text-xl font-bold px-4">Who to follow</p>
+    <div className="rounded-2xl border border-accent pt-4">
+      <p className="mb-4 px-4 text-xl font-bold">Who to follow</p>
+
       <div className="flex flex-col">
         {!suggestedUsers && isLoading && (
           <div className="flex flex-col gap-2.5 px-4">
@@ -59,6 +52,7 @@ const SuggestedUsersPanel = () => {
             <RightPanelSkeleton />
           </div>
         )}
+
         {suggestedUsers?.length > 0 &&
           suggestedUsers.map((user) => {
             const isFollowing = currentUser?.following?.includes(user._id)
@@ -66,24 +60,15 @@ const SuggestedUsersPanel = () => {
             return (
               <Link
                 to={`/profile/${user.username}`}
-                className={`${nameplateClass} flex items-center justify-between gap-2 px-4 hover:bg-secondary/30`} // Added py-1 for vertical breathing room
+                className={`${nameplateClass} flex items-center justify-between gap-2 px-4 hover:bg-secondary/30`}
                 key={user._id}
               >
                 <div className="flex min-w-0 flex-grow items-center gap-1">
-                  {/* AVATAR WRAPPER: Added padding and removed overflow-hidden */}
                   <div className="relative mt-2 flex-shrink-0 p-1">
-                    <UserAvatar user={user} size={"sm"} />
+                    <UserAvatar user={user} size="sm" />
                   </div>
-
-                  {/* TEXT CONTENT: Moved overflow-hidden here specifically */}
                   <div className="flex min-w-0 flex-col overflow-hidden">
                     <span className="flex items-center gap-1 font-bold tracking-tight hover:underline">
-                      {/* <span
-                        className="truncate"
-                        style={user.nameColor ? { color: user.nameColor } : undefined}
-                      >
-                        {user.fullName}
-                      </span> */}
                       <UserFullName
                         user={user}
                         className="truncate pr-[2px]"
@@ -108,7 +93,6 @@ const SuggestedUsersPanel = () => {
                     </span>
                   </div>
                 </div>
-
                 <div className="flex-shrink-0">
                   <FollowButton
                     user={user}
@@ -120,13 +104,23 @@ const SuggestedUsersPanel = () => {
               </Link>
             )
           })}
-        <button
-          onClick={handleRefreshClick}
-          className="flex items-center justify-center gap-1 text-primary"
+
+        {/* ── Refresh ── */}
+        {/* <button
+          onClick={() => refetch()}
+          className="flex items-center justify-center gap-1 pt-1 text-primary"
           disabled={isRefetching || isLoading}
         >
-          {isLoading || isRefetching ? <div></div> : <BiRefresh className="h-5 w-5" />}
+          {isLoading || isRefetching ? <div /> : <BiRefresh className="h-5 w-5" />}
           {isLoading || isRefetching ? "Refreshing..." : "Refresh Suggestions"}
+        </button> */}
+
+        {/* ── Show more → full page ── */}
+        <button
+          onClick={() => navigate("/suggested-users")}
+          className="mt-1 py-4 flex justify-start px-4 text-sm  text-primary transition hover:bg-secondary/30"
+        >
+          Show more
         </button>
       </div>
 

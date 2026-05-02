@@ -10,6 +10,7 @@ import {
   getFollowingUsers,
   getMuteStatus,
   getSuggestedUsers,
+  getSuggestedUsersPage,
   getUserProfile,
   getUserStats,
   getVacationModeStatus,
@@ -35,6 +36,7 @@ router.post("/update", updateUser);
 
 // --- SOCIAL & RELATIONSHIPS ---
 router.get("/suggested", getSuggestedUsers);
+router.get("/suggested/all", getSuggestedUsersPage);
 router.post("/follow/:userId", followUnfollowUser);
 router.get("/followers/:userId", getFollowers);
 router.get("/following/:userId", getFollowingUsers);

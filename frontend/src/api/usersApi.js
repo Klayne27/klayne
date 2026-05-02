@@ -248,3 +248,17 @@ export const getMuteStatusApi = async (userId) => {
   if (!res.ok) throw new Error(data.error || "Failed to get mute status")
   return data
 }
+
+export const getSuggestedUsersPageApi = async ({ pageParam = 1 }) => {
+  // Pass the pageParam as a query string so the backend can read req.query.page
+  const res = await fetch(`${BASE_URL}/suggested/all?page=${pageParam}&limit=20`)
+
+  // CRITICAL FIX: Added await here
+  const data = await res.json()
+
+  if (!res.ok) {
+    throw new Error(data.error || "Failed to fetch suggested users")
+  }
+
+  return data
+}

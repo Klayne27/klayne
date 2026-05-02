@@ -41,6 +41,7 @@ const JoinGroupPage = lazy(() => import("./pages/JoinGroupPage"))
 const BoardPage = lazy(() => import("./pages/BoardPage"))
 const WardrobePage = lazy(() => import("./features/wardrobe/WardrobePage"))
 const TrendingPage = lazy(() => import("./pages/TrendingPage"))
+const SuggestedUsersPage = lazy(() => import("./pages/SuggestedUsersPage"))
 const HashtagFeedPage = lazy(() => import("./pages/HashtagFeedPage"))
 
 
@@ -112,6 +113,7 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
               <Route path="/wardrobe" element={<WardrobePage />} />
               <Route path="/hashtag/:tag" element={<HashtagFeedPage />} />
               <Route path="/trending" element={<TrendingPage />} />
+              <Route path="/suggested-users" element={<SuggestedUsersPage />} />
 
               <Route path="/pomodoro" element={<PomodoroPage />} />
               <Route path="/study-dashboard" element={<StudyDashboardPage />} />

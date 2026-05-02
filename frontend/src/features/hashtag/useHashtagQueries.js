@@ -34,3 +34,18 @@ export const useGetHashtagPosts = (tag) => {
     staleTime: 60 * 1000,
   })
 }
+
+const fetchPanelTrending = async () => {
+  const res = await fetch("/api/hashtags/panel-trending", { credentials: "include" })
+  if (!res.ok) throw new Error("Failed to fetch panel trending")
+  return res.json()
+}
+
+export const useGetPanelTrending = () => {
+  return useQuery({
+    queryKey: [...hashtagKeys.trending(), "panel"], // Unique key for the 4-item panel
+    queryFn: fetchPanelTrending,
+    staleTime: 5 * 60 * 1000, // Panel can stay stale slightly longer
+    refetchOnWindowFocus: false,
+  })
+}
