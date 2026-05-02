@@ -454,7 +454,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               {!isMyProfile && (
                 <DropdownMenu icon={<BsThreeDots size={20} />}>
                   {/* MUTE ACTION */}
-                  {amIFollowing && (
+                  {(
                     <button
                       className="flex w-full items-center gap-3 px-4 py-3 text-sm font-bold transition hover:bg-white/10"
                       onClick={() => {

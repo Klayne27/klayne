@@ -1008,14 +1008,14 @@ export const muteUser = async (req, res) => {
 
     const currentUser = await User.findById(currentUserId).select("following mutedUsers");
 
-    const isFollowing = currentUser.following.some(
-      (id) => id.toString() === userId.toString(),
-    );
-    if (!isFollowing) {
-      return res
-        .status(400)
-        .json({ error: "You must follow a user before muting them." });
-    }
+    // const isFollowing = currentUser.following.some(
+    //   (id) => id.toString() === userId.toString(),
+    // );
+    // if (!isFollowing) {
+    //   return res
+    //     .status(400)
+    //     .json({ error: "You must follow a user before muting them." });
+    // }
 
     const existingIdx = currentUser.mutedUsers.findIndex(
       (m) => m.user.toString() === userId.toString(),
