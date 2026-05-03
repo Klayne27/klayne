@@ -40,7 +40,7 @@ const SearchPanel = () => {
 
   return (
     <div className="relative w-full md:block">
-      <div className="mb-4 flex w-full items-center gap-2 rounded-full border border-accent px-3 py-2">
+      <div className="mb-1 flex w-full items-center gap-2 rounded-full border border-accent px-3 py-2 placeholder">
         <CiSearch className="size-5 text-gray-400" />
         <input
           type="text"

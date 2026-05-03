@@ -1,10 +1,9 @@
 import { useNavigate } from "react-router-dom"
 import { IoArrowBack } from "react-icons/io5"
-import { FaHashtag } from "react-icons/fa"
+import { HiDotsHorizontal } from "react-icons/hi"
 import { useGetTrendingHashtags } from "../features/hashtag/useHashtagQueries"
 import LoadingSpinner from "../components/common/LoadingSpinner"
 
-// Request more hashtags on this page than the panel shows
 const FULL_PAGE_LIMIT = 25
 
 const TrendingPage = () => {
@@ -12,9 +11,9 @@ const TrendingPage = () => {
   const { data: tags, isLoading, isError } = useGetTrendingHashtags(FULL_PAGE_LIMIT)
 
   return (
-    <div className="min-h-screen w-full border-accent md:border-x">
+    <div className="min-h-screen w-full border-accent">
       {/* ── Sticky header ── */}
-      <div className="sticky top-0 z-10 flex items-center gap-4 border-b border-accent bg-base-100/80 px-4 py-3 backdrop-blur">
+      <div className="sticky top-0 z-10 flex items-center gap-4 border-b border-accent bg-base-100/80 px-4 py-3 backdrop-blur mb-4">
         <button
           onClick={() => navigate(-1)}
           className="flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-secondary/40"
@@ -22,9 +21,11 @@ const TrendingPage = () => {
           <IoArrowBack size={20} />
         </button>
         <div>
-          <h1 className="text-lg font-bold leading-tight">Trending</h1>
-          <p className="text-xs text-slate-500">What's happening right now</p>
+          <h1 className="text-xl font-bold leading-tight">Trending</h1>
         </div>
+      </div>
+      <div className="pb-4">
+        <span className="px-4 text-xl font-bold">What's happening right now</span>
       </div>
 
       {/* ── Content ── */}
@@ -47,35 +48,26 @@ const TrendingPage = () => {
         </div>
       )}
 
-      <div className="divide-y divide-accent">
+      <div className="flex flex-col">
         {tags?.map((item, i) => (
           <button
             key={item.tag}
             onClick={() => navigate(`/hashtag/${item.tag}`)}
-            className="group flex w-full items-center gap-4 px-4 py-4 transition hover:bg-secondary/20"
+            className="group relative flex w-full flex-col items-start px-4 py-3 transition hover:bg-secondary/30"
           >
-            {/* Rank */}
-            <span className="w-6 shrink-0 text-right text-sm font-semibold text-slate-500">
-              {i + 1}
-            </span>
-
-            {/* Hash icon */}
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
-              <FaHashtag size={16} className="text-primary" />
+            <div className="flex w-full items-center justify-between leading-tight">
+              {/* <span className="text-[13px] text-slate-500">{i + 1} · Trending</span> */}
             </div>
 
-            {/* Tag info */}
-            <div className="min-w-0 flex-1 text-left">
-              <p className="truncate font-bold group-hover:underline">#{item.tag}</p>
-              <p className="text-sm text-slate-500">
-                {item.count.toLocaleString()} {item.count === 1 ? "post" : "posts"}
-              </p>
+            <div className="text-left leading-tight">
+              <span className="text-[14px] font-bold text-base-content">#{item.tag}</span>
             </div>
 
-            {/* Arrow */}
-            <span className="shrink-0 text-slate-500 opacity-0 transition-opacity group-hover:opacity-100">
-              →
-            </span>
+            <div className="text-left leading-tight">
+              <span className="text-[13px] text-slate-500">
+                {item.count.toLocaleString()} Post{item.count > 1 ? "s" : ""}
+              </span>
+            </div>
           </button>
         ))}
       </div>

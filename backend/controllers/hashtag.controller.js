@@ -27,32 +27,12 @@ const POST_POPULATE = [
 // GET /api/hashtags/trending
 export const getTrendingHashtags = async (req, res) => {
   try {
-    const limit = Math.min(parseInt(req.query.limit) || 10, 25);
+    const limit = Math.min(parseInt(req.query.limit) || 30, 30);
 
-    // "Recent trending": used in the last 7 days, sorted by count desc
-    const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-
-    const trending = await Hashtag.find({
-      count: { $gt: 0 },
-      lastUsed: { $gte: since },
-    })
-      .sort({ count: -1, lastUsed: -1 })
+    const trending = await Hashtag.find({ count: { $gt: 0 } })
+      .sort({ count: -1 })
       .limit(limit)
       .lean();
-
-    // If fewer than `limit` recent results, pad with all-time popular
-    if (trending.length < limit) {
-      const existingTags = trending.map((t) => t.tag);
-      const allTime = await Hashtag.find({
-        count: { $gt: 0 },
-        tag: { $nin: existingTags },
-      })
-        .sort({ count: -1 })
-        .limit(limit - trending.length)
-        .lean();
-
-      trending.push(...allTime);
-    }
 
     res.status(200).json(trending);
   } catch (error) {
@@ -65,30 +45,11 @@ export const getTrendingHashtags = async (req, res) => {
 export const getPanelTrendingHashtags = async (req, res) => {
   try {
     const PANEL_LIMIT = 4;
-    // Look for tags used in the last 3 days for "fresher" trends
-    const recentWindow = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
 
-    let trending = await Hashtag.find({
-      count: { $gt: 0 },
-      lastUsed: { $gte: recentWindow },
-    })
-      .sort({ count: -1, lastUsed: -1 })
+    const trending = await Hashtag.find({ count: { $gt: 0 } })
+      .sort({ count: -1 })
       .limit(PANEL_LIMIT)
       .lean();
-
-    // Fallback: If not enough recent tags, fill with all-time popular tags
-    if (trending.length < PANEL_LIMIT) {
-      const existingTags = trending.map((t) => t.tag);
-      const fallback = await Hashtag.find({
-        count: { $gt: 0 },
-        tag: { $nin: existingTags },
-      })
-        .sort({ count: -1 })
-        .limit(PANEL_LIMIT - trending.length)
-        .lean();
-
-      trending = [...trending, ...fallback];
-    }
 
     res.status(200).json(trending);
   } catch (error) {
@@ -106,7 +67,7 @@ export const getPostsByHashtag = async (req, res) => {
 
     const query = {
       hashtags: tag,
-      parentPost: null, // top-level posts only
+      parentPost: null,
       isScheduled: false,
     };
 

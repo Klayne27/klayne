@@ -23,14 +23,14 @@ const TrendingTagsPanel = () => {
   if (!tags?.length) return null
 
   return (
-    <div className="mt-4  rounded-2xl border border-accent pt-4">
+    <div className="mt-3 mb-4  rounded-2xl border border-accent pt-4">
       <h2 className="mb-3 px-4 text-xl font-bold">What's happening</h2>
       <div className="flex flex-col">
         {tags.map((item) => (
           <button
             key={item.tag}
             onClick={() => navigate(`/hashtag/${item.tag}`)}
-            className="group flex w-full flex-col px-4 py-3 transition hover:bg-secondary/20"
+            className="group flex w-full flex-col px-4 py-2 transition hover:bg-secondary/20"
           >
             <p className="mt-0.5 text-left text-[15px] font-bold text-base-content">#{item.tag}</p>
             <p className="mt-1 text-left text-[13px] text-slate-500">

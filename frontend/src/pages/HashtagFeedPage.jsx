@@ -29,9 +29,9 @@ const HashtagFeedPage = () => {
   )
 
   return (
-    <div className="template min-h-screen flex-1 border-r border-accent">
+    <div className="template min-h-screen flex-1 border-accent">
       {/* Header */}
-      <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-accent bg-base-100/80 px-4 py-3 backdrop-blur-md">
+      <div className="sticky top-0 z-10 mb-4 flex items-center gap-3 border-b border-accent bg-base-100/80 px-4 py-3 backdrop-blur-md">
         <button
           onClick={() => navigate(-1)}
           className="rounded-full p-2 transition hover:bg-secondary"
@@ -40,18 +40,21 @@ const HashtagFeedPage = () => {
         </button>
         <div className="flex flex-col">
           <div className="flex items-center gap-1 text-xl font-bold">
-            <FaHashtag className="text-primary" size={18} />
+            <FaHashtag size={18} />
             {tag}
           </div>
-          {!isLoading && (
-            <span className="text-xs text-slate-400">
-              {posts.length > 0
-                ? `${data?.pages[0] ? "" : ""}posts tagged #${tag}`
-                : "No posts yet"}
-            </span>
-          )}
+          <span className="text-xs text-slate-500">
+            {posts.length} post{posts.length > 1 ? "s" : ""}
+          </span>
         </div>
       </div>
+      {!isLoading && (
+        <div className="mb-4">
+          <span className="px-4 text-xl font-bold">
+            {posts.length > 0 ? `${data?.pages[0] ? "" : ""}Posts tagged #${tag}` : "No posts yet"}
+          </span>
+        </div>
+      )}
 
       {/* Feed */}
       {isLoading ? (

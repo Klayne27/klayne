@@ -63,7 +63,7 @@ const SuggestedUsersPage = () => {
   return (
     <div className="min-h-screen w-full border-accent">
       {/* ── Sticky header ── */}
-      <div className="sticky top-0 z-10 flex items-center gap-4 border-b border-accent bg-base-100/80 px-4 py-3 backdrop-blur">
+      <div className="sticky top-0 z-10 mb-4 flex items-center gap-4 border-b border-accent bg-base-100/80 px-4 py-3 backdrop-blur">
         <button
           onClick={() => navigate(-1)}
           className="flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-secondary/40"
@@ -71,13 +71,15 @@ const SuggestedUsersPage = () => {
           <IoArrowBack size={20} />
         </button>
         <div>
-          <h1 className="text-lg font-bold leading-tight">Connect</h1>
-          <p className="text-xs text-slate-500">People you might know</p>
+          <h1 className="text-lg font-bold leading-tight">Follow</h1>
         </div>
+      </div>
+      <div className="pb-4">
+        <span className="px-4 text-xl font-bold">Suggested For you</span>
       </div>
 
       {/* ── Content ── */}
-      <div className="divide-y divide-accent">
+      <div className="">
         {isLoading && (
           <div className="flex justify-center py-16">
             <LoadingSpinner size="md" />
@@ -146,27 +148,27 @@ const SuggestedUsersPage = () => {
 
 // ── Individual user row ────────────────────────────────────────────────────────
 const SuggestedUserRow = ({ user, currentUser, isFollowing, openUnfollowModal, navigate }) => (
-  <div className="flex items-start gap-3 px-4 py-4 transition hover:bg-secondary/20">
+  <button
+    className="flex w-full items-start gap-3 px-4 py-4 transition hover:bg-secondary/30"
+    onClick={() => navigate(`/profile/${user.username}`)}
+  >
     {/* Avatar – clickable */}
-    <button onClick={() => navigate(`/profile/${user.username}`)} className="mt-0.5 flex-shrink-0">
+    <div className="mt-0.5 flex-shrink-0">
       <UserAvatar user={user} size="md" />
-    </button>
+    </div>
 
     {/* Text content */}
     <div className="min-w-0 flex-1">
-      <button
-        onClick={() => navigate(`/profile/${user.username}`)}
-        className="flex flex-wrap items-center gap-1 text-left"
-      >
+      <div className="flex flex-wrap items-center gap-1 text-left">
         <UserFullName user={user} className="truncate font-bold hover:underline" />
         {user.isVerified && <img src="/verified2.png" className="size-[15px]" alt="verified" />}
         {user.isGoldVerified && (
           <img src="/gold-verified2.png" className="size-[15px]" alt="gold verified" />
         )}
         {user.isCha && <img src="/cha.png" className="size-[13px] rounded-md" alt="cha" />}
-      </button>
+      </div>
 
-      <p className="text-sm text-slate-500">@{truncateText(user.username, 20)}</p>
+      <p className="text-left text-sm text-slate-500">@{truncateText(user.username, 20)}</p>
 
       {user.bio && (
         <p className="mt-1.5 line-clamp-2 text-sm leading-snug text-base-content/80">{user.bio}</p>
@@ -182,7 +184,7 @@ const SuggestedUserRow = ({ user, currentUser, isFollowing, openUnfollowModal, n
         openUnfollowModal={openUnfollowModal}
       />
     </div>
-  </div>
+  </button>
 )
 
 export default SuggestedUsersPage

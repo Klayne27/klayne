@@ -134,6 +134,7 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
             </Routes>
           </Suspense>
         </main>
+
         {!isMessagePage &&
           !isPublicChatPage &&
           !shouldHideSidePanels &&

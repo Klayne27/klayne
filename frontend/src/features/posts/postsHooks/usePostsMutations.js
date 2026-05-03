@@ -22,6 +22,8 @@ import { useLocation, useNavigate, useParams } from "react-router-dom"
 import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 import { userKeys } from "../../users/usersHooks/userKeys"
 
+const POST_NAMESPACES = ["posts", "hashtags"]
+
 const updatePostLikes = (oldData, postId, userId) => {
   if (!oldData) return oldData
 
@@ -258,6 +260,74 @@ const updatePostBookmarkStatus = (oldData, postId, userId) => {
   return oldData
 }
 
+const applyOptimisticPostUpdate = async (queryClient, updater) => {
+  // Cancel all post-related in-flight queries
+  await Promise.all(POST_NAMESPACES.map((ns) => queryClient.cancelQueries({ queryKey: [ns] })))
+
+  const allQueries = queryClient.getQueryCache().getAll()
+  const previousData = {}
+
+  allQueries.forEach((query) => {
+    const key = query.queryKey
+    if (!Array.isArray(key)) return
+    if (!POST_NAMESPACES.includes(key[0])) return
+
+    previousData[JSON.stringify(key)] = queryClient.getQueryData(key)
+    queryClient.setQueryData(key, (old) => updater(old))
+  })
+
+  return previousData
+}
+
+const rollback = (queryClient, previousData) => {
+  Object.entries(previousData).forEach(([key, value]) => {
+    queryClient.setQueryData(JSON.parse(key), value)
+  })
+}
+
+const makeUniversalPostUpdater = (transformFn) => {
+  return function updater(old) {
+    if (!old) return old
+
+    // ── infinite query ───────────────────────────────────────────────────
+    if (old.pages) {
+      return {
+        ...old,
+        pages: old.pages.map((page) => {
+          // hashtag shape: { posts: [], hasNextPage, nextCursor }
+          if (!Array.isArray(page) && Array.isArray(page.posts)) {
+            return { ...page, posts: transformFn(page.posts) }
+          }
+          // reply-list shape: { replies: [], … }
+          if (!Array.isArray(page) && Array.isArray(page.replies)) {
+            return { ...page, replies: transformFn(page.replies) }
+          }
+          // flat array shape
+          if (Array.isArray(page)) return transformFn(page)
+          return page
+        }),
+      }
+    }
+
+    // ── flat array ───────────────────────────────────────────────────────
+    if (Array.isArray(old)) return transformFn(old)
+
+    // ── thread shape { post, ancestors } ────────────────────────────────
+    if (old.post || old.ancestors) {
+      return {
+        ...old,
+        post: old.post ? transformFn([old.post])[0] : old.post,
+        ancestors: old.ancestors ? transformFn(old.ancestors) : old.ancestors,
+      }
+    }
+
+    // ── single post detail ───────────────────────────────────────────────
+    if (old._id) return transformFn([old])[0]
+
+    return old
+  }
+}
+
 export const useCreatePosts = () => {
   const queryClient = useQueryClient()
 
@@ -447,54 +517,6 @@ export const useDeleteMultipleScheduledPosts = () => {
   return { deleteMultipleScheduledPosts, isPending, isError, error }
 }
 
-export const useLikePost = (username = null) => {
-  const queryClient = useQueryClient()
-  const { authUser } = useAuthUser()
-
-  const { mutate: likePost, isPending: isLiking } = useMutation({
-    mutationFn: (postId) => likePostApi(postId),
-
-    onMutate: async (postId) => {
-      await queryClient.cancelQueries({ queryKey: postKeys.all })
-
-      // 2. Get all keys currently in the cache
-      const allActiveQueries = queryClient.getQueryCache().getAll()
-
-      const previousData = {}
-
-      // 3. Iterate through every cached query
-      allActiveQueries.forEach((query) => {
-        const key = query.queryKey
-
-        // Check if this query is a "posts" related query
-        if (Array.isArray(key) && key[0] === "posts") {
-          const data = queryClient.getQueryData(key)
-
-          // Save for rollback
-          previousData[JSON.stringify(key)] = data
-
-          // 4. Perform the update
-          queryClient.setQueryData(key, (oldData) => updatePostLikes(oldData, postId, authUser._id))
-        }
-      })
-
-      return { previousData }
-    },
-
-    onError: (error, postId, context) => {
-      showAppToast(error.message || "Failed to like/unlike post.")
-
-      if (context?.previousData) {
-        Object.entries(context.previousData).forEach(([key, value]) => {
-          queryClient.setQueryData(JSON.parse(key), value)
-        })
-      }
-    },
-  })
-
-  return { likePost, isLiking }
-}
-
 export const usePinPost = () => {
   const queryClient = useQueryClient()
   const { authUser } = useAuthUser()
@@ -576,6 +598,34 @@ export const usePinPost = () => {
   return { pinUnpinPost, isPinning, isError, error }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// The three mutations – only onMutate changes; everything else is identical
+// to the originals.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const useLikePost = (username = null) => {
+  const queryClient = useQueryClient()
+  const { authUser } = useAuthUser()
+
+  const { mutate: likePost, isPending: isLiking } = useMutation({
+    mutationFn: (postId) => likePostApi(postId),
+
+    onMutate: async (postId) => {
+      const previousData = await applyOptimisticPostUpdate(queryClient, (old) =>
+        updatePostLikes(old, postId, authUser._id),
+      )
+      return { previousData }
+    },
+
+    onError: (error, _postId, context) => {
+      showAppToast(error.message || "Failed to like/unlike post.")
+      if (context?.previousData) rollback(queryClient, context.previousData)
+    },
+  })
+
+  return { likePost, isLiking }
+}
+
 export const useRepostPost = (username) => {
   const queryClient = useQueryClient()
   const { authUser } = useAuthUser()
@@ -587,38 +637,20 @@ export const useRepostPost = (username) => {
         headers: { "Content-Type": "application/json" },
       })
       const data = await response.json()
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to toggle repost status")
-      }
+      if (!response.ok) throw new Error(data.error || "Failed to toggle repost status")
       return data
     },
 
     onMutate: async (postId) => {
-      await queryClient.cancelQueries({ queryKey: postKeys.all })
-      const allQueries = queryClient.getQueryCache().getAll()
-      const previousData = {}
-
-      allQueries.forEach((query) => {
-        const key = query.queryKey
-        if (Array.isArray(key) && key[0] === "posts") {
-          previousData[JSON.stringify(key)] = queryClient.getQueryData(key)
-          queryClient.setQueryData(key, (old) => updatePostRepostStatus(old, postId, authUser._id))
-        }
-      })
+      const previousData = await applyOptimisticPostUpdate(queryClient, (old) =>
+        updatePostRepostStatus(old, postId, authUser._id),
+      )
       return { previousData }
     },
 
-    onSuccess: (data) => {
-      // showAppToast(data.message || "Success!", "success")
-    },
-
-    onError: (err, postId, context) => {
+    onError: (err, _postId, context) => {
       showAppToast(err.message || "Could not update repost.", "error")
-      if (context?.previousData) {
-        Object.entries(context.previousData).forEach(([key, value]) => {
-          queryClient.setQueryData(JSON.parse(key), value)
-        })
-      }
+      if (context?.previousData) rollback(queryClient, context.previousData)
     },
   })
 
@@ -633,19 +665,9 @@ export const useToggleBookmarks = (currentProfileUsername = null) => {
     mutationFn: toggleBookmarkApi,
 
     onMutate: async (postId) => {
-      await queryClient.cancelQueries({ queryKey: postKeys.all })
-      const allQueries = queryClient.getQueryCache().getAll()
-      const previousData = {}
-
-      allQueries.forEach((query) => {
-        const key = query.queryKey
-        if (Array.isArray(key) && key[0] === "posts") {
-          previousData[JSON.stringify(key)] = queryClient.getQueryData(key)
-          queryClient.setQueryData(key, (old) =>
-            updatePostBookmarkStatus(old, postId, authUser._id),
-          )
-        }
-      })
+      const previousData = await applyOptimisticPostUpdate(queryClient, (old) =>
+        updatePostBookmarkStatus(old, postId, authUser._id),
+      )
       return { previousData }
     },
 
@@ -653,20 +675,16 @@ export const useToggleBookmarks = (currentProfileUsername = null) => {
       showAppToast(data.message, "success")
     },
 
-    onError: (error, postId, context) => {
-      console.error("Error toggling bookmark:", error)
+    onError: (error, _postId, context) => {
       showAppToast(error.message || "Failed to toggle bookmark", "error")
-
-      if (context) {
-        for (const snapshotKey in context) {
-          queryClient.setQueryData(JSON.parse(snapshotKey), context[snapshotKey])
-        }
-      }
+      if (context?.previousData) rollback(queryClient, context.previousData)
     },
   })
 
   return { toggleBookmark, isBookmarking }
 }
+
+// ─── useUpdatePost ─────────────────────────────────────────────────────────────
 
 export const useUpdatePost = () => {
   const queryClient = useQueryClient()
@@ -675,97 +693,37 @@ export const useUpdatePost = () => {
     mutationFn: editPostApi,
 
     onMutate: async ({ postId, postData }) => {
-      // Cancel any in-flight refetches that could overwrite optimistic data
-      await queryClient.cancelQueries({ queryKey: postKeys.all })
+      // Transform function: patch any post whose _id matches
+      const patchPost = (posts) =>
+        posts.map((post) => (post._id === postId ? { ...post, ...postData, isEdited: true } : post))
 
-      const snapshots = []
+      const previousData = await applyOptimisticPostUpdate(
+        queryClient,
+        makeUniversalPostUpdater(patchPost),
+      )
 
-      // ── 1. Single post detail ──────────────────────────────────────────────
-      const previousDetail = queryClient.getQueryData(postKeys.details(postId))
-      if (previousDetail) {
-        snapshots.push({ key: postKeys.details(postId), data: previousDetail })
-        queryClient.setQueryData(postKeys.details(postId), (old) => ({
-          ...old,
-          ...postData,
-          isEdited: true,
-        }))
+      // Also snapshot + patch the single-post detail key directly
+      // (applyOptimisticPostUpdate already covers it if it's under "posts",
+      //  but be explicit here so the onSettled invalidation has something to
+      //  compare against)
+      const detailKey = postKeys.details(postId)
+      const previousDetail = queryClient.getQueryData(detailKey)
+      if (previousDetail && !previousData[JSON.stringify(detailKey)]) {
+        previousData[JSON.stringify(detailKey)] = previousDetail
+        queryClient.setQueryData(detailKey, (old) =>
+          old ? { ...old, ...postData, isEdited: true } : old,
+        )
       }
 
-      // ── 2. All paginated feed/list queries (forYou, ic, user posts, etc.) ──
-      queryClient.setQueriesData({ queryKey: postKeys.all }, (oldData) => {
-        if (!oldData) return oldData
-
-        // Paginated infinite query shape
-        if (oldData.pages) {
-          return {
-            ...oldData,
-            pages: oldData.pages.map((page) => ({
-              ...page,
-              // Feed posts
-              ...(page.posts && {
-                posts: page.posts.map((post) =>
-                  post._id === postId ? { ...post, ...postData, isEdited: true } : post,
-                ),
-              }),
-              // Reply lists — patch both the reply and its nested firstChildReply
-              ...(page.replies && {
-                replies: page.replies.map((reply) => {
-                  const patchedReply =
-                    reply._id === postId ? { ...reply, ...postData, isEdited: true } : reply
-
-                  const patchedFirstChild =
-                    patchedReply.firstChildReply?._id === postId
-                      ? {
-                          ...patchedReply.firstChildReply,
-                          ...postData,
-                          isEdited: true,
-                        }
-                      : patchedReply.firstChildReply
-
-                  return { ...patchedReply, firstChildReply: patchedFirstChild }
-                }),
-              }),
-            })),
-          }
-        }
-
-        // Flat array shape (rare, but some queries return plain arrays)
-        if (Array.isArray(oldData)) {
-          return oldData.map((post) =>
-            post._id === postId ? { ...post, ...postData, isEdited: true } : post,
-          )
-        }
-
-        // Thread query shape: { post, ancestors }
-        if (oldData.post || oldData.ancestors) {
-          return {
-            ...oldData,
-            post:
-              oldData.post?._id === postId
-                ? { ...oldData.post, ...postData, isEdited: true }
-                : oldData.post,
-            ancestors: oldData.ancestors?.map((a) =>
-              a._id === postId ? { ...a, ...postData, isEdited: true } : a,
-            ),
-          }
-        }
-
-        return oldData
-      })
-
-      return { snapshots }
+      return { previousData }
     },
 
-    onError: (err, variables, context) => {
-      // Roll back every snapshot we took
-      context?.snapshots?.forEach(({ key, data }) => {
-        queryClient.setQueryData(key, data)
-      })
+    onError: (err, _variables, context) => {
+      if (context?.previousData) rollback(queryClient, context.previousData)
       showAppToast(err.message || "Failed to edit post. Please try again.", "error")
     },
 
     onSuccess: (updatedPost) => {
-      // Overwrite the detail cache with the server-confirmed version
       if (updatedPost?._id) {
         queryClient.setQueryData(postKeys.details(updatedPost._id), updatedPost)
       }
@@ -773,13 +731,14 @@ export const useUpdatePost = () => {
     },
 
     onSettled: (_data, _error, variables) => {
-      // Light invalidation — stale-while-revalidate handles the rest
       queryClient.invalidateQueries({ queryKey: postKeys.details(variables.postId) })
     },
   })
 
   return { updatePost, isUpdatingPost }
 }
+
+// ─── useVoteOnPoll ─────────────────────────────────────────────────────────────
 
 export const useVoteOnPoll = () => {
   const queryClient = useQueryClient()
@@ -795,89 +754,29 @@ export const useVoteOnPoll = () => {
     mutationFn: (variables) => voteOnPollApi(variables),
 
     onMutate: async ({ postId, optionId }) => {
-      // Step 1: Define all possible query keys that might contain the post.
-      const keysToUpdate = [
-        postKeys.list("/api/posts/all"),
-        postKeys.list("/api/posts/ic"),
-        postKeys.list("/api/posts/vent"),
-        postKeys.list("/api/posts/following"),
-        postKeys.bookmarked(),
-        postKeys.pinned(username),
-        postKeys.details(postId),
-        postKeys.user(username),
-        postKeys.likes(username),
-        postKeys.replies(postId),
-        postKeys.thread(postId),
-      ].filter((key) => queryClient.getQueryData(key))
-
-      // Step 2: Cancel ongoing queries and capture previous state.
-      await Promise.all(keysToUpdate.map((key) => queryClient.cancelQueries({ queryKey: key })))
-      const previousData = keysToUpdate.reduce((acc, key) => {
-        acc[JSON.stringify(key)] = queryClient.getQueryData(key)
-        return acc
-      }, {})
-
-      // Helper function for the update logic to avoid repetition
-      const updatePostInList = (posts) =>
-        posts?.map((post) => {
-          if (post._id === postId) {
-            const newPollOptions = post.pollOptions.map((option) =>
-              option._id === optionId
-                ? { ...option, voters: [...option.voters, currentUser._id] }
-                : option,
-            )
-            return {
-              ...post,
-              pollOptions: newPollOptions,
-              pollTotalVotes: post.pollTotalVotes + 1,
-            }
-          }
-          return post
+      // Patch function: toggle the voter into the chosen option
+      const patchVote = (posts) =>
+        posts.map((post) => {
+          if (post._id !== postId) return post
+          const newPollOptions = post.pollOptions.map((option) =>
+            option._id === optionId
+              ? { ...option, voters: [...option.voters, currentUser._id] }
+              : option,
+          )
+          return { ...post, pollOptions: newPollOptions, pollTotalVotes: post.pollTotalVotes + 1 }
         })
 
-      // Step 3: Loop through all relevant caches and perform the optimistic update.
-      keysToUpdate.forEach((key) => {
-        queryClient.setQueryData(key, (oldData) => {
-          if (!oldData) return oldData
-
-          // Case 1: Handle infinite query data structure { pages: [...] }
-          if (oldData.pages) {
-            return {
-              ...oldData,
-              pages: oldData.pages.map((page) => ({
-                ...page,
-                posts: updatePostInList(page.posts),
-              })),
-            }
-          }
-
-          // Case 2: Handle simple array of posts [post1, post2, ...]
-          if (Array.isArray(oldData)) {
-            return updatePostInList(oldData)
-          }
-
-          // Case 3: Handle a single post object { _id: ..., ... }
-          // This will cover the post details page
-          if (oldData._id === postId) {
-            return updatePostInList([oldData])[0] // Reuse the helper
-          }
-
-          // If the data structure is unrecognized, return it unchanged.
-          return oldData
-        })
-      })
+      const previousData = await applyOptimisticPostUpdate(
+        queryClient,
+        makeUniversalPostUpdater(patchVote),
+      )
 
       return { previousData }
     },
 
-    onError: (err, variables, context) => {
+    onError: (err, _variables, context) => {
       showAppToast(err.message || "Failed to cast vote.", "error")
-      // Rollback the cache on error.
-      if (context?.previousData) {
-        Object.entries(context.previousData).forEach(([key, value]) => {
-          queryClient.setQueryData(JSON.parse(key), value)
-        })
-      }
+      if (context?.previousData) rollback(queryClient, context.previousData)
     },
   })
 
@@ -885,7 +784,7 @@ export const useVoteOnPoll = () => {
 }
 
 export const useUpdateScheduledPost = () => {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
 
   const {
     mutate: updateScheduledPost,
@@ -895,16 +794,16 @@ export const useUpdateScheduledPost = () => {
   } = useMutation({
     mutationFn: ({ postId, postData }) => updateScheduledPostApi({ postId, postData }),
     onSuccess: () => {
-      showAppToast("Scheduled post updated successfully", "success");
-      queryClient.invalidateQueries({ queryKey: postKeys.list("scheduled") });
+      showAppToast("Scheduled post updated successfully", "success")
+      queryClient.invalidateQueries({ queryKey: postKeys.list("scheduled") })
     },
     onError: (error) => {
-      showAppToast(error.message || "Failed to update scheduled post", "error");
+      showAppToast(error.message || "Failed to update scheduled post", "error")
     },
-  });
+  })
 
-  return { updateScheduledPost, isPending, isError, error };
-};
+  return { updateScheduledPost, isPending, isError, error }
+}
 
 export const useMarkVentPostsAsRead = () => {
   const { mutate: markVentFeedAsRead } = useMutation({
@@ -914,14 +813,13 @@ export const useMarkVentPostsAsRead = () => {
   return { markVentFeedAsRead }
 }
 
-
 export const useMarkPostsAsRead = () => {
   const { mutate: markFeedAsRead } = useMutation({
     mutationFn: markPostsAsReadApi,
-  });
+  })
 
-  return { markFeedAsRead };
-};
+  return { markFeedAsRead }
+}
 
 export const useMarkICPostsAsRead = () => {
   const { mutate: markICPostsAsRead } = useMutation({
