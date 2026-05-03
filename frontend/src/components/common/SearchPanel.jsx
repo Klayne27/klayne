@@ -28,8 +28,6 @@ const SearchPanel = () => {
   const { suggestedUsers, isLoadingSuggestedUsers, isError, error, isFetching } =
     useSearchUsers(debouncedQuery)
 
-  
-
   useEffect(() => {
     if (debouncedQuery || suggestedUsers?.length > 0 || isError) {
       setShowResults(true)
@@ -39,13 +37,14 @@ const SearchPanel = () => {
   }, [debouncedQuery, suggestedUsers, isError])
 
   return (
-    <div className="relative w-full md:block">
-      <div className="mb-1 flex w-full items-center gap-2 rounded-full border border-accent px-3 py-2 placeholder">
-        <CiSearch className="size-5 text-gray-400" />
+    <div className="relative min-w-0 flex-1">
+      <div className="mb-1 flex w-full items-center gap-2 rounded-full border border-accent px-3 py-2">
+        <CiSearch className="size-5 shrink-0 text-gray-400" />
         <input
           type="text"
           placeholder="Search"
-          className="focus:border-accent/99 z-10 grow bg-base-100 focus:outline-none"
+          // ADD: min-w-0 so the input itself can shrink inside the flex row
+          className="z-10 min-w-0 grow bg-base-100 focus:outline-none"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onFocus={() => {
@@ -60,7 +59,11 @@ const SearchPanel = () => {
       </div>
 
       {showResults && (debouncedQuery.length > 0 || suggestedUsers?.length > 0) ? (
-        <div className="absolute left-0 top-[51px] z-50 max-h-[500px] w-full overflow-hidden rounded-2xl border border-accent bg-base-100 shadow-md shadow-gray-400">
+        <div
+          className={`absolute left-0 top-[51px] z-50 max-h-[500px] w-full overflow-hidden overflow-y-auto rounded-2xl border border-accent bg-base-100 shadow-md shadow-gray-400`}
+          // Clamp to viewport on mobile so it never extends past the right edge
+          style={{ maxWidth: "calc(100vw - 1.25rem)" }}
+        >
           {(isLoadingSuggestedUsers || isFetching) && debouncedQuery ? (
             <p className="p-4 text-center text-gray-400">Searching...</p>
           ) : isError ? (
@@ -80,24 +83,16 @@ const SearchPanel = () => {
                     onMouseEnter={() => setIsHovered(true)}
                     onMouseLeave={() => setIsHovered(false)}
                   >
-                    <div className="">
+                    <div className="shrink-0">
                       <div className="w-8 rounded-full">
-                        {/* <img
-                          src={getOptimizedImageUrl(
-                            hasBlockedYou || !user.profileImg?.imageUrl
-                              ? "/avatar-placeholder.png"
-                              : user.profileImg?.imageUrl,
-                            "avatar",
-                          )}
-                          alt={`${user.username}'s profile`}
-                        /> */}
                         <UserAvatar user={user} size={"sm"} isAnon={hasBlockedYou} />
                       </div>
                     </div>
-                    <div className="flex flex-col overflow-hidden">
+                    {/* ADD: min-w-0 so text truncation works in flex child */}
+                    <div className="flex min-w-0 flex-col overflow-hidden">
                       <UserFullName
                         user={user}
-                        className={`min-w-0 truncate font-semibold`}
+                        className="min-w-0 truncate font-semibold"
                         style={user.nameColor ? { color: user.nameColor } : undefined}
                       />
                       <span className="min-w-0 truncate text-sm text-slate-500">

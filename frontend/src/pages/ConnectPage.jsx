@@ -54,30 +54,22 @@ const ConnectPage = () => {
 
   // ── Mobile: shared header + tab-switched content ──────────────────────────
   return (
-    <div className="min-h-screen w-full">
-      {/*
-       * Sticky header with slide-up/down transition.
-       *
-       * transition-transform duration-300 ease-in-out  matches the sidebar's
-       * CSS transition class so both elements animate at the same speed.
-       *
-       * -translate-y-full moves the header completely out of view upward
-       * (its own height), which is what the sidebar does downward with
-       * translate-y-full.  The user sees both disappear simultaneously.
-       */}
+    <div className="min-h-screen w-full overflow-x-hidden">
       <div
         className={`sticky top-0 z-10 border-b border-accent bg-base-100/80 backdrop-blur transition-transform duration-300 ease-in-out ${
           isVisible ? "translate-y-0" : "-translate-y-full"
         }`}
       >
         {/* Row 1: back button + search */}
-        <div className="flex items-center gap-2 px-2.5 py-2">
+        <div className="flex min-w-0 items-center gap-2 overflow-x-hidden px-2.5 py-2">
           <button
             onClick={() => navigate(-1)}
-            className="flex-shrink-0 rounded-full p-2.5 transition duration-200 hover:bg-secondary/40"
+            // ADD: shrink-0 so the back button never gets squeezed
+            className="shrink-0 rounded-full p-2.5 transition duration-200 hover:bg-secondary/40"
           >
             <FaArrowLeft size={16} />
           </button>
+          {/* SearchPanel is now flex-1 + min-w-0 internally, so it fills remaining space */}
           <SearchPanel />
         </div>
 
