@@ -141,8 +141,7 @@ const Sidebar = ({
   }, [])
 
   const isOnline = authUser.statusPreference === "online"
-    const nameplateClass = getNameplateClass(authUser?.equipped?.nameplate)
-  
+  const nameplateClass = getNameplateClass(authUser?.equipped?.nameplate)
 
   const totalNotifications =
     unreadMessageCount +
@@ -221,8 +220,9 @@ const Sidebar = ({
     newVentPostCount,
     totalNotifications,
   ])
+
   const handleMobileSearchClick = () => {
-    navigate("/search")
+    navigate("/suggested-users")
   }
 
   const handleHomeClick = useCallback(() => {
@@ -445,11 +445,11 @@ const Sidebar = ({
     <>
       {
         <div
-          className={`template fixed bottom-0 left-0 z-[10] flex w-full items-center justify-around border-t border-accent bg-base-100 pt-0.5 md:sticky md:top-0 md:z-0 md:h-dvh md:flex-col md:border-r md:border-t-0 ${
+          className={`template fixed bottom-0 left-0 z-[10] flex w-full items-center justify-around border-t border-accent bg-base-100 pt-0.5 transition-transform duration-300 ease-in-out md:sticky md:top-0 md:z-0 md:h-dvh md:flex-col md:border-r md:border-t-0 ${
             shouldCollapseSidebar
-              ? "md:max-w-[60px] md:flex-[0_0_auto] md:items-center" // Collapsed State
-              : "md:max-w-[264px] md:flex-[2_2_0] md:items-start" // Expanded State
-          } ${!isMobileBarVisible ? "translate-y-full md:translate-y-0" : ""}`}
+              ? "md:max-w-[60px] md:flex-[0_0_auto] md:items-center"
+              : "md:max-w-[264px] md:flex-[2_2_0] md:items-start"
+          } ${!isMobileBarVisible ? "translate-y-full md:translate-y-0" : "translate-y-0"}`}
         >
           <div
             className={
@@ -824,12 +824,12 @@ const Sidebar = ({
           {/* User Profile and Popover (Desktop only) */}
           {authUser && (
             <div
-              className={`relative mb-3 mt-auto hidden w-full items-center justify-start  md:flex`}
+              className={`relative mb-3 mt-auto hidden w-full items-center justify-start md:flex`}
             >
               <button
                 ref={profileButtonRef}
                 onClick={togglePopover}
-                className={` hover:bg-secondary/60  transition duration-300 mr-2 flex w-full min-w-0 items-center gap-2 rounded-full px-2 py-2 ${
+                className={`mr-2 flex w-full min-w-0 items-center gap-2 rounded-full px-2 py-2 transition duration-300 hover:bg-secondary/60 ${
                   isTouchDevice && activeButtonId === "user-profile-button"
                     ? "bg-secondary bg-opacity-50 transition duration-300"
                     : "transition duration-300"

@@ -7,6 +7,7 @@ import CreatePostModal from "./features/posts/components/CreatePostModal"
 import LoadingSpinner from "./components/common/LoadingSpinner"
 import { PomodoroTimerEngine } from "./features/pomodoro/components/PomodoroTimerEngine"
 import StyleWrapper from "./features/wardrobe/StyleWrapper"
+import ConnectPage from "./pages/ConnectPage"
 // import CreateTodoListModal from "./features/todos/components/CreateTodoListModal"
 
 const ImageViewerPage = lazy(() => import("./components/common/ImageViewerPage"))
@@ -112,8 +113,11 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
               <Route path="/board/:postId" element={<BoardPage />} />
               <Route path="/wardrobe" element={<WardrobePage />} />
               <Route path="/hashtag/:tag" element={<HashtagFeedPage />} />
-              <Route path="/trending" element={<TrendingPage />} />
-              <Route path="/suggested-users" element={<SuggestedUsersPage />} />
+              {/* <Route path="/trending" element={<TrendingPage />} />
+              <Route path="/suggested-users" element={<SuggestedUsersPage />} /> */}
+
+              <Route path="/suggested-users" element={<ConnectPage />} />
+              <Route path="/trending" element={<ConnectPage />} />
 
               <Route path="/pomodoro" element={<PomodoroPage />} />
               <Route path="/study-dashboard" element={<StudyDashboardPage />} />

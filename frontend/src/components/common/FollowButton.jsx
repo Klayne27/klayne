@@ -45,7 +45,7 @@ const FollowButton = ({
 
   return (
     <button
-      className={`flex items-center justify-center rounded-full border border-accent px-[8px] py-[6px] text-sm font-medium transition duration-200 md:min-w-[90px] md:text-center ${
+      className={`flex items-center justify-center rounded-full border border-accent px-4 py-2 text-sm font-medium transition duration-200 md:min-w-[80px] md:text-center ${
         !isCurrentlyFollowing
           ? "bg-primary hover:bg-primary/80 transition duration-200"
           :

@@ -44,7 +44,7 @@ const SearchPanel = () => {
         <CiSearch className="size-5 text-gray-400" />
         <input
           type="text"
-          placeholder="Search by username or name"
+          placeholder="Search"
           className="focus:border-accent/99 z-10 grow bg-base-100 focus:outline-none"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
