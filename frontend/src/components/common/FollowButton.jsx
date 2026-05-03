@@ -30,6 +30,7 @@ const FollowButton = ({
 
   const handleFollowClick = (e) => {
     e.preventDefault()
+    e.stopPropagation()
     if (isCurrentlyFollowing) {
       if (openUnfollowModal) {
         openUnfollowModal(user)

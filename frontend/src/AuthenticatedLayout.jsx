@@ -7,7 +7,6 @@ import CreatePostModal from "./features/posts/components/CreatePostModal"
 import LoadingSpinner from "./components/common/LoadingSpinner"
 import { PomodoroTimerEngine } from "./features/pomodoro/components/PomodoroTimerEngine"
 import StyleWrapper from "./features/wardrobe/StyleWrapper"
-import ConnectPage from "./pages/ConnectPage"
 // import CreateTodoListModal from "./features/todos/components/CreateTodoListModal"
 
 const ImageViewerPage = lazy(() => import("./components/common/ImageViewerPage"))
@@ -44,6 +43,7 @@ const WardrobePage = lazy(() => import("./features/wardrobe/WardrobePage"))
 const TrendingPage = lazy(() => import("./pages/TrendingPage"))
 const SuggestedUsersPage = lazy(() => import("./pages/SuggestedUsersPage"))
 const HashtagFeedPage = lazy(() => import("./pages/HashtagFeedPage"))
+const ConnectPage = lazy(() => import("./pages/ConnectPage"))
 
 
 const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSubscribed }) => {

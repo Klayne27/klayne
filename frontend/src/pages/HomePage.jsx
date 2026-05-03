@@ -137,7 +137,7 @@ const HomePage = () => {
 
   return (
     <>
-      <div ref={mainFeedRef} className="template mr-auto min-h-screen flex-[4_4_0] border-accent">
+      <div ref={mainFeedRef} className="template mr-auto min-h-screen flex-[4_4_0] border-accent border-r">
         <div
           className={`sticky top-0 w-full ${
             showUnfollowModal ? "z-0" : "z-10"

@@ -20,9 +20,11 @@ const SuggestedUsersPage = ({ mobile = false }) => {
   const navigate = useNavigate()
   const { authUser: currentUser } = useAuthUser()
   const { follow } = useFollow()
-  const showUnfollowModal = useAppStore((s) => s.showUnfollowModal)
-  const setShowUnfollowModal = useAppStore((s) => s.setShowUnfollowModal)
+  // const showUnfollowModal = useAppStore((s) => s.showUnfollowModal)
+  // const setShowUnfollowModal = useAppStore((s) => s.setShowUnfollowModal)
   const [userToUnfollow, setUserToUnfollow] = useState(null)
+
+  const [showUnfollowModal, setShowUnfollowModal] = useState(false)
 
   const { users, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } =
     useGetSuggestedUsersInfinite()
@@ -65,7 +67,7 @@ const SuggestedUsersPage = ({ mobile = false }) => {
     <div className="min-h-screen w-full border-accent">
       {/* Header – hidden when rendered inside ConnectPage (mobile) */}
       {!mobile && (
-        <div className="sticky top-0 z-10 flex items-center gap-4 border-b border-accent bg-base-100/80 px-4 py-3 backdrop-blur">
+        <div className="z-5 sticky top-0 flex items-center gap-4 border-b border-accent bg-base-100/80 px-4 py-3 backdrop-blur">
           <button
             onClick={() => navigate(-1)}
             className="flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-secondary/40"
@@ -128,7 +130,8 @@ const SuggestedUsersPage = ({ mobile = false }) => {
             Unfollow <p>@{userToUnfollow?.username}</p>
           </>
         }
-        message="Their posts will no longer show up in your For You timeline."
+        message="Their posts will no longer show up in your For You timeline. You can still view
+          their profile, unless their posts are protected."
         confirmButtonText="Unfollow"
         onConfirm={handleConfirmUnfollow}
         onClose={closeUnfollowModal}
@@ -140,8 +143,11 @@ const SuggestedUsersPage = ({ mobile = false }) => {
 
 const SuggestedUserRow = ({ user, currentUser, isFollowing, openUnfollowModal, navigate }) => (
   <div
-    className="flex w-full items-start gap-3 px-4 py-4 transition hover:bg-secondary/30 cursor-pointer"
-    onClick={() => navigate(`/profile/${user.username}`)}
+    className="flex w-full cursor-pointer items-start gap-3 px-4 py-4 transition hover:bg-secondary/30"
+    onClick={(e) => {
+      e.stopPropagation()
+      navigate(`/profile/${user.username}`)
+    }}
   >
     <div className="mt-0.5 flex-shrink-0">
       <UserAvatar user={user} size="md" />

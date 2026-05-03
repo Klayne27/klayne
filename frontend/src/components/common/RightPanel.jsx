@@ -13,7 +13,7 @@ const RightPanel = () => {
   const showTrending =  pathname.startsWith("/trending")
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-[380px] flex-shrink-0 flex-col self-start border-l border-accent pl-7 lg:flex">
+    <aside className="sticky top-0 hidden h-screen w-[380px] flex-shrink-0 flex-col self-start pl-7 lg:flex">
       {/* ── Sticky search header — always visible at the top ── */}
       <div className="sticky top-0 z-10 bg-base-100/80 pt-1 backdrop-blur-md">
         <SearchPanel />
