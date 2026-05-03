@@ -14,8 +14,9 @@ import DropdownMenu from "../../../../components/common/DropdownMenu"
 import ConfirmationModal from "../../../../components/common/ConfirmationModal"
 import useMobileConversationLongPress from "../../../../hooks/customHooks/useMobileConversationLongPress"
 import SlideUpMenu from "../../../../components/common/SlideUpMenu"
-import { TbUser } from "react-icons/tb"
+import { TbUser, TbUserMinus } from "react-icons/tb"
 import { useDeleteGroup, useLeaveGroup } from "../groupChatHooks/useGroupMutations"
+import { useToggleConversationVisibility } from "../../private/privateChatHooks/usePrivateChatMutations"
 
 function GroupConversationItem({ conv }) {
   const { authUser: currentUser } = useAuthUser()
@@ -39,6 +40,9 @@ function GroupConversationItem({ conv }) {
     handleTouchCancel,
     isMobile,
   } = useMobileConversationLongPress()
+
+    const { toggleVisibility } = useToggleConversationVisibility()
+  
 
   const isMenuOpen = activeConversationId === conv._id
   const isSelected = selectedConversation?._id === conv._id
@@ -93,6 +97,11 @@ function GroupConversationItem({ conv }) {
     e.convId = conv._id
     handleTouchStart(e)
   }
+
+    const handleToggleHide = (e) => {
+      e.stopPropagation()
+      toggleVisibility({ conversationId: conv._id, isHiding: true })
+    }
 
   return (
     <>
@@ -151,6 +160,13 @@ function GroupConversationItem({ conv }) {
             >
               <IoSettingsOutline />
               Group settings
+            </button>
+            <button
+              className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
+              onClick={handleToggleHide}
+            >
+              <TbUserMinus />
+              Hide conversation
             </button>
             {!isOwner && (
               <button

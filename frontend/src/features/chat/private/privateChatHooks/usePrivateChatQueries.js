@@ -154,6 +154,7 @@ export const useGetOrCreateConversation = () => {
       } else {
         showAppToast("Failed to open chat: Conversation ID missing.")
       }
+      // This only runs after a successful API call (creation)
       queryClient.invalidateQueries({ queryKey: conversationKeys.list() })
     },
     onError: (error) => {
@@ -168,9 +169,15 @@ export const useGetOrCreateConversation = () => {
     name,
   } = {}) => {
     if (existingConversationId) {
+      // 1. Navigate to the chat
       navigate(`/messages/${existingConversationId}`)
+
+      // 2. CRITICAL: Manually invalidate the list so the sidebar updates
+      queryClient.invalidateQueries({ queryKey: conversationKeys.list() })
       return
     }
+
+    // Fallback to API call if no ID exists (creates the private chat)
     mutate({ targetUserId, participantIds, name })
   }
 
