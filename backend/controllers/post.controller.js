@@ -190,20 +190,13 @@ export const createReply = async (req, res) => {
     }
 
     const { isGoldVerified } = req.user;
-
     if (video && !isGoldVerified) {
       return res.status(403).json({ error: "Only Gold Verified users can post videos." });
     }
 
-    // const isOwnerReplyingAnonymously =
-    //   parent.isVent &&
-    //   parent.isAnonymous &&
-    //   parent.user._id.toString() === userId.toString();
-
     const finalIsAnonymous =
-      // isOwnerReplyingAnonymously ||
-      (parent.isVent && req.body.isAnonymous === true) || // user opted in on any vent post
-      (!parent.isVent && parent.isAnonymous && req.body.isAnonymous !== false); // old behavior for non-vent anon posts
+      (parent.isVent && req.body.isAnonymous === true) ||
+      (!parent.isVent && parent.isAnonymous && req.body.isAnonymous !== false);
 
     if (await isBlockedOrBlockedBy(userId, parent.user._id)) {
       return res
@@ -235,6 +228,9 @@ export const createReply = async (req, res) => {
 
     const mentionedUsersIds = await extractAndValidateMentions(text);
 
+    // ── Extract hashtags ───────────────────────────────────────────────────
+    const tags = extractHashtags(text);
+
     const newReply = new Post({
       user: userId,
       text,
@@ -244,11 +240,12 @@ export const createReply = async (req, res) => {
       videoPublicId,
       mediaType,
       mentionedUsers: mentionedUsersIds,
+      hashtags: tags, // ADD
       parentPost: parentId,
       publishedAt: new Date(),
       isIC: parent.isIC || isIC || false,
       isVent: parent.isVent,
-      isAnonymous: finalIsAnonymous, // ← use finalIsAnonymous
+      isAnonymous: finalIsAnonymous,
     });
 
     await newReply.save();
@@ -266,6 +263,11 @@ export const createReply = async (req, res) => {
       await newReply.save();
     }
 
+    // ── Sync hashtag counts ────────────────────────────────────────────────
+    if (tags.length) {
+      await syncHashtagCounts(tags, []);
+    }
+
     await Post.findByIdAndUpdate(parentId, { $inc: { repliesCount: 1 } });
 
     if (parent.user._id.toString() !== userId.toString()) {
@@ -274,11 +276,10 @@ export const createReply = async (req, res) => {
         to: parent.user._id,
         type: parent.parentPost === null ? "reply" : "replyReply",
         postId: newReply._id,
-        isAnonymousInteraction: finalIsAnonymous, // ← was isOwnerReplyingAnonymously
+        isAnonymousInteraction: finalIsAnonymous,
       });
     }
 
-    // Notify mentioned users (excluding the reply author and the parent owner who already got a reply notif)
     const mentionNotificationPromises = mentionedUsersIds
       .filter((mentionedId) => mentionedId.toString() !== userId.toString())
       .map((mentionedId) =>
@@ -302,7 +303,6 @@ export const createReply = async (req, res) => {
       })
       .populate({ path: "image", select: "imageUrl" });
 
-    // Replace the existing masking block:
     let finalReply = populatedReply.toObject();
 
     if (finalIsAnonymous) {

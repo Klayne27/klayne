@@ -348,7 +348,6 @@ export const useCreatePosts = () => {
         queryClient.invalidateQueries({ queryKey: postKeys.list("/api/posts/all") })
         queryClient.invalidateQueries({ queryKey: postKeys.list("/api/posts/ic") })
         queryClient.invalidateQueries({ queryKey: postKeys.list("/api/posts/following") })
-        queryClient.invalidateQueries({ queryKey: postKeys.list("/api/posts/following") })
         queryClient.invalidateQueries({ queryKey: hashtagKeys.trending() })
       }
     },
@@ -371,6 +370,7 @@ export const useCreateReply = (parentId) => {
       queryClient.invalidateQueries({ queryKey: postKeys.replies(parentId) })
       // Also invalidate the post itself so repliesCount updates
       queryClient.invalidateQueries({ queryKey: postKeys.thread(parentId) })
+      queryClient.invalidateQueries({ queryKey: hashtagKeys.trending() })
       showAppToast("Reply posted!", "success")
     },
     onError: (error) => {

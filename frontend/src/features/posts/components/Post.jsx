@@ -354,6 +354,8 @@ const Post = ({
   const isFollowingOriginalPostOwner = authUser?.following?.includes(originalPostOwner._id)
   const isBlockedByAuthUser = authUser?.blockedUsers?.includes(originalPostOwner._id)
 
+  console.log(post);
+
   return (
     <div
       className={`z-[1001] min-w-0 ${

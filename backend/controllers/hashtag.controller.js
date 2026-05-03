@@ -9,6 +9,14 @@ const POST_POPULATE = [
       "username fullName profileImg isVerified isGoldVerified isCha nameColor equipped",
     populate: { path: "profileImg", select: "imageUrl" },
   },
+  {
+    path: "parentPost",
+    populate: {
+      path: "user",
+      select:
+        "username fullName",
+    },
+  },
   { path: "image", select: "imageUrl" },
   {
     path: "repostedFrom",
@@ -59,17 +67,24 @@ export const getPanelTrendingHashtags = async (req, res) => {
 };
 
 // GET /api/hashtags/:tag/posts?cursor=&limit=
+// GET /api/hashtags/:tag/posts?cursor=&limit=&includeReplies=true
 export const getPostsByHashtag = async (req, res) => {
   try {
     const tag = req.params.tag.toLowerCase().replace(/^#/, "");
     const limit = parseInt(req.query.limit) || 12;
     const cursor = req.query.cursor;
+    // Default: top-level only. Pass ?includeReplies=true to include replies.
+    const includeReplies = req.query.includeReplies === "true";
 
     const query = {
       hashtags: tag,
-      parentPost: null,
       isScheduled: false,
     };
+
+    // Only filter out replies when not explicitly including them
+    // if (!includeReplies) {
+    //   query.parentPost = null;
+    // }
 
     if (cursor) {
       query._id = { $lt: new mongoose.Types.ObjectId(cursor) };
