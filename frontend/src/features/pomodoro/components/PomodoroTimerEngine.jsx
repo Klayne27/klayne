@@ -368,7 +368,7 @@ export const PomodoroTimerEngine = () => {
     const duration = durationAtStartRef.current
     if (!startTime || !duration) return
 
-    const elapsed = (Date.now() - startTime) / 10
+    const elapsed = (Date.now() - startTime) / 1000
     const remaining = duration - elapsed
 
     if (remaining <= 0) {
@@ -465,7 +465,7 @@ export const PomodoroTimerEngine = () => {
     }
 
     if (savedIsActive && savedStartTime && savedDurationAtStart) {
-      const elapsed = (Date.now() - savedStartTime) / 10
+      const elapsed = (Date.now() - savedStartTime) / 1000
       const remaining = savedDurationAtStart - elapsed
 
       startTimestampRef.current = savedStartTime
