@@ -49,7 +49,6 @@ const SuggestedUsersPanel = () => {
             <RightPanelSkeleton />
             <RightPanelSkeleton />
             <RightPanelSkeleton />
-            <RightPanelSkeleton />
           </div>
         )}
 
