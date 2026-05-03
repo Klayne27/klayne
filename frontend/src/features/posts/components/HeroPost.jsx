@@ -242,7 +242,7 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
           ) : (
             <Link
               to={`/profile/${originalPostOwner.username}`}
-              className="flex min-w-0 items-center gap-1 overflow-hidden truncate font-bold hover:underline"
+              className="flex min-w-0 items-center gap-1 overflow-hidden truncate font-bold"
               onMouseEnter={(e) => handleMouseEnter(originalPostOwner, e)}
               onMouseLeave={handleMouseLeave}
             >
@@ -256,8 +256,10 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
               </span> */}
               <UserFullName
                 user={originalPostOwner}
-                className={`min-w-0 truncate`}
-                style={originalPostOwner.nameColor ? { color: originalPostOwner.nameColor } : undefined}
+                className={`min-w-0 truncate hover:underline`}
+                style={
+                  originalPostOwner.nameColor ? { color: originalPostOwner.nameColor } : undefined
+                }
               />
               <span className="flex items-center">
                 {originalPostOwner.isVerified && (
@@ -284,7 +286,7 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
             ) : (
               <Link
                 to={`/profile/${originalPostOwner.username}`}
-                className="min-w-0 truncate text-sm text-slate-500 hover:underline"
+                className="min-w-0 truncate text-sm text-slate-500"
               >
                 @{originalPostOwner.username}
               </Link>

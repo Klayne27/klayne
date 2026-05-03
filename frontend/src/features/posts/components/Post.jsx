@@ -497,7 +497,7 @@ const Post = ({
                     ) : (
                       <span
                         // to={`/profile/${originalPostOwner.username}`}
-                        className="min-w-0 truncate hover:underline"
+                        className="min-w-0 truncate "
                         onClick={handleInteractiveClick}
                         data-profile-trigger="true"
                         onMouseEnter={(e) => handleMouseEnter(originalPostOwner, e)}
