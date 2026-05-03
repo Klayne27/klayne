@@ -26,10 +26,12 @@ export const useDashboardData = ({
   const chartData = useMemo(() => {
     if (!allSessions) return []
     const groupedData = {}
+
     allSessions.forEach((session) => {
       const sessionDate = new Date(session.date)
       let key
       let shouldInclude = false
+
       if (studyView === "weekly" && isThisWeek(sessionDate, { weekStartsOn: 1 })) {
         key = format(sessionDate, "EEEEEE")
         shouldInclude = true
@@ -37,61 +39,60 @@ export const useDashboardData = ({
         key = format(sessionDate, "d")
         shouldInclude = true
       } else if (studyView === "yearly" && isThisYear(sessionDate)) {
-        key = format(sessionDate, "MMMMM")
+        key = format(sessionDate, "yyyy-MM")
         shouldInclude = true
       }
+
       if (shouldInclude) {
-        if (!groupedData[key]) {
-          groupedData[key] = { name: key, time: 0 }
-        }
+        if (!groupedData[key]) groupedData[key] = { time: 0 }
         groupedData[key].time += session.duration
       }
     })
 
-    let dataArray = []
     if (studyView === "weekly") {
       const today = new Date()
       const startOfWeekDate = startOfWeek(today, { weekStartsOn: 1 })
-      const allDaysOfWeek = eachDayOfInterval({ start: startOfWeekDate, end: today })
-      dataArray = allDaysOfWeek.map((date) => {
-        const formattedDayName = format(date, "EEEEEE")
+      return eachDayOfInterval({ start: startOfWeekDate, end: today }).map((date) => {
+        const key = format(date, "EEEEEE")
         return {
-          name: formattedDayName,
+          name: key, // XAxis dataKey — unique per day of week
           tooltipName: format(date, "EEEE"),
-          time: groupedData[formattedDayName]?.time || 0,
-        }
-      })
-    } else if (studyView === "monthly") {
-      const today = new Date()
-      const startOfMonthDate = startOfMonth(today)
-      const allDaysInMonth = eachDayOfInterval({
-        start: startOfMonthDate,
-        end: today,
-      })
-
-      dataArray = allDaysInMonth.map((date) => {
-        const formattedDateName = format(date, "d")
-        return {
-          name: formattedDateName,
-          tooltipName: format(date, "MMM d"),
-          time: groupedData[formattedDateName]?.time || 0,
-        }
-      })
-    } else if (studyView === "yearly") {
-      const allMonths = eachMonthOfInterval({
-        start: startOfYear(new Date()),
-        end: new Date(),
-      })
-      dataArray = allMonths.map((monthDate) => {
-        const monthName = format(monthDate, "MMMMM")
-        return {
-          name: monthName,
-          tooltipName: format(monthDate, "MMMM"),
-          time: groupedData[monthName]?.time || 0,
+          time: groupedData[key]?.time || 0,
         }
       })
     }
-    return dataArray
+
+    if (studyView === "monthly") {
+      const today = new Date()
+      return eachDayOfInterval({ start: startOfMonth(today), end: today }).map((date) => {
+        const key = format(date, "d")
+        return {
+          name: key, // day number — unique within a month
+          tooltipName: format(date, "MMM d"),
+          time: groupedData[key]?.time || 0,
+        }
+      })
+    }
+
+    if (studyView === "yearly") {
+      return eachMonthOfInterval({ start: startOfYear(new Date()), end: new Date() }).map(
+        (monthDate) => {
+          const groupKey = format(monthDate, "yyyy-MM")
+          return {
+            // Use the full month name as `name` so recharts has a unique key
+            // per data point. The XAxis is hidden for yearly view so this
+            // never renders as a label — it only identifies the point internally.
+            name: format(monthDate, "MMMM"),
+            // Single-letter abbreviation kept for display if ever needed
+            shortName: format(monthDate, "MMMMM"),
+            tooltipName: format(monthDate, "MMMM"),
+            time: groupedData[groupKey]?.time || 0,
+          }
+        },
+      )
+    }
+
+    return []
   }, [allSessions, studyView])
 
   const todoChartData = useMemo(() => {
@@ -110,79 +111,77 @@ export const useDashboardData = ({
         key = format(todoDate, "d")
         shouldInclude = true
       } else if (todoView === "yearly" && isThisYear(todoDate)) {
-        key = format(todoDate, "MMMMM")
+        key = format(todoDate, "yyyy-MM")
         shouldInclude = true
       }
 
       if (shouldInclude) {
-        if (!groupedData[key]) {
-          groupedData[key] = { name: key, count: 0 }
-        }
+        if (!groupedData[key]) groupedData[key] = { count: 0 }
         groupedData[key].count += 1
       }
     })
 
-    let dataArray = []
     if (todoView === "weekly") {
       const today = new Date()
       const startOfWeekDate = startOfWeek(today, { weekStartsOn: 1 })
-      const allDaysOfWeek = eachDayOfInterval({ start: startOfWeekDate, end: today })
-      dataArray = allDaysOfWeek.map((date) => {
-        const formattedDayName = format(date, "EEEEEE")
+      return eachDayOfInterval({ start: startOfWeekDate, end: today }).map((date) => {
+        const key = format(date, "EEEEEE")
         return {
-          name: formattedDayName,
+          name: key,
           tooltipName: format(date, "EEEE"),
-          count: groupedData[formattedDayName]?.count || 0,
-        }
-      })
-    } else if (todoView === "monthly") {
-      const today = new Date()
-      const startOfMonthDate = startOfMonth(today)
-      const allDaysInMonth = eachDayOfInterval({
-        start: startOfMonthDate,
-        end: today,
-      })
-      dataArray = allDaysInMonth.map((date) => {
-        const formattedDateName = format(date, "d")
-        return {
-          name: formattedDateName,
-          tooltipName: format(date, "MMM d"),
-          count: groupedData[formattedDateName]?.count || 0,
-        }
-      })
-    } else if (todoView === "yearly") {
-      const allMonths = eachMonthOfInterval({
-        start: startOfYear(new Date()),
-        end: new Date(),
-      })
-      dataArray = allMonths.map((monthDate) => {
-        const monthName = format(monthDate, "MMMMM")
-        return {
-          name: monthName,
-          tooltipName: format(monthDate, "MMMM"),
-          count: groupedData[monthName]?.count || 0,
+          count: groupedData[key]?.count || 0,
         }
       })
     }
 
-    return dataArray
+    if (todoView === "monthly") {
+      const today = new Date()
+      return eachDayOfInterval({ start: startOfMonth(today), end: today }).map((date) => {
+        const key = format(date, "d")
+        return {
+          name: key,
+          tooltipName: format(date, "MMM d"),
+          count: groupedData[key]?.count || 0,
+        }
+      })
+    }
+
+    if (todoView === "yearly") {
+      return eachMonthOfInterval({ start: startOfYear(new Date()), end: new Date() }).map(
+        (monthDate) => {
+          const groupKey = format(monthDate, "yyyy-MM")
+          return {
+            name: format(monthDate, "MMMM"), // unique full name as recharts key
+            shortName: format(monthDate, "MMMMM"),
+            tooltipName: format(monthDate, "MMMM"),
+            count: groupedData[groupKey]?.count || 0,
+          }
+        },
+      )
+    }
+
+    return []
   }, [completedTodos, todoView])
+
+  // ── Goal calculations (unchanged) ─────────────────────────────────────────
 
   const studyDurationToday = useMemo(() => {
     const today = format(new Date(), "yyyy-MM-dd")
-    const totalToday = allSessions
-      ?.filter((session) => format(new Date(session.date), "yyyy-MM-dd") === today)
-      .reduce((sum, session) => sum + session.duration, 0)
-    return totalToday || 0
+    return (
+      allSessions
+        ?.filter((s) => format(new Date(s.date), "yyyy-MM-dd") === today)
+        .reduce((sum, s) => sum + s.duration, 0) || 0
+    )
   }, [allSessions])
 
   const studyDurationWeekly = useMemo(() => {
     if (!allSessions) return 0
     const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 })
-    const totalWeekly = allSessions
-      ?.filter((session) => new Date(session.date) >= weekStart)
-      .reduce((sum, session) => sum + session.duration, 0)
-    return totalWeekly || 0
+    return (
+      allSessions
+        ?.filter((s) => new Date(s.date) >= weekStart)
+        .reduce((sum, s) => sum + s.duration, 0) || 0
+    )
   }, [allSessions])
 
   const currentStudyDuration = studyGoalView === "daily" ? studyDurationToday : studyDurationWeekly
@@ -190,24 +189,18 @@ export const useDashboardData = ({
 
   const studyGoalProgress = useMemo(() => {
     if (currentStudyGoal <= 0) return 0
-    const goalInMinutes = currentStudyGoal * 60
-    return Math.min((currentStudyDuration / goalInMinutes) * 100, 100)
+    return Math.min((currentStudyDuration / (currentStudyGoal * 60)) * 100, 100)
   }, [currentStudyDuration, currentStudyGoal])
 
   const todoCounts = useMemo(() => {
     if (!completedTodos) return { daily: 0, weekly: 0 }
     const today = format(new Date(), "yyyy-MM-dd")
     const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 })
-
-    const completedDaily = completedTodos.filter(
-      (todo) => format(new Date(todo.completedAt), "yyyy-MM-dd") === today,
-    ).length
-
-    const completedWeekly = completedTodos.filter(
-      (todo) => new Date(todo.completedAt) >= weekStart,
-    ).length
-
-    return { daily: completedDaily, weekly: completedWeekly }
+    return {
+      daily: completedTodos.filter((t) => format(new Date(t.completedAt), "yyyy-MM-dd") === today)
+        .length,
+      weekly: completedTodos.filter((t) => new Date(t.completedAt) >= weekStart).length,
+    }
   }, [completedTodos])
 
   const currentTodoCount = todoGoalView === "daily" ? todoCounts.daily : todoCounts.weekly
