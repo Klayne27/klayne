@@ -4,54 +4,60 @@ import { showAppToast } from "../../../utils/showAppToast"
 import { userKeys } from "../../users/usersHooks/userKeys"
 import { pomodoroKeys } from "./pomodoroKeys"
 import { wardrobeKeys } from "../../wardrobe/wardrobeHooks"
+import { useCallback, useRef } from "react"
 
 export const useEndStudySession = () => {
   const queryClient = useQueryClient()
+  const inFlightRef = useRef(false) // ← NEW
 
-  const { mutate: endStudySession } = useMutation({
+  const { mutate: endStudySessionRaw } = useMutation({
     mutationFn: endStudySessionApi,
-    retry: 2, // 3 total attempts
+    retry: 2,
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 5000),
     onMutate: async ({ duration }) => {
       await queryClient.cancelQueries({ queryKey: userKeys.auth() })
       await queryClient.cancelQueries({ queryKey: pomodoroKeys.leaderboard })
-
       const previousAuthUser = queryClient.getQueryData(userKeys.auth())
 
       queryClient.setQueryData(userKeys.auth(), (oldUser) => {
         if (!oldUser) return oldUser
-
-        const newTotalStudyDuration = oldUser.totalStudyDuration + duration
-        const newTotalSessionsCompleted = oldUser.totalSessionsCompleted + 1
-        const newMonthlyStats = { ...oldUser.monthlyStats }
-
-        newMonthlyStats.studyDuration += duration
-        newMonthlyStats.sessionsCompleted += 1
-
         return {
           ...oldUser,
-          totalStudyDuration: newTotalStudyDuration,
-          totalSessionsCompleted: newTotalSessionsCompleted,
-          monthlyStats: newMonthlyStats,
+          totalStudyDuration: oldUser.totalStudyDuration + duration,
+          totalSessionsCompleted: oldUser.totalSessionsCompleted + 1,
+          monthlyStats: {
+            ...oldUser.monthlyStats,
+            studyDuration: oldUser.monthlyStats.studyDuration + duration,
+            sessionsCompleted: oldUser.monthlyStats.sessionsCompleted + 1,
+          },
         }
       })
-
       return { previousAuthUser }
     },
-
     onSuccess: () => {
+      inFlightRef.current = false // ← reset
       queryClient.invalidateQueries({ queryKey: userKeys.auth() })
       queryClient.invalidateQueries({ queryKey: pomodoroKeys.leaderboard })
       queryClient.invalidateQueries({ queryKey: wardrobeKeys.inventory() })
     },
-
     onError: (error, variables, context) => {
+      inFlightRef.current = false // ← reset
       if (context?.previousAuthUser) {
         queryClient.setQueryData(userKeys.auth(), context.previousAuthUser)
       }
-      showAppToast(error.message, "error")
+      // Don't toast here — handleSessionEnd already shows "Continuing..." toast
     },
   })
+
+  // Wrap mutate to prevent duplicate fires for the same session
+  const endStudySession = useCallback(
+    (variables, options) => {
+      if (inFlightRef.current) return // ← already in-flight, skip
+      inFlightRef.current = true
+      endStudySessionRaw(variables, options)
+    },
+    [endStudySessionRaw],
+  )
 
   return { endStudySession }
 }

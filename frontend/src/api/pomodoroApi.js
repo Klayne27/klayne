@@ -36,15 +36,16 @@ export const updatePomodoroSettingsApi = async (settings) => {
 //   return res.json()
 // }
 
-export const endStudySessionApi = async ({duration}) => {
+export const endStudySessionApi = async ({ duration, taskId }) => {
+  // ← destructure taskId
   const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), 10_000) // 10s max per attempt
+  const timeoutId = setTimeout(() => controller.abort(), 10_000)
 
   try {
     const res = await fetch(`${BASE_URL}/session/end`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({duration}),
+      body: JSON.stringify({ duration, taskId }), // ← include taskId
       signal: controller.signal,
     })
     clearTimeout(timeoutId)

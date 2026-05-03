@@ -37,6 +37,8 @@ export const PomodoroTimerEngine = () => {
   const isEndingSessionRef = useRef(false)
   const alarmAudioRef = useRef(null)
   const breakEndAudioRef = useRef(null)
+  const sessionHandledRef = useRef(false) // ← NEW: prevents safety valve + mutation double-fire
+  const resumeDebounceRef = useRef(null) // ← NEW: prevents rapid visibilitychange double-fire
 
   // ── Snapshot of session duration locked in at START time ─────────────────
   // This is the fix for the settings-change bug. We capture sessionDuration
@@ -76,6 +78,13 @@ export const PomodoroTimerEngine = () => {
   useEffect(() => {
     const handleResume = () => {
       if (!isActiveRef.current || isGoalReachedRef.current) return
+
+      // Debounce: ignore rapid back-to-back fires (e.g. tab switching)
+      if (resumeDebounceRef.current) return
+      resumeDebounceRef.current = setTimeout(() => {
+        resumeDebounceRef.current = null
+      }, 300)
+
       processTickRef.current()
       if (workerRef.current) {
         workerRef.current.postMessage({ type: "STOP" })
@@ -86,7 +95,6 @@ export const PomodoroTimerEngine = () => {
       }
     }
 
-    // Store named wrappers so removeEventListener can match them
     const onVisibilityChange = () => {
       if (document.visibilityState === "visible") handleResume()
     }
@@ -99,6 +107,7 @@ export const PomodoroTimerEngine = () => {
       document.removeEventListener("visibilitychange", onVisibilityChange)
       window.removeEventListener("focus", handleResume)
       window.removeEventListener("pageshow", handleResume)
+      if (resumeDebounceRef.current) clearTimeout(resumeDebounceRef.current)
     }
   }, [])
 
@@ -156,29 +165,29 @@ export const PomodoroTimerEngine = () => {
     }
   }, [timer, isActive, isBreak, isGoalReached, isInitialized])
 
-const playAlarm = useCallback(() => {
-  const s = settingsRef.current
-  if (s && !s.isMuted && alarmAudioRef.current) {
-    alarmAudioRef.current.currentTime = 0
-    alarmAudioRef.current.play().catch(() => {})
-  }
-
-  try {
-    if (typeof Notification !== "undefined" && Notification.permission === "granted") {
-      if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.ready.then((reg) => {
-          reg
-            .showNotification("Pomodoro", { body: "Session complete! Time for a break." })
-            .catch((e) => console.warn(e))
-        })
-      } else {
-        new Notification("Pomodoro", { body: "Session complete! Time for a break." })
-      }
+  const playAlarm = useCallback(() => {
+    const s = settingsRef.current
+    if (s && !s.isMuted && alarmAudioRef.current) {
+      alarmAudioRef.current.currentTime = 0
+      alarmAudioRef.current.play().catch(() => {})
     }
-  } catch (error) {
-    console.warn("PWA Notification blocked:", error)
-  }
-}, [])
+
+    try {
+      if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+        if ("serviceWorker" in navigator) {
+          navigator.serviceWorker.ready.then((reg) => {
+            reg
+              .showNotification("Pomodoro", { body: "Session complete! Time for a break." })
+              .catch((e) => console.warn(e))
+          })
+        } else {
+          new Notification("Pomodoro", { body: "Session complete! Time for a break." })
+        }
+      }
+    } catch (error) {
+      console.warn("PWA Notification blocked:", error)
+    }
+  }, [])
 
   // ── startNextTimer ────────────────────────────────────────────────────────
   const startNextTimer = useCallback(
@@ -222,115 +231,130 @@ const playAlarm = useCallback(() => {
     [setTimer, setIsBreak, setSessionCount, setIsGoalReached, setIsActive, persistNextPhase],
   )
 
-  // ── handleSessionEnd ──────────────────────────────────────────────────────
-const handleSessionEnd = useCallback(() => {
-  if (isEndingSessionRef.current) return
-  const s = settingsRef.current
-  if (!s) return
+  // ── handleSessionEnd — the main fix ──────────────────────────────────────────
+  const handleSessionEnd = useCallback(() => {
+    if (isEndingSessionRef.current) return
+    const s = settingsRef.current
+    if (!s) return
 
-  isEndingSessionRef.current = true
-  setIsActive(false)
+    isEndingSessionRef.current = true
+    sessionHandledRef.current = false // ← reset for this session end cycle
+    setIsActive(false)
 
-  if (sessionEndTimeoutRef.current) clearTimeout(sessionEndTimeoutRef.current)
+    if (sessionEndTimeoutRef.current) clearTimeout(sessionEndTimeoutRef.current)
 
-  const currentIsBreak = isBreakRef.current
-  const currentSessionCount = sessionCountRef.current
-  const currentSelectedTaskId = selectedTaskIdRef.current
-  const loggedDuration = Math.round(committedSessionDurationRef.current ?? s.sessionDuration)
+    const currentIsBreak = isBreakRef.current
+    const currentSessionCount = sessionCountRef.current
+    const currentSelectedTaskId = selectedTaskIdRef.current
+    const loggedDuration = Math.round(committedSessionDurationRef.current ?? s.sessionDuration)
 
-  // Safety valve — if API never responds, still advance so user isn't stuck
-  sessionEndTimeoutRef.current = setTimeout(() => {
-    if (!isEndingSessionRef.current) return
-    isEndingSessionRef.current = false
-    showAppToast("Session may not have saved. Check your connection.", "warning")
-    const nextCount = currentIsBreak ? currentSessionCount : currentSessionCount + 1
-    const nextIsBreak = !currentIsBreak && !s.skipBreaks
-    startNextTimer(s.autoplay, nextCount, nextIsBreak)
-  }, 15_000) // 15s covers 2 retries × ~5s each with some buffer
+    // Safety valve — fires if API never responds within 35s (covers 3 retries × ~10s + delays)
+    sessionEndTimeoutRef.current = setTimeout(() => {
+      if (sessionHandledRef.current) return // ← mutation already resolved, bail out
+      if (!isEndingSessionRef.current) return
 
-  setTimeout(() => {
-    if (!currentIsBreak) {
-      playAlarm()
-      const newSessionCount = currentSessionCount + 1
-      const isGoalMet = s.sessionGoalCount > 0 && newSessionCount >= s.sessionGoalCount
-      const xpMultiplier = loggedDuration >= 120 ? 40 : loggedDuration >= 60 ? 30 : 20
-      const calculatedXp = loggedDuration * xpMultiplier
-
-      endStudySession(
-        { duration: loggedDuration, taskId: currentSelectedTaskId },
-        {
-          onSuccess: (data) => {
-            clearTimeout(sessionEndTimeoutRef.current)
-            isEndingSessionRef.current = false
-
-            setXpGainedAmount(calculatedXp)
-            setShowXpGain(true)
-            setTimeout(() => setShowXpGain(false), 2000)
-
-            if (data.newUnlocks?.length > 0) {
-              data.newUnlocks.forEach((itemKey) => {
-                const config = WARDROBE_CONFIG[itemKey]
-                if (config) showAppToast(`🎁 Unlocked: ${config.label}!`, "success")
-              })
-            }
-
-            if (data?.xpResult?.levelsGained?.length > 0) {
-              const milestoneLevelReached = Math.max(
-                ...data.xpResult.levelsGained.filter((level) => level % 10 === 0),
-              )
-              if (milestoneLevelReached > 0) {
-                usePomodoroTimerStore.getState().setMilestoneLevel(milestoneLevelReached)
-                usePomodoroTimerStore.getState().setShowShareModal(true)
-              } else {
-                showAppToast(`You leveled up to Level ${data.xpResult.finalLevel}! 🎉`, "success")
-              }
-            }
-
-            if (isGoalMet) {
-              showAppToast(`Goal of ${s.sessionGoalCount} sessions reached! 🎉`, "success")
-              setTimer(0)
-              setSessionCount(newSessionCount)
-              setIsGoalReached(true)
-              localStorage.setItem(STORAGE_KEYS.GOAL_REACHED, "true")
-              localStorage.setItem(STORAGE_KEYS.SESSION_COUNT, String(newSessionCount))
-              localStorage.setItem(STORAGE_KEYS.ACTIVE, "false")
-              isEndingSessionRef.current = false
-              return
-            }
-
-            startNextTimer(s.autoplay, newSessionCount, !s.skipBreaks)
-          },
-          onError: (err) => {
-            clearTimeout(sessionEndTimeoutRef.current)
-            isEndingSessionRef.current = false
-            showAppToast("Session may not have saved. Continuing...", "warning")
-            // Still advance — user should not be stuck because of a network failure
-            if (!isGoalMet) {
-              startNextTimer(s.autoplay, newSessionCount, !s.skipBreaks)
-            }
-          },
-        },
-      )
-    } else {
-      if (!s.isMuted && breakEndAudioRef.current) {
-        breakEndAudioRef.current.play().catch(() => {})
-      }
-      clearTimeout(sessionEndTimeoutRef.current)
+      sessionHandledRef.current = true // ← mark handled before advancing
       isEndingSessionRef.current = false
-      startNextTimer(s.autoplay, currentSessionCount, false)
-    }
-  }, 1)
-}, [
-  setIsActive,
-  setTimer,
-  setSessionCount,
-  setIsGoalReached,
-  playAlarm,
-  endStudySession,
-  startNextTimer,
-  setXpGainedAmount,
-  setShowXpGain,
-])
+      showAppToast("Session may not have saved. Check your connection.", "warning")
+
+      const nextCount = currentIsBreak ? currentSessionCount : currentSessionCount + 1
+      const nextIsBreak = !currentIsBreak && !s.skipBreaks
+      startNextTimer(s.autoplay, nextCount, nextIsBreak)
+    }, 35_000) // ← raised from 15s to cover all retry attempts
+
+    setTimeout(() => {
+      if (!currentIsBreak) {
+        playAlarm()
+        const newSessionCount = currentSessionCount + 1
+        const isGoalMet = s.sessionGoalCount > 0 && newSessionCount >= s.sessionGoalCount
+        const xpMultiplier = loggedDuration >= 120 ? 40 : loggedDuration >= 60 ? 30 : 20
+        const calculatedXp = loggedDuration * xpMultiplier
+
+        endStudySession(
+          { duration: loggedDuration, taskId: currentSelectedTaskId },
+          {
+            onSuccess: (data) => {
+              clearTimeout(sessionEndTimeoutRef.current)
+
+              // ── KEY FIX: if safety valve already fired, don't advance again ──
+              if (sessionHandledRef.current) return
+              sessionHandledRef.current = true
+              isEndingSessionRef.current = false
+              // ─────────────────────────────────────────────────────────────────
+
+              setXpGainedAmount(calculatedXp)
+              setShowXpGain(true)
+              setTimeout(() => setShowXpGain(false), 2000)
+
+              if (data.newUnlocks?.length > 0) {
+                data.newUnlocks.forEach((itemKey) => {
+                  const config = WARDROBE_CONFIG[itemKey]
+                  if (config) showAppToast(`🎁 Unlocked: ${config.label}!`, "success")
+                })
+              }
+
+              if (data?.xpResult?.levelsGained?.length > 0) {
+                const milestoneLevelReached = Math.max(
+                  ...data.xpResult.levelsGained.filter((l) => l % 10 === 0),
+                )
+                if (milestoneLevelReached > 0) {
+                  usePomodoroTimerStore.getState().setMilestoneLevel?.(milestoneLevelReached)
+                  usePomodoroTimerStore.getState().setShowShareModal?.(true)
+                } else {
+                  showAppToast(`You leveled up to Level ${data.xpResult.finalLevel}! 🎉`, "success")
+                }
+              }
+
+              if (isGoalMet) {
+                showAppToast(`Goal of ${s.sessionGoalCount} sessions reached! 🎉`, "success")
+                setTimer(0)
+                setSessionCount(newSessionCount)
+                setIsGoalReached(true)
+                localStorage.setItem(STORAGE_KEYS.GOAL_REACHED, "true")
+                localStorage.setItem(STORAGE_KEYS.SESSION_COUNT, String(newSessionCount))
+                localStorage.setItem(STORAGE_KEYS.ACTIVE, "false")
+                return
+              }
+
+              startNextTimer(s.autoplay, newSessionCount, !s.skipBreaks)
+            },
+            onError: (err) => {
+              clearTimeout(sessionEndTimeoutRef.current)
+
+              // ── KEY FIX: if safety valve already fired, don't double-advance ──
+              if (sessionHandledRef.current) return
+              sessionHandledRef.current = true
+              isEndingSessionRef.current = false
+              // ──────────────────────────────────────────────────────────────────
+
+              showAppToast("Session may not have saved. Continuing...", "warning")
+              if (!isGoalMet) {
+                startNextTimer(s.autoplay, newSessionCount, !s.skipBreaks)
+              }
+            },
+          },
+        )
+      } else {
+        if (!s.isMuted && breakEndAudioRef.current) {
+          breakEndAudioRef.current.play().catch(() => {})
+        }
+        clearTimeout(sessionEndTimeoutRef.current)
+        // Break ends don't need the sessionHandledRef guard — no API call involved
+        isEndingSessionRef.current = false
+        startNextTimer(s.autoplay, currentSessionCount, false)
+      }
+    }, 1)
+  }, [
+    setIsActive,
+    setTimer,
+    setSessionCount,
+    setIsGoalReached,
+    playAlarm,
+    endStudySession,
+    startNextTimer,
+    setXpGainedAmount,
+    setShowXpGain,
+  ])
 
   // ── Keep handleSessionEnd ref current so processTick never goes stale ─────
   const handleSessionEndRef = useRef(handleSessionEnd)
@@ -344,7 +368,7 @@ const handleSessionEnd = useCallback(() => {
     const duration = durationAtStartRef.current
     if (!startTime || !duration) return
 
-    const elapsed = (Date.now() - startTime) / 1000
+    const elapsed = (Date.now() - startTime) / 10
     const remaining = duration - elapsed
 
     if (remaining <= 0) {
@@ -441,7 +465,7 @@ const handleSessionEnd = useCallback(() => {
     }
 
     if (savedIsActive && savedStartTime && savedDurationAtStart) {
-      const elapsed = (Date.now() - savedStartTime) / 1000
+      const elapsed = (Date.now() - savedStartTime) / 10
       const remaining = savedDurationAtStart - elapsed
 
       startTimestampRef.current = savedStartTime
@@ -466,23 +490,24 @@ const handleSessionEnd = useCallback(() => {
   }, [isSettingsLoading, settings, isInitialized])
 
   // ── Register engine actions into the store ────────────────────────────────
-useEffect(() => {
-  setEngineActions({
-    startNextTimer,
-    handleSessionEnd,
-    startTimestampRef,
-    durationAtStartRef,
-    committedSessionDurationRef,
-    isEndingSessionRef,
-    // Closes over the engine's actual refs — bypasses any store ref identity concerns
-    forceEnd: () => {
-      isEndingSessionRef.current = false
-      if (sessionEndTimeoutRef.current) clearTimeout(sessionEndTimeoutRef.current)
-      handleSessionEndRef.current()
-    },
-  })
-  return () => setEngineActions(null)
-}, [startNextTimer, handleSessionEnd, setEngineActions])
+  useEffect(() => {
+    setEngineActions({
+      startNextTimer,
+      handleSessionEnd,
+      startTimestampRef,
+      durationAtStartRef,
+      committedSessionDurationRef,
+      isEndingSessionRef,
+      // Closes over the engine's actual refs — bypasses any store ref identity concerns
+      forceEnd: () => {
+        sessionHandledRef.current = false // ← reset so the forced end can proceed
+        isEndingSessionRef.current = false
+        if (sessionEndTimeoutRef.current) clearTimeout(sessionEndTimeoutRef.current)
+        handleSessionEndRef.current()
+      },
+    })
+    return () => setEngineActions(null)
+  }, [startNextTimer, handleSessionEnd, setEngineActions])
 
   return null
 }
