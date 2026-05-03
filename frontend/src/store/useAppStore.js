@@ -8,6 +8,9 @@ const createModalSlice = (set) => ({
   showCreatePostModal: false,
   showEditPostModal: false,
   editPostModalData: null,
+  showResults: false,
+
+  setShowResults: (show) => set({showResults: show}),
 
   openImageModal: (imageUrl) => set({ selectedImage: imageUrl }),
   closeImageModal: () => set({ selectedImage: null }),

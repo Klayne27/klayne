@@ -5,76 +5,64 @@ import TrendingPage from "./TrendingPage"
 import SuggestedUsersPage from "./SuggestedUsersPage"
 import SearchPanel from "../components/common/SearchPanel"
 import { FaArrowLeft } from "react-icons/fa"
+import { useAppStore } from "../store/useAppStore"
 
 const ConnectPage = () => {
   const isMobile = useIsMobile()
   const navigate = useNavigate()
   const { pathname } = useLocation()
-
   const activeTab = pathname.startsWith("/trending") ? "trending" : "people"
 
-  // ── Scroll-hide logic ─────────────────────────────────────────────────────
-  // Must exactly mirror the sidebar's scroll handler so both elements animate
-  // in sync:
-  //   • hide when scrolling DOWN past 50 px from the top
-  //   • show when scrolling UP (any amount)
-  //   • always show when within 50 px of the top (matches sidebar threshold)
+  const setShowResults = useAppStore((s) => s.setShowResults)
+
   const [isVisible, setIsVisible] = useState(true)
   const lastScrollY = useRef(0)
 
   useEffect(() => {
-    if (!isMobile) return // desktop — header is always visible
-
+    if (!isMobile) return
     const handleScroll = () => {
       const currentScrollY = window.scrollY
-
       if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
-        // Scrolling down past threshold → hide (matches sidebar: currentScrollY > 50)
         setIsVisible(false)
+        setShowResults(false)
       } else if (currentScrollY < lastScrollY.current) {
-        // Scrolling up → show
         setIsVisible(true)
       }
-      // No update when scrollY === lastScrollY (momentum micro-jitter)
-
       lastScrollY.current = currentScrollY
     }
-
-    // Initialise ref so the first scroll event has a correct baseline
-    lastScrollY.current = window.scrollY
-
     window.addEventListener("scroll", handleScroll, { passive: true })
     return () => window.removeEventListener("scroll", handleScroll)
-  }, [isMobile])
+  }, [isMobile, setShowResults])
 
-  // ── Desktop: render the individual page directly (no tab chrome) ──────────
   if (!isMobile) {
     return activeTab === "trending" ? <TrendingPage /> : <SuggestedUsersPage />
   }
 
-  // ── Mobile: shared header + tab-switched content ──────────────────────────
   return (
-    <div className="min-h-screen w-full overflow-x-hidden">
+    <div className="min-h-screen w-full">
       <div
-        className={`sticky top-0 z-10 border-b border-accent bg-base-100/80 backdrop-blur transition-transform duration-300 ease-in-out ${
+        className={`sticky top-0 z-50 border-b border-accent bg-base-100/80 backdrop-blur transition-transform duration-300 ease-in-out ${
           isVisible ? "translate-y-0" : "-translate-y-full"
         }`}
       >
-        {/* Row 1: back button + search */}
-        <div className="flex min-w-0 items-center gap-2 overflow-x-hidden px-2.5 py-2">
+        {/* Row 1: Back button + Search */}
+        {/* REMOVED: overflow-x-hidden (This was clipping your dropdown) */}
+        <div className="relative z-30 flex items-center gap-2 px-2.5 py-2">
           <button
             onClick={() => navigate(-1)}
-            // ADD: shrink-0 so the back button never gets squeezed
-            className="shrink-0 rounded-full p-2.5 transition duration-200 hover:bg-secondary/40"
+            className="flex-shrink-0 rounded-full p-2 transition duration-200 hover:bg-secondary/40"
           >
-            <FaArrowLeft size={16} />
+            <FaArrowLeft size={18} />
           </button>
-          {/* SearchPanel is now flex-1 + min-w-0 internally, so it fills remaining space */}
-          <SearchPanel />
+
+          {/* SearchPanel is flex-1 and min-w-0 to stay within bounds */}
+          <div className="min-w-0 flex-1">
+            <SearchPanel />
+          </div>
         </div>
 
-        {/* Row 2: tabs — same style as HomePage */}
-        <div className="flex">
+        {/* Row 2: Tabs */}
+        <div className="relative z-20 flex bg-transparent">
           <button
             className={`relative flex flex-1 items-center justify-center py-3 text-sm transition hover:bg-secondary/30 ${
               activeTab === "people" ? "font-bold" : "text-base-content/50"
@@ -101,8 +89,9 @@ const ConnectPage = () => {
         </div>
       </div>
 
-      {/* Tab content */}
-      {activeTab === "people" ? <SuggestedUsersPage mobile /> : <TrendingPage mobile />}
+      <div className="flex flex-col">
+        {activeTab === "people" ? <SuggestedUsersPage mobile /> : <TrendingPage mobile />}
+      </div>
     </div>
   )
 }

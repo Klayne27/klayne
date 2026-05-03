@@ -32,7 +32,7 @@ const ProfilePage = lazy(() => import("./pages/ProfilePage"))
 const NotificationPage = lazy(() => import("./pages/NotifcationPage"))
 const PrivateChatPage = lazy(() => import("./pages/chat/PrivateChatPage"))
 const PostPage = lazy(() => import("./pages/PostPage"))
-const SearchPage = lazy(() => import("./pages/SearchPage"))
+// const SearchPage = lazy(() => import("./pages/SearchPage"))
 const TodoPageLayout = lazy(() => import("./pages/todos/TodoPageLayout"))
 const DevlogPage = lazy(() => import("./pages/DevlogPage"))
 const DevlogDetailPage = lazy(() => import("./pages/DevlogDetailPage"))
@@ -106,7 +106,7 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
               <Route path="/bookmarks" element={<BookmarksPage />} />
               <Route path="/themes" element={<ThemesPage />} />
               <Route path="/:username/post/:pid" element={<PostPage />} />
-              <Route path="/search" element={<SearchPage />} />
+              {/* <Route path="/search" element={<SearchPage />} /> */}
               <Route path="/devlog" element={<DevlogPage />} />
               <Route path="/devlog/:id" element={<DevlogDetailPage />} />
               <Route path="/board" element={<BoardPage />} />
