@@ -1455,7 +1455,7 @@
     transparent 70%
   );
   mask-image: radial-gradient(ellipse 200px 150px at 83% 50%, white 10%, transparent 70%);
-  animation: np-moth-wings 5.5s ease-in-out infinite alternate;
+  /* animation: np-moth-wings 5.5s ease-in-out infinite alternate; */
 }
 @keyframes np-moth-bg {
   0% {
