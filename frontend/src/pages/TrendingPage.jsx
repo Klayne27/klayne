@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom"
+import { useLocation, useNavigate } from "react-router-dom"
 import { IoArrowBack } from "react-icons/io5"
 import { useGetTrendingHashtags } from "../features/hashtag/useHashtagQueries"
 import LoadingSpinner from "../components/common/LoadingSpinner"
@@ -12,6 +12,13 @@ const FULL_PAGE_LIMIT = 25
 const TrendingPage = ({ mobile = false }) => {
   const navigate = useNavigate()
   const { data: tags, isLoading, isError } = useGetTrendingHashtags(FULL_PAGE_LIMIT)
+  const { pathname } = useLocation()
+
+  const navigateToHashtag = (itemTag) => {
+    if (pathname.includes(`/hashtag/${itemTag}`)) return
+
+    navigate(`/hashtag/${itemTag}`)
+  }
 
   return (
     <div className="min-h-screen w-full border-accent md:border-r">
@@ -53,7 +60,7 @@ const TrendingPage = ({ mobile = false }) => {
         {tags?.map((item) => (
           <button
             key={item.tag}
-            onClick={() => navigate(`/hashtag/${item.tag}`)}
+            onClick={() => navigateToHashtag(item.tag)}
             className="group flex w-full flex-col items-start px-4 py-3 transition hover:bg-secondary/30"
           >
             <span className="text-[14px] font-bold text-base-content">#{item.tag}</span>

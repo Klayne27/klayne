@@ -1,5 +1,8 @@
-import { useNavigate } from "react-router-dom"
-import { useGetPanelTrending, useGetTrendingHashtags } from "../../features/hashtag/useHashtagQueries"
+import { useLocation, useNavigate } from "react-router-dom"
+import {
+  useGetPanelTrending,
+  useGetTrendingHashtags,
+} from "../../features/hashtag/useHashtagQueries"
 import RightPanelSkeleton from "../skeletons/RightPanelSkeleton"
 import { HiDotsHorizontal } from "react-icons/hi" // Closer to X's "more" icon
 import TrendingSkeleton from "../skeletons/TrendingSkeleton"
@@ -7,6 +10,13 @@ import TrendingSkeleton from "../skeletons/TrendingSkeleton"
 const TrendingTagsPanel = () => {
   const navigate = useNavigate()
   const { data: tags, isLoading } = useGetPanelTrending() // Use the new hook
+  const { pathname } = useLocation()
+
+  const navigateToHashtag = (itemTag) => {
+    if (pathname.includes(`/hashtag/${itemTag}`)) return
+
+    navigate(`/hashtag/${itemTag}`)
+  }
 
   if (isLoading) {
     return (
@@ -24,13 +34,13 @@ const TrendingTagsPanel = () => {
   if (!tags?.length) return null
 
   return (
-    <div className="mt-3 mb-4  rounded-2xl border border-accent pt-4">
+    <div className="mb-4 mt-3 rounded-2xl border border-accent pt-4">
       <h2 className="mb-3 px-4 text-xl font-bold">What's happening</h2>
       <div className="flex flex-col">
         {tags.map((item) => (
           <button
             key={item.tag}
-            onClick={() => navigate(`/hashtag/${item.tag}`)}
+            onClick={() => navigateToHashtag(item.tag)}
             className="group flex w-full flex-col px-4 py-2 transition hover:bg-secondary/20"
           >
             <p className="mt-0.5 text-left text-[15px] font-bold text-base-content">#{item.tag}</p>

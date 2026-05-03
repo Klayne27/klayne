@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import RightPanelSkeleton from "../skeletons/RightPanelSkeleton"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { BiRefresh } from "react-icons/bi"
@@ -22,6 +22,8 @@ const SuggestedUsersPanel = () => {
   const { authUser: currentUser } = useAuthUser()
   const [userToUnfollow, setUserToUnfollow] = useState(null)
 
+  const { pathname } = useLocation()
+
   const openUnfollowModal = (user) => {
     setUserToUnfollow(user)
     setShowUnfollowModal(true)
@@ -35,6 +37,12 @@ const SuggestedUsersPanel = () => {
       follow(userToUnfollow._id)
       closeUnfollowModal()
     }
+  }
+
+  const handleNavigate = (e) => {
+    if (pathname === "/suggested-users") return
+
+    navigate("/suggested-users")
   }
 
   if (!isLoading && !isRefetching && suggestedUsers?.length === 0) return null
@@ -116,8 +124,8 @@ const SuggestedUsersPanel = () => {
 
         {/* ── Show more → full page ── */}
         <button
-          onClick={() => navigate("/suggested-users")}
-          className="mt-1 py-4 flex justify-start px-4 text-sm  text-primary transition hover:bg-secondary/30"
+          onClick={handleNavigate}
+          className="mt-1 flex justify-start px-4 py-4 text-sm text-primary transition hover:bg-secondary/30"
         >
           Show more
         </button>
