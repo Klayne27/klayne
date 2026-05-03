@@ -336,7 +336,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     <>
       <ScrollToTop />
       <div
-        className={`template min-h-screen min-w-0 flex-[4_4_0] overflow-hidden border-accent ${WARDROBE_CONFIG[userProfile?.equipped?.fonts] || ""} ${userProfile?.equipped?.theme ? "custom-gradient-bg" : ""}`}
+        className={`template min-h-screen min-w-0 md:border-r flex-[4_4_0] overflow-hidden border-accent ${WARDROBE_CONFIG[userProfile?.equipped?.fonts] || ""} ${userProfile?.equipped?.theme ? "custom-gradient-bg" : ""}`}
         style={{
           ...fontVars,
           ...themeVars,
