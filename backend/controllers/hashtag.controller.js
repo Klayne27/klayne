@@ -6,7 +6,7 @@ const POST_POPULATE = [
   {
     path: "user",
     select:
-      "username fullName profileImg isVerified isGoldVerified isCha badges preferredBadge nameColor equipped",
+      "username fullName profileImg isVerified isGoldVerified isCha nameColor equipped",
     populate: { path: "profileImg", select: "imageUrl" },
   },
   { path: "image", select: "imageUrl" },
@@ -16,7 +16,7 @@ const POST_POPULATE = [
       {
         path: "user",
         select:
-          "username fullName profileImg isVerified isGoldVerified nameColor equipped",
+          "username fullName profileImg isVerified isGoldVerified isCha nameColor equipped",
         populate: { path: "profileImg", select: "imageUrl" },
       },
       { path: "image", select: "imageUrl" },
@@ -62,7 +62,7 @@ export const getPanelTrendingHashtags = async (req, res) => {
 export const getPostsByHashtag = async (req, res) => {
   try {
     const tag = req.params.tag.toLowerCase().replace(/^#/, "");
-    const limit = Math.min(parseInt(req.query.limit) || 20, 50);
+    const limit = parseInt(req.query.limit) || 12;
     const cursor = req.query.cursor;
 
     const query = {

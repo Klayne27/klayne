@@ -21,6 +21,7 @@ import { showAppToast } from "../../../utils/showAppToast"
 import { useLocation, useNavigate, useParams } from "react-router-dom"
 import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 import { userKeys } from "../../users/usersHooks/userKeys"
+import { hashtagKeys } from "../../hashtag/hashtagKeys"
 
 const POST_NAMESPACES = ["posts", "hashtags"]
 
@@ -347,6 +348,8 @@ export const useCreatePosts = () => {
         queryClient.invalidateQueries({ queryKey: postKeys.list("/api/posts/all") })
         queryClient.invalidateQueries({ queryKey: postKeys.list("/api/posts/ic") })
         queryClient.invalidateQueries({ queryKey: postKeys.list("/api/posts/following") })
+        queryClient.invalidateQueries({ queryKey: postKeys.list("/api/posts/following") })
+        queryClient.invalidateQueries({ queryKey: hashtagKeys.trending() })
       }
     },
     onError: (error) => {
