@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom"
 import { useGetPanelTrending, useGetTrendingHashtags } from "../../features/hashtag/useHashtagQueries"
 import RightPanelSkeleton from "../skeletons/RightPanelSkeleton"
 import { HiDotsHorizontal } from "react-icons/hi" // Closer to X's "more" icon
+import TrendingSkeleton from "../skeletons/TrendingSkeleton"
 
 const TrendingTagsPanel = () => {
   const navigate = useNavigate()
@@ -9,11 +10,11 @@ const TrendingTagsPanel = () => {
 
   if (isLoading) {
     return (
-      <div className="mt-4 rounded-2xl border border-accent pt-4">
+      <div className="mb-4 mt-3 rounded-2xl border border-accent pt-4">
         <p className="mb-4 px-4 text-xl font-bold">What's happening</p>
-        <div className="mb-4 flex flex-col gap-6 px-4">
+        <div className="mb-8 flex flex-col gap-6 px-4">
           {[...Array(4)].map((_, i) => (
-            <RightPanelSkeleton key={i} />
+            <TrendingSkeleton key={i} />
           ))}
         </div>
       </div>
