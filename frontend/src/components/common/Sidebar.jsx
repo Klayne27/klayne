@@ -445,7 +445,7 @@ const Sidebar = ({
     <>
       {
         <div
-          className={`template fixed bottom-0 left-0 z-[10] flex w-full items-center justify-around border-t border-accent bg-base-100 pt-0.5 transition-transform duration-300 ease-in-out md:sticky md:top-0 md:z-0 md:h-dvh md:flex-col  md:border-t-0 ${
+          className={`template fixed bottom-0 left-0 z-[10] flex w-full items-center justify-around border-t border-accent bg-base-100 pt-0.5 transition-transform duration-300 ease-in-out md:sticky md:top-0 md:z-0 md:h-dvh md:flex-col md:border-t-0 ${
             shouldCollapseSidebar
               ? "md:max-w-[60px] md:flex-[0_0_auto] md:items-center"
               : "md:max-w-[264px] md:flex-[2_2_0] md:items-start"
@@ -464,7 +464,7 @@ const Sidebar = ({
           <div
             to="/"
             onClick={handleHomeClick}
-            className={`hidden h-12 w-auto cursor-pointer justify-start rounded-full fill-primary p-1.5 ${shouldCollapseSidebar ? "mr-1" : ""} hover:bg-secondary md:flex ${
+            className={`hidden h-12 w-auto cursor-pointer justify-start rounded-full fill-primary p-1.5 ${shouldCollapseSidebar ? "mr-1.5" : ""} hover:bg-secondary md:flex ${
               isTouchDevice && activeButtonId === "k-logo"
                 ? "bg-secondary bg-opacity-50 transition duration-150"
                 : ""
@@ -853,8 +853,7 @@ const Sidebar = ({
 
                 {!shouldCollapseSidebar && (
                   <div className="flex min-w-0 flex-1 items-center justify-between">
-                    {/* Changed items-center to items-start to align text to the left */}
-                    <div className="flex min-w-0 flex-col items-start overflow-hidden">
+                    <div className="flex min-w-0 flex-col items-start overflow-hidden leading-none">
                       <p>
                         <UserFullName
                           user={authUser}
