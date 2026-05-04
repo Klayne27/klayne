@@ -23,6 +23,7 @@ import devlogRoutes from "./routes/devlog.routes.js";
 import boardRoutes from "./routes/board.routes.js";
 import wardrobeRoutes from "./routes/wardrobe.routes.js";
 import hashtagRoutes from "./routes/hashtag.routes.js";
+import suggestionRoutes from "./routes/suggestion.routes.js";
 
 import connectMongoDB from "./db/connectMongoDB.js";
 import { publishScheduledPosts } from "./cron/scheduledPostPublisher.js";
@@ -68,6 +69,7 @@ app.use("/api/todolists", todoListRoutes);
 app.use("/api/board", boardRoutes);
 app.use("/api/wardrobe", wardrobeRoutes);
 app.use("/api/hashtags", hashtagRoutes);
+app.use("/api/suggestions", suggestionRoutes);
 
 
 if (process.env.NODE_ENV === "production") {

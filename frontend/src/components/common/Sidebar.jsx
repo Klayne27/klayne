@@ -26,7 +26,7 @@ import {
 } from "react-icons/tb"
 import { GoBell, GoBellFill, GoHome, GoHomeFill } from "react-icons/go"
 import { IoBookmark, IoBookmarkOutline, IoChatbubbles, IoChatbubblesOutline } from "react-icons/io5"
-import { HiOutlinePaintBrush, HiOutlineEllipsisHorizontalCircle } from "react-icons/hi2"
+import { HiOutlinePaintBrush, HiOutlineEllipsisHorizontalCircle, HiOutlineLightBulb } from "react-icons/hi2"
 import klayneLogo from "/klaynelogo2.png"
 
 import { MdOutlineLibraryBooks } from "react-icons/md"
@@ -771,6 +771,28 @@ const Sidebar = ({
                     >
                       <MdOutlineLibraryBooks className="size-6" />
                       <span>Devlog</span>
+                    </button>
+                    {authUser?.isAdmin && <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        navigate("/admin/suggestions")
+                        setShowMorePopover(false)
+                      }}
+                      className="flex w-full items-center gap-3 px-4 py-3 text-left font-semibold transition hover:bg-secondary"
+                    >
+                      <HiOutlineLightBulb className="size-6" />
+                      <span>Suggestion Page</span>
+                    </button>}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        navigate("/suggestions")
+                        setShowMorePopover(false)
+                      }}
+                      className="flex w-full items-center gap-3 px-4 py-3 text-left font-semibold transition hover:bg-secondary"
+                    >
+                      <HiOutlineLightBulb className="size-6" />
+                      <span>Suggestion</span>
                     </button>
                     <button
                       onClick={(e) => {

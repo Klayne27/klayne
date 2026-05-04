@@ -44,6 +44,9 @@ const TrendingPage = lazy(() => import("./pages/TrendingPage"))
 const SuggestedUsersPage = lazy(() => import("./pages/SuggestedUsersPage"))
 const HashtagFeedPage = lazy(() => import("./pages/HashtagFeedPage"))
 const ConnectPage = lazy(() => import("./pages/ConnectPage"))
+const SuggestionForm = lazy(() => import("./features/suggestions/components/SuggestionForm"))
+const AdminSuggestionsPage = lazy(() => import("./pages/AdminSuggestionsPage"))
+
 
 
 const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSubscribed }) => {
@@ -118,6 +121,9 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
 
               <Route path="/suggested-users" element={<ConnectPage />} />
               <Route path="/trending" element={<ConnectPage />} />
+
+              <Route path="/suggestions" element={<SuggestionForm />} />
+              <Route path="/admin/suggestions" element={<AdminSuggestionsPage />} />
 
               <Route path="/pomodoro" element={<PomodoroPage />} />
               <Route path="/study-dashboard" element={<StudyDashboardPage />} />
