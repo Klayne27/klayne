@@ -1,12 +1,23 @@
-// controllers/suggestion.controller.js
 import Suggestion from "../models/suggestion.model.js";
+import { v2 as cloudinary } from "cloudinary";
 
 export const submitSuggestion = async (req, res) => {
   try {
-    const { type, title, description } = req.body;
+    const { type, title, description, img } = req.body;
 
     if (!title?.trim() || !description?.trim()) {
       return res.status(400).json({ error: "Title and description are required." });
+    }
+
+    let uploadedImgUrl = null;
+    let imgPublicId = null;
+
+    if (img) {
+      const uploaded = await cloudinary.uploader.upload(img, {
+        upload_preset: "ml_posts", // reuse the same preset as posts
+      });
+      uploadedImgUrl = uploaded.secure_url;
+      imgPublicId = uploaded.public_id;
     }
 
     const suggestion = await Suggestion.create({
@@ -14,6 +25,8 @@ export const submitSuggestion = async (req, res) => {
       type: type || "idea",
       title: title.trim(),
       description: description.trim(),
+      img: uploadedImgUrl,
+      imgPublicId,
     });
 
     res.status(201).json(suggestion);
@@ -41,8 +54,11 @@ export const getAllSuggestions = async (req, res) => {
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(parseInt(limit))
-        .populate("user", "username fullName profileImg isVerified")
-        .populate({ path: "user", populate: { path: "profileImg", select: "imageUrl" } }),
+        .populate({
+          path: "user",
+          select: "username fullName profileImg isVerified",
+          populate: { path: "profileImg", select: "imageUrl" },
+        }),
       Suggestion.countDocuments(filter),
     ]);
 
@@ -91,6 +107,11 @@ export const deleteSuggestion = async (req, res) => {
     const { id } = req.params;
     const suggestion = await Suggestion.findByIdAndDelete(id);
     if (!suggestion) return res.status(404).json({ error: "Suggestion not found." });
+
+    // Clean up the attached image from Cloudinary if one exists
+    if (suggestion.imgPublicId) {
+      await cloudinary.uploader.destroy(suggestion.imgPublicId);
+    }
 
     res.status(200).json({ message: "Deleted." });
   } catch (error) {

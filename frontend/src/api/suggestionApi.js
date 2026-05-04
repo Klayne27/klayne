@@ -1,11 +1,11 @@
-// src/api/suggestionApi.js
 const BASE = "/api/suggestions"
 
-export const submitSuggestionApi = async ({ type, title, description }) => {
+// img is a base64 data-URL string or null
+export const submitSuggestionApi = async ({ type, title, description, img }) => {
   const res = await fetch(BASE, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ type, title, description }),
+    body: JSON.stringify({ type, title, description, img: img || null }),
   })
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || "Failed to submit suggestion")

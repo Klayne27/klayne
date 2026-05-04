@@ -39,6 +39,8 @@ import UserAvatar from "../../../components/common/UserAvatar"
 import UserFullName from "../../../components/common/UserFullname"
 import { useMentionSuggestions } from "../../../hooks/customHooks/useMentionSuggestions"
 import MentionSuggestionsDropdown from "../../../components/common/MentionSuggestionsDropdown"
+import { shouldTextBeWhite } from "../../../utils/shouldTextBeWhite"
+import { useTheme } from "../../../context/ThemeContext"
 
 const CHARACTER_LIMIT_STANDARD = 400
 const CHARACTER_LIMIT_VERIFIED = 800
@@ -99,6 +101,7 @@ const CreatePost = ({ feedType }) => {
   const [isAnonymous, setIsAnonymous] = useState(false)
 
   const isMobile = useIsMobile()
+  const { theme } = useTheme()
 
   // Fetch mention suggestions using react-query
   // const { suggestedUsers, isLoadingSuggestedUsers } = useSearchUsers(debouncedMentionSearchTerm)
@@ -561,7 +564,7 @@ const CreatePost = ({ feedType }) => {
         {isAnonymous && feedType === "venting" ? (
           <div className="">
             <div className="w-10">
-              <img src="/avatar-placeholder.png" alt="Anonymous Avatar" className="rounded-full"/>
+              <img src="/avatar-placeholder.png" alt="Anonymous Avatar" className="rounded-full" />
             </div>
           </div>
         ) : (
@@ -858,7 +861,7 @@ const CreatePost = ({ feedType }) => {
               )}
               <button
                 type="submit"
-                className="rounded-full bg-primary px-3 py-1 font-bold text-white transition duration-300 hover:bg-primary/80 disabled:cursor-default disabled:bg-slate-500 disabled:text-black md:px-4 md:py-2"
+                className={`rounded-full bg-primary px-3 py-1 font-bold ${shouldTextBeWhite(theme)} transition duration-300 hover:bg-primary/80 disabled:cursor-default disabled:bg-slate-500 disabled:text-black md:px-4 md:py-2`}
                 // --- MODIFIED: Update disabled logic ---
                 disabled={
                   (feedType === "venting" ? isCreatingVentPost : isPending) || isButtonDisabled

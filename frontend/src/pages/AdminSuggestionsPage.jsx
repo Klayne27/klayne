@@ -1,12 +1,15 @@
-// src/features/suggestions/AdminSuggestionsPage.jsx
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { FaArrowLeft, FaTrash } from "react-icons/fa"
 import { formatDistanceToNow } from "date-fns"
-import { useDeleteSuggestion, useUpdateSuggestion } from "../features/suggestions/suggestionHooks/useSuggestionMutations"
+import {
+  useDeleteSuggestion,
+  useUpdateSuggestion,
+} from "../features/suggestions/suggestionHooks/useSuggestionMutations"
 import { useGetAllSuggestions } from "../features/suggestions/suggestionHooks/useSuggestionQueries"
 import { useAuthUser } from "../features/auth/authHooks/useAuthUser"
 import LoadingSpinner from "../components/common/LoadingSpinner"
+import { getOptimizedImageUrl } from "../utils/cloudinaryUtils"
 
 const STATUS_COLORS = {
   pending: "bg-yellow-500/20 text-yellow-400",
@@ -31,9 +34,9 @@ const SuggestionCard = ({ suggestion }) => {
   const { deleteSuggestion } = useDeleteSuggestion()
   const [adminNote, setAdminNote] = useState(suggestion.adminNote || "")
   const [expanded, setExpanded] = useState(false)
+  const [imgOpen, setImgOpen] = useState(false)
 
   const handleStatusChange = (e) => updateSuggestion({ id: suggestion._id, status: e.target.value })
-
   const handleNoteSave = () => updateSuggestion({ id: suggestion._id, adminNote })
 
   return (
@@ -82,6 +85,23 @@ const SuggestionCard = ({ suggestion }) => {
         >
           {expanded ? "Show less" : "Show more"}
         </button>
+      )}
+
+      {/* Attached image */}
+      {suggestion.img && (
+        <div className="mt-1">
+          <img
+            src={getOptimizedImageUrl(suggestion.img, "post")}
+            alt="Attached screenshot"
+            onClick={() => setImgOpen((p) => !p)}
+            className={`cursor-zoom-in rounded-xl border border-accent object-contain transition-all ${
+              imgOpen ? "max-h-none w-full" : "max-h-40"
+            }`}
+          />
+          <p className="mt-1 text-xs text-slate-600">
+            {imgOpen ? "Click to collapse" : "Click to expand"}
+          </p>
+        </div>
       )}
 
       {/* Admin controls */}
@@ -140,7 +160,7 @@ const AdminSuggestionsPage = () => {
   }
 
   return (
-    <div className="template min-h-screen flex-1 md:border-x border-accent">
+    <div className="template min-h-screen flex-1 border-accent md:border-x">
       {/* Header */}
       <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-accent bg-base-100/80 px-4 py-3 backdrop-blur-md">
         <button

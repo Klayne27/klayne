@@ -1,4 +1,3 @@
-// models/suggestion.model.js
 import mongoose from "mongoose";
 
 const suggestionSchema = new mongoose.Schema(
@@ -34,6 +33,16 @@ const suggestionSchema = new mongoose.Schema(
       type: String,
       default: "",
       maxLength: 500,
+    },
+    // Cloudinary URL of the optional attached screenshot / image
+    img: {
+      type: String,
+      default: null,
+    },
+    // Cloudinary public_id so we can destroy it when the suggestion is deleted
+    imgPublicId: {
+      type: String,
+      default: null,
     },
   },
   { timestamps: true },
