@@ -267,7 +267,7 @@ export const PomodoroTimerEngine = () => {
         playAlarm()
         const newSessionCount = currentSessionCount + 1
         const isGoalMet = s.sessionGoalCount > 0 && newSessionCount >= s.sessionGoalCount
-        const xpMultiplier = loggedDuration >= 120 ? 40 : loggedDuration >= 60 ? 30 : 20
+        const xpMultiplier = loggedDuration >= 120 ? 20 : loggedDuration >= 60 ? 15 : 10
         const calculatedXp = loggedDuration * xpMultiplier
 
         endStudySession(
