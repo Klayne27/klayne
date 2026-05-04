@@ -12,7 +12,7 @@ export const createReplyApi = async ({ parentId, text, img, video, isIC, isAnony
 }
 
 export const getPostRepliesApi = async ({ queryKey, pageParam = 1 }) => {
-  const [, ,postId] = queryKey
+  const [, , postId] = queryKey
   const res = await fetch(`${BASE_URL}/replies/${postId}?page=${pageParam}&limit=12`)
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || "Failed to fetch replies")
@@ -105,7 +105,7 @@ export const deletePostApi = async (postId) => {
     method: "DELETE",
   })
 
-  const data = res.json()
+  const data = await res.json()
 
   if (!res.ok) throw new Error(data.error || "Something went wrong")
 
@@ -161,11 +161,11 @@ export const pinUnpinPostApi = async (postId) => {
       "Content-Type": "application/json",
     },
   })
-  if (!res.ok) {
-    const errorData = await res.json()
-    throw new Error(errorData.error || "Failed to pin post")
-  }
-  return res.json()
+
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Failed to pin post")
+
+  return data
 }
 
 export const unpinPostApi = async (postId) => {
@@ -175,11 +175,11 @@ export const unpinPostApi = async (postId) => {
       "Content-Type": "application/json",
     },
   })
-  if (!res.ok) {
-    const errorData = await res.json()
-    throw new Error(errorData.error || "Failed to unpin post")
-  }
-  return res.json()
+
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Failed to unpin post")
+
+  return data
 }
 
 export const updateScheduledPostApi = async ({ postId, postData }) => {

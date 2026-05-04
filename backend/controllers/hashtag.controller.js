@@ -66,7 +66,6 @@ export const getPanelTrendingHashtags = async (req, res) => {
   }
 };
 
-// GET /api/hashtags/:tag/posts?cursor=&limit=
 // GET /api/hashtags/:tag/posts?cursor=&limit=&includeReplies=true
 export const getPostsByHashtag = async (req, res) => {
   try {

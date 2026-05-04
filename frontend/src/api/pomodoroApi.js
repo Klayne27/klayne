@@ -22,22 +22,8 @@ export const updatePomodoroSettingsApi = async (settings) => {
   return res.json()
 }
 
-// export const endStudySessionApi = async ({ duration }) => {
-//   const res = await fetch(`${BASE_URL}/session/end`, {
-//     method: "POST",
-//     headers: {
-//       "Content-Type": "application/json",
-//     },
-//     body: JSON.stringify({ duration }),
-//   })
-//   if (!res.ok) {
-//     throw new Error("Failed to end study session")
-//   }
-//   return res.json()
-// }
 
 export const endStudySessionApi = async ({ duration, taskId }) => {
-  // ← destructure taskId
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 10_000)
 
@@ -45,7 +31,7 @@ export const endStudySessionApi = async ({ duration, taskId }) => {
     const res = await fetch(`${BASE_URL}/session/end`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ duration, taskId }), // ← include taskId
+      body: JSON.stringify({ duration, taskId }),
       signal: controller.signal,
     })
     clearTimeout(timeoutId)

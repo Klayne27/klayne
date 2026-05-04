@@ -559,9 +559,9 @@ const CreatePost = ({ feedType }) => {
           </div>
         )}
         {isAnonymous && feedType === "venting" ? (
-          <div className="avatar">
-            <div className="w-10 rounded-full">
-              <img src="/avatar-placeholder.png" alt="Anonymous Avatar" />
+          <div className="">
+            <div className="w-10">
+              <img src="/avatar-placeholder.png" alt="Anonymous Avatar" className="rounded-full"/>
             </div>
           </div>
         ) : (

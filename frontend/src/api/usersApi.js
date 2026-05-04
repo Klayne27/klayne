@@ -250,10 +250,8 @@ export const getMuteStatusApi = async (userId) => {
 }
 
 export const getSuggestedUsersPageApi = async ({ pageParam = 1 }) => {
-  // Pass the pageParam as a query string so the backend can read req.query.page
   const res = await fetch(`${BASE_URL}/suggested/all?page=${pageParam}&limit=20`)
 
-  // CRITICAL FIX: Added await here
   const data = await res.json()
 
   if (!res.ok) {

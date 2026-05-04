@@ -22,20 +22,6 @@ import {
 import Image from "../models/image.model.js";
 import { extractHashtags, syncHashtagCounts } from "../lib/utils/hashtagUtils.js";
 
-// const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
-//   if (!currentUserId || !targetUserId) return false;
-//   if (currentUserId.toString() === targetUserId.toString()) return false;
-
-//   const currentUser = await User.findById(currentUserId).select("blockedUsers blockedBy");
-//   const targetUser = await User.findById(targetUserId).select("blockedUsers blockedBy");
-
-//   if (!currentUser || !targetUser) return false;
-
-//   return (
-//     currentUser.blockedUsers.includes(targetUserId) ||
-//     targetUser.blockedUsers.includes(currentUserId)
-//   );
-// };
 
 export const getPostThread = async (req, res) => {
   try {

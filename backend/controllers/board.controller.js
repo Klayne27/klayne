@@ -12,48 +12,6 @@ import {
 } from "../lib/socket.js";
 import { getBlockingUsers, getMutedUsers, isBlockedOrBlockedBy } from "../lib/utils/helpers.js";
 
-// const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
-//   if (!currentUserId || !targetUserId) {
-//     return false;
-//   }
-//   if (currentUserId.toString() === targetUserId.toString()) {
-//     return false;
-//   }
-
-//   const currentUser = await User.findById(currentUserId)
-//     .select("blockedUsers blockedBy")
-//     .lean();
-//   const targetUser = await User.findById(targetUserId)
-//     .select("blockedUsers blockedBy")
-//     .lean();
-
-//   if (!currentUser || !targetUser) {
-//     return false;
-//   }
-
-//   let currentUserBlockedTarget;
-//   try {
-//     currentUserBlockedTarget = (currentUser.blockedUsers || []).some((id) => {
-//       const result = id.toString() === targetUserId.toString();
-//       return result;
-//     });
-//   } catch (e) {
-//     throw e;
-//   }
-
-//   let targetUserBlockedCurrentUser;
-//   try {
-//     targetUserBlockedCurrentUser = (targetUser.blockedUsers || []).some((id) => {
-//       const result = id.toString() === currentUserId.toString();
-//       return result;
-//     });
-//   } catch (e) {
-//     throw e;
-//   }
-
-//   return currentUserBlockedTarget || targetUserBlockedCurrentUser;
-// };
-
 const userProjection = {
   _id: 1,
   username: 1,
@@ -208,13 +166,12 @@ export const editBoardPost = async (req, res) => {
   }
 };
 
-// ── DELETE board post — cascade delete images ─────────────────────────────────
+// ── DELETE board post ───────────────────────────────────────────────────────────
 export const deleteBoardPost = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user._id;
 
-    // Populate images so we have access to the imageUrl strings
     const post = await BoardPost.findById(id).populate("images");
     if (!post) return res.status(404).json({ error: "Board post not found." });
 
@@ -223,24 +180,18 @@ export const deleteBoardPost = async (req, res) => {
       return res.status(403).json({ error: "Not authorized." });
     }
 
-    // 1. Delete all images from Cloudinary and DB
     if (post.images && post.images.length > 0) {
       await Promise.all(
         post.images.map(async (img) => {
           if (img.imageUrl) {
-            // Extract publicId from URL (Logic from your deleteMessage reference)
-            // Example: https://res.cloudinary.com/.../v1234/folder/image_name.jpg
-            // Result: image_name
             const publicId = img.imageUrl.split("/").pop().split(".")[0];
 
             try {
               await cloudinary.uploader.destroy(publicId);
             } catch (cloudErr) {
               console.error("Cloudinary error for image:", publicId, cloudErr.message);
-              // We continue so the DB record still gets wiped even if Cloudinary fails
             }
           }
-          // Remove the image document from your Image collection
           return Image.deleteOne({ _id: img._id });
         }),
       );
@@ -322,21 +273,6 @@ export const getBoardPost = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
-// export const getBoardPost = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-
-//     const post = await BoardPost.findById(id).populate(boardPostPopulate).lean();
-
-//     if (!post) return res.status(404).json({ error: "Board post not found." });
-
-//     res.status(200).json(post);
-//   } catch (error) {
-//     console.error("Error in getBoardPost:", error);
-//     res.status(500).json({ error: "Internal server error" });
-//   }
-// };
 
 // ── REACT to board post ──────────────────────────────────────────────────────
 export const reactToBoardPost = async (req, res) => {
