@@ -21,7 +21,7 @@ const TrendingPage = ({ mobile = false }) => {
   }
 
   return (
-    <div className="min-h-screen w-full border-accent md:border-r">
+    <div className="min-h-screen w-full border-accent md:border-x">
       {/* Header – hidden when rendered inside ConnectPage (mobile) */}
       {!mobile && (
         <div className="sticky top-0 z-10 flex items-center gap-4 border-b border-accent bg-base-100/80 px-4 py-3 backdrop-blur">
