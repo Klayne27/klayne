@@ -3,6 +3,9 @@ import { useSubmitSuggestion } from "../suggestionHooks/useSuggestionMutations"
 import { useNavigate } from "react-router-dom"
 import { FaArrowLeft, FaImage, FaTimes } from "react-icons/fa"
 import { usePasteHandler } from "../../../hooks/customHooks/usePasteHandler"
+import { showAppToast } from "../../../utils/showAppToast"
+
+const LIMITS = { title: 100, description: 1000 }
 
 const TYPES = [
   { value: "feature", label: "Feature Request" },
@@ -19,21 +22,16 @@ const SuggestionForm = () => {
   const [imgPreview, setImgPreview] = useState(null)
 
   const fileInputRef = useRef(null)
-  // 2. Create a ref for the textarea
   const descriptionRef = useRef(null)
-
   const navigate = useNavigate()
 
-  // 3. Initialize the paste handler
   const handlePaste = usePasteHandler({
     inputRef: descriptionRef,
     input: form.description,
-    // Provide a setter that updates only the description in our form object
     setInput: (newText) => setForm((prev) => ({ ...prev, description: newText })),
-    // We'll handle the actual file-to-base64 conversion in the callback below
     setSelectedFile: () => {},
     setPreviewImage: setImgPreview,
-    fileInputRef: fileInputRef,
+    fileInputRef,
     onImagePasted: (file) => {
       const reader = new FileReader()
       reader.onload = () => setForm((prev) => ({ ...prev, img: reader.result }))
@@ -58,9 +56,29 @@ const SuggestionForm = () => {
     if (fileInputRef.current) fileInputRef.current.value = ""
   }
 
+  // ── Derived state ──────────────────────────────────────────────────────────
+  const titleOver = form.title.length > LIMITS.title
+  const descriptionOver = form.description.length > LIMITS.description
+  const hasOverflow = titleOver || descriptionOver
+
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (!form.title.trim() || !form.description.trim()) return
+
+    if (!form.title.trim() || !form.description.trim()) {
+      showAppToast("Title and description are required.", "error")
+      return
+    }
+
+    if (titleOver) {
+      showAppToast(`Title must be ${LIMITS.title} characters or fewer.`, "error")
+      return
+    }
+
+    if (descriptionOver) {
+      showAppToast(`Description must be ${LIMITS.description} characters or fewer.`, "error")
+      return
+    }
+
     submitSuggestion(form, {
       onSuccess: () => {
         setForm(EMPTY_FORM)
@@ -114,12 +132,19 @@ const SuggestionForm = () => {
               name="title"
               value={form.title}
               onChange={handleChange}
-              maxLength={100}
               placeholder="Short summary"
-              className="input input-bordered w-full rounded-xl"
-              required
+              className={`input input-bordered w-full rounded-xl transition ${
+                titleOver ? "border-red-500 focus:border-red-500" : ""
+              }`}
             />
-            <span className="self-end text-xs text-slate-500">{form.title.length}/100</span>
+            <span
+              className={`self-end text-xs transition-colors ${
+                titleOver ? "font-semibold text-red-500" : "text-slate-500"
+              }`}
+            >
+              {form.title.length}/{LIMITS.title}
+              {titleOver && " — too long"}
+            </span>
           </div>
 
           {/* Description */}
@@ -131,13 +156,20 @@ const SuggestionForm = () => {
               onPaste={handlePaste}
               value={form.description}
               onChange={handleChange}
-              maxLength={1000}
               rows={5}
               placeholder="What's on your mind? Don't hold back—describe the feature of your dreams or a bug that's bugging you. (You can paste images here!)"
-              className="textarea textarea-bordered w-full resize-none rounded-xl"
-              required
+              className={`textarea textarea-bordered w-full resize-none rounded-xl transition ${
+                descriptionOver ? "border-red-500 focus:border-red-500" : ""
+              }`}
             />
-            <span className="self-end text-xs text-slate-500">{form.description.length}/1000</span>
+            <span
+              className={`self-end text-xs transition-colors ${
+                descriptionOver ? "font-semibold text-red-500" : "text-slate-500"
+              }`}
+            >
+              {form.description.length}/{LIMITS.description}
+              {descriptionOver && " — too long"}
+            </span>
           </div>
 
           {/* Image attachment */}
@@ -147,7 +179,6 @@ const SuggestionForm = () => {
             </label>
 
             {imgPreview ? (
-              /* Preview with remove button */
               <div className="relative w-fit">
                 <img
                   src={imgPreview}
@@ -163,7 +194,6 @@ const SuggestionForm = () => {
                 </button>
               </div>
             ) : (
-              /* Upload trigger */
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
@@ -174,7 +204,6 @@ const SuggestionForm = () => {
               </button>
             )}
 
-            {/* Hidden file input */}
             <input
               ref={fileInputRef}
               type="file"
@@ -184,14 +213,19 @@ const SuggestionForm = () => {
             />
           </div>
 
-          <div className="flex justify-start">
+          {/* Submit */}
+          <div className="flex items-center gap-3">
             <button
               type="submit"
-              disabled={isPending || !form.title.trim() || !form.description.trim()}
-              className="rounded-full bg-primary px-4 py-2 font-semibold"
+              disabled={isPending || !form.title.trim() || !form.description.trim() || hasOverflow}
+              className="rounded-full bg-primary px-4 py-2 font-semibold disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isPending ? "Submitting..." : "Submit"}
             </button>
+
+            {hasOverflow && (
+              <p className="text-xs text-red-500">Fix the fields above before submitting.</p>
+            )}
           </div>
         </form>
       </div>

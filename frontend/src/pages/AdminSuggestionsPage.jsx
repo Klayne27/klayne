@@ -39,105 +39,113 @@ const SuggestionCard = ({ suggestion }) => {
   const handleStatusChange = (e) => updateSuggestion({ id: suggestion._id, status: e.target.value })
   const handleNoteSave = () => updateSuggestion({ id: suggestion._id, adminNote })
 
-  return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-accent bg-base-200 p-4">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex min-w-0 flex-col gap-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span
-              className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase ${TYPE_COLORS[suggestion.type]}`}
-            >
-              {suggestion.type}
-            </span>
-            <span
-              className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase ${STATUS_COLORS[suggestion.status]}`}
-            >
-              {suggestion.status}
-            </span>
-          </div>
-          <p className="mt-1 text-sm font-bold">{suggestion.title}</p>
-          <p className="text-xs text-slate-500">
-            @{suggestion.user?.username} ·{" "}
-            {formatDistanceToNow(new Date(suggestion.createdAt), { addSuffix: true })}
-          </p>
+return (
+  // Added overflow-hidden to prevent anything from spilling out of the rounded corners
+  <div className="flex flex-col gap-3 overflow-hidden rounded-2xl border border-accent bg-base-200 p-4">
+    {/* Header */}
+    <div className="flex items-start justify-between gap-2">
+      <div className="flex min-w-0 flex-col gap-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase ${TYPE_COLORS[suggestion.type]}`}
+          >
+            {suggestion.type}
+          </span>
+          <span
+            className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase ${STATUS_COLORS[suggestion.status]}`}
+          >
+            {suggestion.status}
+          </span>
         </div>
-
-        <button
-          onClick={() => deleteSuggestion(suggestion._id)}
-          className="shrink-0 rounded-full p-1.5 text-slate-500 transition hover:bg-red-500/10 hover:text-red-400"
-        >
-          <FaTrash size={12} />
-        </button>
+        {/* TITLE FIX: Added break-words to handle long titles without spaces */}
+        <p className="mt-1 break-words text-sm font-bold leading-tight">{suggestion.title}</p>
+        <p className="text-xs text-slate-500">
+          @{suggestion.user?.username} ·{" "}
+          {formatDistanceToNow(new Date(suggestion.createdAt), { addSuffix: true })}
+        </p>
       </div>
 
-      {/* Description */}
+      <button
+        onClick={() => deleteSuggestion(suggestion._id)}
+        className="shrink-0 rounded-full p-1.5 text-slate-500 transition hover:bg-red-500/10 hover:text-red-400"
+      >
+        <FaTrash size={12} />
+      </button>
+    </div>
+
+    {/* Description */}
+    <div className="flex flex-col">
+      {/* DESCRIPTION FIX: Added break-words. Line-clamp handles the "collapsed" state, 
+            break-words handles the "expanded" state overflow. */}
       <p
-        className={`cursor-pointer whitespace-pre-wrap text-sm text-slate-300 ${!expanded ? "line-clamp-3" : ""}`}
+        className={`cursor-pointer whitespace-pre-wrap break-words text-sm text-slate-300 ${
+          !expanded ? "line-clamp-3" : ""
+        }`}
         onClick={() => setExpanded((p) => !p)}
       >
         {suggestion.description}
       </p>
       {suggestion.description.length > 150 && (
         <button
-          className="self-start text-xs text-primary hover:underline"
+          className="mt-1 self-start text-xs text-primary hover:underline"
           onClick={() => setExpanded((p) => !p)}
         >
           {expanded ? "Show less" : "Show more"}
         </button>
       )}
+    </div>
 
-      {/* Attached image */}
-      {suggestion.img && (
-        <div className="mt-1">
-          <img
-            src={getOptimizedImageUrl(suggestion.img, "post")}
-            alt="Attached screenshot"
-            onClick={() => setImgOpen((p) => !p)}
-            className={`cursor-zoom-in rounded-xl border border-accent object-contain transition-all ${
-              imgOpen ? "max-h-none w-full" : "max-h-40"
-            }`}
-          />
-          <p className="mt-1 text-xs text-slate-600">
-            {imgOpen ? "Click to collapse" : "Click to expand"}
-          </p>
-        </div>
-      )}
+    {/* Attached image */}
+    {suggestion.img && (
+      <div className="mt-1">
+        <img
+          src={getOptimizedImageUrl(suggestion.img, "post")}
+          alt="Attached screenshot"
+          onClick={() => setImgOpen((p) => !p)}
+          className={`cursor-zoom-in rounded-xl border border-accent object-contain transition-all duration-300 ${
+            imgOpen ? "max-h-[600px] w-full" : "max-h-40"
+          }`}
+        />
+        <p className="mt-1 text-[10px] font-semibold uppercase text-slate-600">
+          {imgOpen ? "Click to collapse" : "Click to expand"}
+        </p>
+      </div>
+    )}
 
-      {/* Admin controls */}
-      <div className="mt-1 flex flex-col gap-2 border-t border-accent/40 pt-3">
-        <select
-          value={suggestion.status}
-          onChange={handleStatusChange}
+    {/* Admin controls */}
+    <div className="mt-1 flex flex-col gap-2 border-t border-accent/40 pt-3">
+      <select
+        value={suggestion.status}
+        onChange={handleStatusChange}
+        disabled={isPending}
+        className="select select-bordered select-sm w-full max-w-[180px] rounded-xl"
+      >
+        {STATUSES.map((s) => (
+          <option key={s} value={s}>
+            {s.charAt(0).toUpperCase() + s.slice(1)}
+          </option>
+        ))}
+      </select>
+
+      <div className="flex items-end gap-2">
+        <textarea
+          value={adminNote}
+          onChange={(e) => setAdminNote(e.target.value)}
+          rows={2}
+          placeholder="Add a private note..."
+          className="textarea textarea-bordered textarea-sm flex-1 resize-none rounded-xl text-xs"
+        />
+        <button
+          onClick={handleNoteSave}
           disabled={isPending}
-          className="select select-bordered select-sm w-full max-w-[180px] rounded-xl"
+          className="btn btn-outline btn-sm rounded-xl"
         >
-          {STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s.charAt(0).toUpperCase() + s.slice(1)}
-            </option>
-          ))}
-        </select>
-
-        <div className="flex items-end gap-2">
-          <textarea
-            value={adminNote}
-            onChange={(e) => setAdminNote(e.target.value)}
-            rows={2}
-            placeholder="Add a private note..."
-            className="textarea textarea-bordered textarea-sm flex-1 resize-none rounded-xl text-xs"
-          />
-          <button
-            onClick={handleNoteSave}
-            disabled={isPending}
-            className="btn btn-outline btn-sm rounded-xl"
-          >
-            Save
-          </button>
-        </div>
+          Save
+        </button>
       </div>
     </div>
-  )
+  </div>
+)
 }
 
 const AdminSuggestionsPage = () => {
