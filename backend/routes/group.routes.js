@@ -17,6 +17,7 @@ import {
   transferOwnership,
   updateGroup,
   updateMemberRole,
+  updateNickname,
 } from "../controllers/group.controller.js";
 
 const router = express.Router();
@@ -46,6 +47,7 @@ router.put("/:groupId", updateGroup);
 router.delete("/:groupId", deleteGroup);
 router.put("/:groupId/transfer/:targetUserId", transferOwnership);
 router.delete("/:groupId/messages/:messageId", adminDeleteMessage);
+router.put("/:groupId/members/:targetUserId/nickname", protectRoute, updateNickname);
 
 // --- SPECIFIC GROUP DATA ---
 // Placed last to ensure it doesn't swallow routes like /join or /members

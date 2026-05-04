@@ -1,35 +1,35 @@
 import { Link } from "react-router-dom"
 import UserFullName from "../../../../components/common/UserFullname"
 import { formatTime } from "../../../../utils/date"
+import { resolveDisplayName } from "../../../../utils/nicknameUtils"
 
 function PrivateChatFirstMessageInGroup({
   message,
   isSentByCurrentUser,
   onUsernameClick,
   selectedConversation,
+  nicknameMap,
 }) {
   const groupParticipants = selectedConversation.participants
   const senderId = message.sender._id
 
   const isUserAMember = groupParticipants.includes(senderId)
 
+
+  const displayName = resolveDisplayName(message.sender, nicknameMap)
+
   return (
     <>
       {message.isFirstInGroup && (
         <div className={`mb-0.5 flex items-center text-sm`}>
           {!isSentByCurrentUser && (
-            // <div
-            //   className={`mr-1 cursor-pointer font-semibold`}
-            //   onClick={(e) => onUsernameClick(message.sender, e)}
-            //   style={message.sender.nameColor ? { color: message.sender.nameColor } : undefined}
-            // >
-            //   {message.senderUsername}
-            // </div>
             <Link to={`/profile/${message.sender?.username}`}>
               <UserFullName
                 user={message.sender}
+                nickname={displayName}
                 className={`mr-1 cursor-pointer font-semibold`}
                 style={message.sender.nameColor ? { color: message.sender.nameColor } : undefined}
+                
               />
             </Link>
           )}

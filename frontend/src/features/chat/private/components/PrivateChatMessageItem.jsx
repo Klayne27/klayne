@@ -29,6 +29,8 @@ import {
   useReactToMessage,
 } from "../privateChatHooks/usePrivateChatMutations"
 import { useTheme } from "../../../../context/ThemeContext"
+import { buildNicknameMap } from "../../../../utils/nicknameUtils"
+import { useMemo } from "react"
 
 const PrivateChatMessageItem = ({
   message,
@@ -125,6 +127,8 @@ const PrivateChatMessageItem = ({
     chatInputRef: privateChatInputRef,
     messageListRef,
   })
+
+  const nicknameMap = useMemo(() => buildNicknameMap(selectedConversation), [selectedConversation])
 
   const isAuthUserAdminOrOwner =
     selectedConversation?.isGroup &&
@@ -292,6 +296,7 @@ const PrivateChatMessageItem = ({
               message={message}
               isSentByCurrentUser={isSentByCurrentUser}
               onUsernameClick={onUsernameClick}
+              nicknameMap={nicknameMap}
             />
 
             {/* Edited Status */}
@@ -352,14 +357,14 @@ const PrivateChatMessageItem = ({
                 const imgUrl = user?.profileImg?.imageUrl || "/avatar-placeholder.png"
                 return (
                   <div className="mt-1">
-                  <img
-                    key={(user._id ?? user).toString()}
-                    src={imgUrl}
-                    alt={user?.username ?? ""}
-                    title={`Seen by @${user?.username ?? ""}`}
-                    className="h-4 w-4 rounded-full object-cover ring-1 ring-base-100"
+                    <img
+                      key={(user._id ?? user).toString()}
+                      src={imgUrl}
+                      alt={user?.username ?? ""}
+                      title={`Seen by @${user?.username ?? ""}`}
+                      className="h-4 w-4 rounded-full object-cover ring-1 ring-base-100"
                     />
-                    </div>
+                  </div>
                 )
               })}
             {seenByUsers.filter((u) => (u._id ?? u).toString() !== currentUser._id.toString())

@@ -1,8 +1,7 @@
 import { useState } from "react"
 import { useParams, useNavigate, Link } from "react-router-dom"
-
 import { IoArrowBack, IoCopy } from "react-icons/io5"
-import { FaTrashCan, FaDoorOpen } from "react-icons/fa6"
+import { FaTrashCan, FaDoorOpen, FaPencil, FaCheck, FaX } from "react-icons/fa6"
 import { useAuthUser } from "../features/auth/authHooks/useAuthUser"
 import { regenerateInviteCodeApi } from "../api/groupApi"
 import { showAppToast } from "../utils/showAppToast"
@@ -21,7 +20,42 @@ import {
   useLeaveGroup,
   useUpdateGroup,
   useUpdateMemberRole,
+  useUpdateNickname,
 } from "../features/chat/group/groupChatHooks/useGroupMutations"
+
+// ── Inline nickname editor ───────────────────────────────────────────────────
+const NicknameEditor = ({ currentNickname, onSave, onCancel }) => {
+  const [value, setValue] = useState(currentNickname || "")
+
+  return (
+    <div className="mt-1.5 flex items-center gap-1.5">
+      <input
+        autoFocus
+        maxLength={50}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        placeholder="Add a nickname…"
+        className="min-w-0 flex-1 rounded-xl border border-accent bg-transparent px-2 py-1 text-xs focus:outline-none"
+        onKeyDown={(e) => {
+          if (e.key === "Enter") onSave(value)
+          if (e.key === "Escape") onCancel()
+        }}
+      />
+      <button
+        onClick={() => onSave(value)}
+        className="shrink-0 rounded-full p-1 text-primary hover:bg-primary/10"
+      >
+        <FaCheck size={11} />
+      </button>
+      <button
+        onClick={onCancel}
+        className="shrink-0 rounded-full p-1 text-slate-400 hover:bg-secondary"
+      >
+        <FaX size={11} />
+      </button>
+    </div>
+  )
+}
 
 export default function GroupSettingsPage() {
   const { conversationId } = useParams()
@@ -29,7 +63,6 @@ export default function GroupSettingsPage() {
   const { authUser: currentUser } = useAuthUser()
 
   const { group, isLoading } = useGetGroup(conversationId)
-
   const { updateGroup } = useUpdateGroup(conversationId)
   const { kickMember } = useKickMember(conversationId)
   const { updateMemberRole } = useUpdateMemberRole(conversationId)
@@ -37,6 +70,7 @@ export default function GroupSettingsPage() {
   const { handleJoinRequest } = useHandleJoinRequest(conversationId)
   const { leaveGroup } = useLeaveGroup()
   const { deleteGroup } = useDeleteGroup()
+  const { updateNickname } = useUpdateNickname(conversationId)
 
   const [memberSearch, setMemberSearch] = useState("")
   const { members, isLoading: isLoadingMembers } = useGetMembers({
@@ -49,22 +83,18 @@ export default function GroupSettingsPage() {
   const [isEditMode, setIsEditMode] = useState(false)
   const [showLeaveModal, setShowLeaveModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [editIsPrivate, setEditIsPrivate] = useState(false) // Add this
+  const [editIsPrivate, setEditIsPrivate] = useState(false)
   const [inviteCode, setInviteCode] = useState(null)
+
+  // Track which member's nickname editor is open: memberId → true
+  const [editingNicknameFor, setEditingNicknameFor] = useState(null)
 
   const handleAvatarChange = (e) => {
     const file = e.target.files[0]
     if (!file) return
-
     const reader = new FileReader()
     reader.readAsDataURL(file)
-
-    reader.onloadend = () => {
-      updateGroup({
-        groupId: conversationId,
-        avatar: reader.result, // base64 string
-      })
-    }
+    reader.onloadend = () => updateGroup({ groupId: conversationId, avatar: reader.result })
   }
 
   if (isLoading) {
@@ -74,21 +104,20 @@ export default function GroupSettingsPage() {
       </div>
     )
   }
-
   if (!group) return null
 
   const myMember = group.members?.find(
     (m) => (m.user?._id || m.user)?.toString() === currentUser._id.toString(),
   )
   const isOwner = myMember?.role === "owner"
-  const isAdminOrOwner = myMember?.role === "admin" || isOwner
+  const isAdminOrOwnerRole = myMember?.role === "admin" || isOwner
 
   const handleSaveEdit = () => {
     updateGroup({
       groupId: conversationId,
       name: editName || group.name,
       description: editDescription !== undefined ? editDescription : group.description,
-      isPrivate: editIsPrivate, // Add this
+      isPrivate: editIsPrivate,
     })
     setIsEditMode(false)
   }
@@ -105,13 +134,17 @@ export default function GroupSettingsPage() {
 
   const handleCopyInvite = () => {
     const code = inviteCode || group.inviteCode
-    const link = `${window.location.origin}/join/${code}`
-    navigator.clipboard.writeText(link)
+    navigator.clipboard.writeText(`${window.location.origin}/join/${code}`)
     showAppToast("Invite link copied!", "success")
   }
 
+  const handleSaveNickname = (targetUserId, nickname) => {
+    updateNickname({ groupId: conversationId, targetUserId, nickname })
+    setEditingNicknameFor(null)
+  }
+
   return (
-    <div  className="mx-auto flex h-full max-w-xl flex-col overflow-y-auto p-4 ">
+    <div className="mx-auto flex h-full max-w-xl flex-col overflow-y-auto p-4">
       {/* Header */}
       <div className="mb-4 flex items-center gap-3">
         <button onClick={() => navigate(-1)}>
@@ -120,9 +153,9 @@ export default function GroupSettingsPage() {
         <h1 className="text-lg font-bold">Group Settings</h1>
       </div>
 
-      {/* Group info */}
+      {/* Group info — unchanged from your original */}
       <div className="mb-4 flex flex-col items-center gap-3 rounded-2xl border border-accent p-4">
-        <label className={`relative ${isAdminOrOwner ? "cursor-pointer" : ""}`}>
+        <label className={`relative ${isAdminOrOwnerRole ? "cursor-pointer" : ""}`}>
           <img
             src={getOptimizedImageUrl(
               group.avatar?.imageUrl || "/avatar-placeholder.png",
@@ -131,8 +164,7 @@ export default function GroupSettingsPage() {
             className="h-16 w-16 rounded-full object-cover"
             alt={group.name}
           />
-
-          {isAdminOrOwner && (
+          {isAdminOrOwnerRole && (
             <>
               <input
                 type="file"
@@ -146,6 +178,7 @@ export default function GroupSettingsPage() {
             </>
           )}
         </label>
+
         {isEditMode ? (
           <>
             <input
@@ -174,7 +207,7 @@ export default function GroupSettingsPage() {
               </div>
               <input
                 type="checkbox"
-                className="toggle toggle-primary" // Assuming you use DaisyUI based on your class names
+                className="toggle toggle-primary"
                 checked={editIsPrivate}
                 onChange={(e) => setEditIsPrivate(e.target.checked)}
               />
@@ -198,14 +231,14 @@ export default function GroupSettingsPage() {
           <>
             <p className="text-lg font-bold">{group.name}</p>
             {group.description && <p className="text-sm text-gray-400">{group.description}</p>}
-            {isAdminOrOwner && (
+            {isAdminOrOwnerRole && (
               <button
                 className="rounded-full border border-accent px-4 py-1 text-sm"
                 onClick={() => {
                   setEditName(group.name)
                   setEditDescription(group.description)
+                  setEditIsPrivate(group.isPrivate)
                   setIsEditMode(true)
-                  setEditIsPrivate(group.isPrivate) // Sync current privacy status
                 }}
               >
                 Edit info
@@ -215,8 +248,8 @@ export default function GroupSettingsPage() {
         )}
       </div>
 
-      {/* Invite link */}
-      {isAdminOrOwner && (
+      {/* Invite link — unchanged */}
+      {isAdminOrOwnerRole && (
         <div className="mb-4 rounded-2xl border border-accent p-4">
           <p className="mb-2 font-semibold">Invite Link</p>
           <div className="flex items-center gap-2">
@@ -236,8 +269,8 @@ export default function GroupSettingsPage() {
         </div>
       )}
 
-      {/* Join requests (admin only, private groups) */}
-      {isAdminOrOwner && group.isPrivate && joinRequests.length > 0 && (
+      {/* Join requests — unchanged */}
+      {isAdminOrOwnerRole && group.isPrivate && joinRequests.length > 0 && (
         <div className="mb-4 rounded-2xl border border-accent p-4">
           <p className="mb-2 font-semibold">Join Requests ({joinRequests.length})</p>
           <div className="flex flex-col gap-2">
@@ -286,7 +319,7 @@ export default function GroupSettingsPage() {
         </div>
       )}
 
-      {/* Member directory */}
+      {/* ── Member directory with nickname editing ── */}
       <div className="mb-4 rounded-2xl border border-accent p-4">
         <p className="mb-2 font-semibold">Members ({group.members?.length})</p>
         <input
@@ -299,82 +332,118 @@ export default function GroupSettingsPage() {
         {isLoadingMembers ? (
           <LoadingSpinner size="sm" />
         ) : (
-          <div className="flex max-h-[400px] flex-col gap-2 overflow-y-auto pr-1">
-            {" "}
+          <div className="flex max-h-[400px] flex-col gap-3 overflow-y-auto pr-1">
             {members.map((member) => {
               const user = member.user
               const memberId = (user?._id || user)?.toString()
               const isMe = memberId === currentUser._id.toString()
+              const canEditNickname = isMe || isAdminOrOwnerRole
+              const isEditingNickname = editingNicknameFor === memberId
 
               return (
-                <div key={memberId} className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <Link to={`/profile/${user.username}`}>
-                      <img
-                        src={getOptimizedImageUrl(
-                          user?.profileImg?.imageUrl || "/avatar-placeholder.png",
-                          "avatar",
-                        )}
-                        className="h-8 w-8 rounded-full object-cover"
-                        alt={user?.username}
-                      />
-                    </Link>
-                    <div className="flex flex-col">
+                <div key={memberId} className="flex flex-col">
+                  {/* Top row: avatar + name + role badge + action buttons */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <Link to={`/profile/${user.username}`} className="shrink-0">
+                        <img
+                          src={getOptimizedImageUrl(
+                            user?.profileImg?.imageUrl || "/avatar-placeholder.png",
+                            "avatar",
+                          )}
+                          className="h-8 w-8 rounded-full object-cover"
+                          alt={user?.username}
+                        />
+                      </Link>
+
+                      <div className="flex min-w-0 flex-col">
+                        <div className="flex items-center gap-1.5">
+                          {/* Show nickname if set, otherwise fullName */}
+                          <span
+                            className="truncate text-sm font-semibold"
+                            style={user?.nameColor ? { color: user.nameColor } : undefined}
+                          >
+                            {member.nickname || user?.fullName}
+                          </span>
+                          {/* Show original name below if nickname is active */}
+                          {member.nickname && (
+                            <span className="shrink-0 text-xs text-slate-500">
+                              ({user?.fullName})
+                            </span>
+                          )}
+                        </div>
+                        <span className="truncate text-xs text-gray-400">@{user?.username}</span>
+                      </div>
+
                       <span
-                        className="text-sm font-semibold"
-                        style={user?.nameColor ? { color: user?.nameColor } : undefined}
+                        className={`ml-1 shrink-0 rounded-full px-2 py-0.5 text-xs font-bold ${
+                          member.role === "owner"
+                            ? "bg-yellow-500/20 text-yellow-500"
+                            : member.role === "admin"
+                              ? "bg-blue-500/20 text-blue-400"
+                              : "bg-secondary text-gray-400"
+                        }`}
                       >
-                        {user?.fullName}
+                        {member.role}
                       </span>
-                      <span className="text-xs text-gray-400">@{user?.username}</span>
                     </div>
-                    <span
-                      className={`ml-1 rounded-full px-2 py-0.5 text-xs font-bold ${
-                        member.role === "owner"
-                          ? "bg-yellow-500/20 text-yellow-500"
-                          : member.role === "admin"
-                            ? "bg-blue-500/20 text-blue-400"
-                            : "bg-secondary text-gray-400"
-                      }`}
-                    >
-                      {member.role}
-                    </span>
+
+                    {/* Right: nickname pencil + kick/promote buttons */}
+                    <div className="flex shrink-0 items-center gap-1">
+                      {canEditNickname && !isEditingNickname && (
+                        <button
+                          onClick={() => setEditingNicknameFor(memberId)}
+                          title={member.nickname ? "Edit nickname" : "Set nickname"}
+                          className="rounded-full p-1.5 text-slate-400 transition hover:bg-secondary hover:text-base-content"
+                        >
+                          <FaPencil size={11} />
+                        </button>
+                      )}
+
+                      {!isMe && isOwner && member.role !== "owner" && (
+                        <>
+                          <button
+                            className="rounded-full border border-accent px-2 py-0.5 text-xs"
+                            onClick={() =>
+                              updateMemberRole({
+                                groupId: conversationId,
+                                targetUserId: memberId,
+                                role: member.role === "admin" ? "member" : "admin",
+                              })
+                            }
+                          >
+                            {member.role === "admin" ? "Demote" : "Promote"}
+                          </button>
+                          <button
+                            className="rounded-full border border-red-500/40 px-2 py-0.5 text-xs text-red-500"
+                            onClick={() =>
+                              kickMember({ groupId: conversationId, targetUserId: memberId })
+                            }
+                          >
+                            Kick
+                          </button>
+                        </>
+                      )}
+                      {!isMe && !isOwner && isAdminOrOwnerRole && member.role === "member" && (
+                        <button
+                          className="rounded-full border border-red-500/40 px-2 py-0.5 text-xs text-red-500"
+                          onClick={() =>
+                            kickMember({ groupId: conversationId, targetUserId: memberId })
+                          }
+                        >
+                          Kick
+                        </button>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Admin actions */}
-                  {!isMe && isOwner && member.role !== "owner" && (
-                    <div className="flex items-center gap-1">
-                      <button
-                        className="rounded-full border border-accent px-2 py-0.5 text-xs"
-                        onClick={() =>
-                          updateMemberRole({
-                            groupId: conversationId,
-                            targetUserId: memberId,
-                            role: member.role === "admin" ? "member" : "admin",
-                          })
-                        }
-                      >
-                        {member.role === "admin" ? "Demote" : "Promote"}
-                      </button>
-                      <button
-                        className="rounded-full border border-red-500/40 px-2 py-0.5 text-xs text-red-500"
-                        onClick={() =>
-                          kickMember({ groupId: conversationId, targetUserId: memberId })
-                        }
-                      >
-                        Kick
-                      </button>
-                    </div>
-                  )}
-                  {!isMe && !isOwner && isAdminOrOwner && member.role === "member" && (
-                    <button
-                      className="rounded-full border border-red-500/40 px-2 py-0.5 text-xs text-red-500"
-                      onClick={() =>
-                        kickMember({ groupId: conversationId, targetUserId: memberId })
-                      }
-                    >
-                      Kick
-                    </button>
+                  {/* Inline nickname editor — expands below the row */}
+                  {isEditingNickname && (
+                    <NicknameEditor
+                      currentNickname={member.nickname}
+                      onSave={(value) => handleSaveNickname(memberId, value)}
+                      onCancel={() => setEditingNicknameFor(null)}
+                    />
                   )}
                 </div>
               )
@@ -383,7 +452,7 @@ export default function GroupSettingsPage() {
         )}
       </div>
 
-      {/* Danger zone */}
+      {/* Danger zone — unchanged */}
       <div className="mb-14 rounded-2xl border border-red-500/30 p-4">
         <p className="mb-3 font-semibold text-red-500">Danger Zone</p>
         {!isOwner && (

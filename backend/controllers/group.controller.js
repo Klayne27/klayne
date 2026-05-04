@@ -748,3 +748,40 @@ export const transferOwnership = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+export const updateNickname = async (req, res) => {
+  try {
+    const { groupId, targetUserId } = req.params;
+    const { nickname } = req.body;
+    const userId = req.user._id.toString();
+
+    const group = await Conversation.findOne({ _id: groupId, isGroup: true });
+    if (!group) return res.status(404).json({ error: "Group not found." });
+
+    // Members can only change their own nickname.
+    // Admins/owners can change anyone's.
+    const isSelf = userId === targetUserId;
+    if (!isSelf && !isAdminOrOwner(group, userId)) {
+      return res.status(403).json({ error: "You can only change your own nickname." });
+    }
+
+    const member = group.members.find((m) => m.user.toString() === targetUserId);
+    if (!member) {
+      return res.status(404).json({ error: "User is not a member of this group." });
+    }
+
+    // Empty string clears the nickname (falls back to fullName in UI)
+    member.nickname = (nickname || "").trim().slice(0, 50);
+    await group.save();
+
+    const populated = await Conversation.findById(group._id)
+      .populate(POPULATE_MEMBER_USER)
+      .populate(POPULATE_AVATAR);
+
+    emitGroupUpdate(populated);
+    res.status(200).json({ nickname: member.nickname });
+  } catch (error) {
+    console.error("Error in updateNickname:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};

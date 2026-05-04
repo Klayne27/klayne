@@ -144,3 +144,14 @@ export const adminDeleteMessageApi = async ({ groupId, messageId }) => {
   if (!res.ok) throw new Error(data.error || "Failed to delete message")
   return data
 }
+
+export const updateNicknameApi = async ({ groupId, targetUserId, nickname }) => {
+  const res = await fetch(`/api/groups/${groupId}/members/${targetUserId}/nickname`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nickname }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Failed to update nickname")
+  return data
+}

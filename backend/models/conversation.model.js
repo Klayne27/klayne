@@ -68,6 +68,12 @@ const conversationSchema = new mongoose.Schema(
           enum: ["owner", "admin", "member"],
           default: "member",
         },
+        nickname: {
+          type: String,
+          default: "",
+          trim: true,
+          maxlength: 50,
+        },
         joinedAt: { type: Date, default: Date.now },
       },
     ],

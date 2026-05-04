@@ -36,6 +36,8 @@ const PrivateChatWindow = () => {
 
   const { pinnedMessages } = useGetPinnedMessages(conversationId)
 
+  
+
   const {
     handleLoadImage,
     handleReactionAdded,

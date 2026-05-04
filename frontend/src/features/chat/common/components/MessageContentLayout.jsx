@@ -10,6 +10,8 @@ function MessageContentLayout({
   children,
 }) {
   const navigate = useNavigate()
+
+  
   return (
     <div
       className={`relative flex min-w-0 max-w-full items-start gap-2 ${

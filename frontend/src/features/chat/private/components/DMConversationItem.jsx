@@ -33,6 +33,8 @@ import { WARDROBE_CONFIG } from "../../../wardrobe/wardrobeConfig"
 import UserFullName from "../../../../components/common/UserFullname"
 import { useGetMuteStatus } from "../../../users/usersHooks/useUserQueries"
 import MuteOptionsModal from "../../../../components/common/MuteOptionsModal"
+import { useMemo } from "react"
+import { buildNicknameMap, resolveDisplayName } from "../../../../utils/nicknameUtils"
 
 function DMConversationItem({ conv }) {
   const { authUser: currentUser } = useAuthUser()
@@ -61,7 +63,6 @@ function DMConversationItem({ conv }) {
   const { deleteConversation } = useDeleteConversation()
   const { deleteAllMessages } = useDeleteAllMessagesOnMySide() // Use the new hook
   const { blockUnblockUser, isBlocking } = useBlockUnblockUser()
-
 
   const { isMuted, muteType } = useGetMuteStatus(otherUser?._id)
   const { muteUser, isMuting } = useMuteUser(otherUser?._id)
@@ -95,6 +96,17 @@ function DMConversationItem({ conv }) {
   const isLastMessageUnread =
     conv.lastMessage?.sender?._id.toString() === otherUser?._id.toString() &&
     !conv.lastMessage?.seen
+
+  const nicknameMap = useMemo(() => buildNicknameMap(conv), [conv])
+
+  // 2. Resolve the display name of the last message sender
+  const senderDisplayName = useMemo(() => {
+    if (!conv.lastMessage?.sender) return ""
+
+    // If the sender is the current user, you might want to show "You"
+    // or their nickname/username. Let's stick to resolveDisplayName:
+    return resolveDisplayName(conv.lastMessage.sender, nicknameMap)
+  }, [conv.lastMessage?.sender, nicknameMap])
 
   let lastMessageContent = "No messages yet..."
 
@@ -249,7 +261,7 @@ function DMConversationItem({ conv }) {
               <span className="pl-[2px] italic">{lastMessageContent}</span>
             ) : (
               <span className="pl-[2px]">
-                {isLastMessageByOtherUser ? otherUser?.username : "You"}: {truncatedLastMessage}
+                {isLastMessageByOtherUser ? senderDisplayName : "You"}: {truncatedLastMessage}
               </span>
             )}
           </p>

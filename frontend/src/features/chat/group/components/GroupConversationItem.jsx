@@ -17,6 +17,8 @@ import SlideUpMenu from "../../../../components/common/SlideUpMenu"
 import { TbUser, TbUserMinus } from "react-icons/tb"
 import { useDeleteGroup, useLeaveGroup } from "../groupChatHooks/useGroupMutations"
 import { useToggleConversationVisibility } from "../../private/privateChatHooks/usePrivateChatMutations"
+import { buildNicknameMap, resolveDisplayName } from "../../../../utils/nicknameUtils"
+import { useMemo } from "react"
 
 function GroupConversationItem({ conv }) {
   const { authUser: currentUser } = useAuthUser()
@@ -41,8 +43,7 @@ function GroupConversationItem({ conv }) {
     isMobile,
   } = useMobileConversationLongPress()
 
-    const { toggleVisibility } = useToggleConversationVisibility()
-  
+  const { toggleVisibility } = useToggleConversationVisibility()
 
   const isMenuOpen = activeConversationId === conv._id
   const isSelected = selectedConversation?._id === conv._id
@@ -87,6 +88,17 @@ function GroupConversationItem({ conv }) {
       ? lastMessageContent.slice(0, 35) + "..."
       : lastMessageContent
 
+  const nicknameMap = useMemo(() => buildNicknameMap(conv), [conv])
+
+  // 2. Resolve the display name of the last message sender
+  const senderDisplayName = useMemo(() => {
+    if (!conv.lastMessage?.sender) return ""
+
+    // If the sender is the current user, you might want to show "You"
+    // or their nickname/username. Let's stick to resolveDisplayName:
+    return resolveDisplayName(conv.lastMessage.sender, nicknameMap)
+  }, [conv.lastMessage?.sender, nicknameMap])
+
   const handleSelect = () => {
     navigate(`/messages/${conv._id}`)
     setReplyingToMessage(null)
@@ -98,10 +110,10 @@ function GroupConversationItem({ conv }) {
     handleTouchStart(e)
   }
 
-    const handleToggleHide = (e) => {
-      e.stopPropagation()
-      toggleVisibility({ conversationId: conv._id, isHiding: true })
-    }
+  const handleToggleHide = (e) => {
+    e.stopPropagation()
+    toggleVisibility({ conversationId: conv._id, isHiding: true })
+  }
 
   return (
     <>
@@ -142,7 +154,7 @@ function GroupConversationItem({ conv }) {
                 <span className="italic">{lastMessageContent}</span>
               ) : (
                 <span>
-                  {conv?.lastMessage?.sender?.username}: {truncated}
+                  {senderDisplayName}: {truncated}
                 </span>
               )}
             </p>

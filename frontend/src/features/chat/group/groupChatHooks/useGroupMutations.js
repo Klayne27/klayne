@@ -213,3 +213,34 @@ export const useAdminDeleteMessage = (groupId) => {
 
   return { adminDeleteMessage, isDeletingAsAdmin }
 }
+
+import { updateNicknameApi } from "../../../../api/groupApi"
+
+export const useUpdateNickname = (groupId) => {
+  const queryClient = useQueryClient()
+
+  const { mutate: updateNickname, isPending: isUpdatingNickname } = useMutation({
+    mutationFn: updateNicknameApi,
+    onSuccess: (_, { targetUserId, nickname }) => {
+      // Update the detail cache so the settings page re-renders immediately
+      queryClient.setQueryData(groupKeys.detail(groupId), (old) => {
+        if (!old) return old
+        return {
+          ...old,
+          members: old.members.map((m) => {
+            const uid = (m.user?._id ?? m.user)?.toString()
+            return uid === targetUserId ? { ...m, nickname } : m
+          }),
+        }
+      })
+      // Also invalidate the members list panel
+      queryClient.invalidateQueries({ queryKey: groupKeys.members(groupId) })
+      showAppToast("Nickname updated.", "success")
+    },
+    onError: (error) => {
+      showAppToast(error.message || "Failed to update nickname.", "error")
+    },
+  })
+
+  return { updateNickname, isUpdatingNickname }
+}

@@ -109,7 +109,7 @@ export const getMessagesByConversationId = async (req, res) => {
       .populate({
         path: "sender",
         select:
-          "username fullName isCha isVerified isGoldVerified  badges preferredBadge followers following createdAt nameColor equipped",
+          "username fullName isCha isVerified isGoldVerified createdAt nameColor equipped",
         populate: {
           path: "profileImg coverImg",
           select: "imageUrl",
@@ -121,7 +121,7 @@ export const getMessagesByConversationId = async (req, res) => {
         populate: {
           path: "sender",
           select:
-            "username fullName isCha isVerified isGoldVerified  badges preferredBadge followers following createdAt nameColor equipped",
+            "username fullName isCha isVerified isGoldVerified createdAt nameColor equipped",
           populate: {
             path: "profileImg coverImg",
             select: "imageUrl",
