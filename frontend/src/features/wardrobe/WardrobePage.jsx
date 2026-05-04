@@ -306,7 +306,7 @@ const WardrobePage = () => {
   }
 
   return (
-    <div className="template min-h-screen flex-1 border-r border-accent">
+    <div className="template min-h-screen flex-1 md:border-x border-accent">
       {/* Header */}
       <div className="sticky top-0 z-50 flex items-center gap-3 border-b border-accent bg-base-100/80 px-4 py-3 backdrop-blur-md">
         <button

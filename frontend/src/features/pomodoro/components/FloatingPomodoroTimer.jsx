@@ -55,7 +55,7 @@ const FloatingPomodoroTimer = () => {
   if (!settings || (timer === 0 && !isActive && !isGoalReached)) return null
 
   return (
-    <div className="mt-4 rounded-2xl border border-accent bg-base-200 p-4">
+    <div className="mt-2 rounded-2xl border border-accent bg-base-100 p-4">
       <div className="mb-2 flex items-center justify-between">
         <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Pomodoro</span>
         <Link to="/pomodoro" className="text-xs text-primary hover:underline">

@@ -152,7 +152,7 @@ const NotificationPage = () => {
 
   return (
     <>
-      <div className="template mx-auto min-h-screen w-full flex-1 overflow-x-hidden border-accent md:border-r md:max-w-3xl lg:max-w-4xl">
+      <div className="template mx-auto min-h-screen w-full flex-1 overflow-x-hidden border-accent md:border-x md:max-w-3xl lg:max-w-4xl">
         <div className="sticky top-0 z-10 flex items-center gap-2 border-accent bg-opacity-20 px-3 py-2 backdrop-blur-md md:gap-4 md:px-4 md:py-3.5">
           <button
             onClick={() => navigate(-1)}

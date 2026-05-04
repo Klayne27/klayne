@@ -57,7 +57,7 @@ const ConversationsList = ({ conversations }) => {
   const showDropdown = showFollowedDropdown && (debouncedFollowedQuery.length > 0 || hasResults)
 
   return (
-    <div className="template flex h-full flex-col border-accent">
+    <div className="template flex h-full flex-col border-accent border-l">
       <ConversationsListHeader />
 
       <div className="px-3 py-2">

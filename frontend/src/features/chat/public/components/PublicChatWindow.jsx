@@ -108,7 +108,7 @@ const PublicChatWindow = () => {
   }
 
   return (
-    <div className="relative flex h-full flex-col border-accent md:border-r">
+    <div className="relative flex h-full flex-col border-accent md:border-x">
       <PublicChatHeader />
       {isCurrentUserBanned ? (
         <div className="flex flex-grow items-center justify-center">

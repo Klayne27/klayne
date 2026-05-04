@@ -61,7 +61,7 @@ const SearchPanel = () => {
           ) : isError ? (
             <p className="p-4 text-center text-sm text-red-500">{error.message}</p>
           ) : suggestedUsers?.length > 0 ? (
-            <div className="flex flex-col">
+            <div className="flex flex-col ">
               {suggestedUsers.map((user) => (
                 <Link
                   to={`/profile/${user.username}`}
