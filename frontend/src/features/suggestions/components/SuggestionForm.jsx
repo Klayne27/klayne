@@ -98,7 +98,7 @@ const SuggestionForm = () => {
                 onClick={() => setForm((p) => ({ ...p, type: t.value }))}
                 className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
                   form.type === t.value
-                    ? "bg-primary "
+                    ? "bg-primary"
                     : "bg-base-200 text-slate-400 hover:bg-secondary"
                 }`}
               >
@@ -127,14 +127,13 @@ const SuggestionForm = () => {
             <label className="text-sm text-slate-400">Description</label>
             <textarea
               name="description"
-              // 4. Attach the ref and the onPaste handler
               ref={descriptionRef}
               onPaste={handlePaste}
               value={form.description}
               onChange={handleChange}
               maxLength={1000}
               rows={5}
-              placeholder="Tell me more... (You can paste images here!)"
+              placeholder="What's on your mind? Don't hold back—describe the feature of your dreams or a bug that's bugging you. (You can paste images here!)"
               className="textarea textarea-bordered w-full resize-none rounded-xl"
               required
             />
@@ -189,7 +188,7 @@ const SuggestionForm = () => {
             <button
               type="submit"
               disabled={isPending || !form.title.trim() || !form.description.trim()}
-              className="rounded-full bg-primary py-2 px-4 font-semibold"
+              className="rounded-full bg-primary px-4 py-2 font-semibold"
             >
               {isPending ? "Submitting..." : "Submit"}
             </button>

@@ -17,7 +17,7 @@ const DropdownMenu = ({ children, icon }) => {
       {showMenu && (
         <>
           <div
-            className="fixed inset-0  h-screen w-screen cursor-default bg-transparent"
+            className="fixed inset-0  z-[10] h-screen w-screen cursor-default bg-transparent"
             onClick={toggleMenu}
           ></div>
           <div

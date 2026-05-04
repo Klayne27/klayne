@@ -52,6 +52,7 @@ import WardrobePage from "../../features/wardrobe/WardrobePage"
 import UserAvatar from "./UserAvatar"
 import UserFullName from "./UserFullname"
 import { getNameplateClass } from "../../utils/getNameplateClass"
+import { createPortal } from "react-dom"
 
 const Sidebar = ({
   onOpenCreatePostModal,
@@ -736,7 +737,9 @@ const Sidebar = ({
             <li
               ref={moreButtonRef}
               onClick={() => setShowMorePopover(!showMorePopover)}
-              className={`relative hidden cursor-pointer items-center justify-start rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
+              className={`relative hidden cursor-pointer items-center justify-start rounded-full ${
+                shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"
+              } transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
             >
               <div className={iconWrapperStyle}>
                 <HiOutlineEllipsisHorizontalCircle className="size-7" />
@@ -745,80 +748,98 @@ const Sidebar = ({
                 <span className="ml-2.5 hidden text-lg md:block">More</span>
               )}
 
-              {/* MORE POPOVER */}
-              {showMorePopover && (
-                <>
-                  <div
-                    className="fixed inset-0 z-[60] cursor-default"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setShowMorePopover(false)
-                    }}
-                  />
-                  <div
-                    style={{
-                      animation: "fadeInSlideDown 0.2s ease-out forwards",
-                    }}
-                    className={`white-shadow absolute bottom-full z-[70] mb-2 w-56 overflow-hidden rounded-2xl border border-accent bg-base-100 py-2 shadow-2xl ${shouldCollapseSidebar ? "-translate-x-[80%]" : "left-0"}`}
-                  >
-                    <button
+              {/* MORE POPOVER - Wrapped in createPortal */}
+              {showMorePopover &&
+                createPortal(
+                  <>
+                    {/* Backdrop: Now truly covers the entire screen */}
+                    <div
+                      className="fixed inset-0 z-[60] h-screen w-screen cursor-default bg-transparent"
                       onClick={(e) => {
                         e.stopPropagation()
-                        navigate("/devlog")
                         setShowMorePopover(false)
                       }}
-                      className="flex w-full items-center gap-3 px-4 py-3 text-left font-semibold transition hover:bg-secondary"
-                    >
-                      <MdOutlineLibraryBooks className="size-6" />
-                      <span>Devlog</span>
-                    </button>
-                    {authUser?.isAdmin && <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        navigate("/admin/suggestions")
-                        setShowMorePopover(false)
+                    />
+
+                    {/* Menu: We use getBoundingClientRect to position it exactly above the button */}
+                    <div
+                      style={{
+                        animation: "fadeInSlideDown 0.2s ease-out forwards",
+                        // Manual positioning because it's now outside the sidebar hierarchy
+                        position: "fixed",
+                        bottom:
+                          window.innerHeight -
+                          moreButtonRef.current?.getBoundingClientRect().top +
+                          8,
+                        left: moreButtonRef.current?.getBoundingClientRect().left,
                       }}
-                      className="flex w-full items-center gap-3 px-4 py-3 text-left font-semibold transition hover:bg-secondary"
+                      className="white-shadow z-[70] w-56 overflow-hidden rounded-2xl border border-accent bg-base-100 py-2 shadow-2xl"
                     >
-                      <HiOutlineLightBulb className="size-6" />
-                      <span>Suggestion Page</span>
-                    </button>}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        navigate("/suggestions")
-                        setShowMorePopover(false)
-                      }}
-                      className="flex w-full items-center gap-3 px-4 py-3 text-left font-semibold transition hover:bg-secondary"
-                    >
-                      <HiOutlineLightBulb className="size-6" />
-                      <span>Suggestion</span>
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        navigate("/wardrobe")
-                        setShowMorePopover(false)
-                      }}
-                      className="flex w-full items-center gap-3 px-4 py-3 text-left font-semibold transition hover:bg-secondary"
-                    >
-                      <PiCoatHangerBold className="size-6" />
-                      <span>Wardrobe</span>
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        navigate("/themes")
-                        setShowMorePopover(false)
-                      }}
-                      className="flex w-full items-center gap-3 px-4 py-3 text-left font-semibold transition hover:bg-secondary"
-                    >
-                      <HiOutlinePaintBrush className="size-6" />
-                      <span>Themes</span>
-                    </button>
-                  </div>
-                </>
-              )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          navigate("/devlog")
+                          setShowMorePopover(false)
+                        }}
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left font-semibold transition hover:bg-secondary"
+                      >
+                        <MdOutlineLibraryBooks className="size-6" />
+                        <span>Devlog</span>
+                      </button>
+
+                      {authUser?.isAdmin && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            navigate("/admin/suggestions")
+                            setShowMorePopover(false)
+                          }}
+                          className="flex w-full items-center gap-3 px-4 py-3 text-left font-semibold transition hover:bg-secondary"
+                        >
+                          <HiOutlineLightBulb className="size-6" />
+                          <span>Suggestion Page</span>
+                        </button>
+                      )}
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          navigate("/suggestions")
+                          setShowMorePopover(false)
+                        }}
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left font-semibold transition hover:bg-secondary"
+                      >
+                        <HiOutlineLightBulb className="size-6" />
+                        <span>Suggestion</span>
+                      </button>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          navigate("/wardrobe")
+                          setShowMorePopover(false)
+                        }}
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left font-semibold transition hover:bg-secondary"
+                      >
+                        <PiCoatHangerBold className="size-6" />
+                        <span>Wardrobe</span>
+                      </button>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          navigate("/themes")
+                          setShowMorePopover(false)
+                        }}
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left font-semibold transition hover:bg-secondary"
+                      >
+                        <HiOutlinePaintBrush className="size-6" />
+                        <span>Themes</span>
+                      </button>
+                    </div>
+                  </>,
+                  document.body, // Teleport to body
+                )}
             </li>
 
             {/* POST BUTTON */}
