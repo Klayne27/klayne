@@ -229,7 +229,7 @@ const DevlogDetailPage = () => {
 
   if (devlogLoading) {
     return (
-      <div className="flex min-h-screen justify-center border-x border-base-300 py-20">
+      <div className="flex min-h-screen justify-center md:border-x border-base-300 py-20">
         <LoadingSpinner size="lg" />
       </div>
     )
@@ -237,7 +237,7 @@ const DevlogDetailPage = () => {
 
   if (isError || !devlog) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-3 border-x border-base-300 text-base-content/40">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 md:border-x border-base-300 text-base-content/40">
         <p className="text-sm">Devlog not found.</p>
         <button onClick={() => navigate("/devlog")} className="btn btn-ghost btn-sm">
           ← Back
@@ -249,7 +249,7 @@ const DevlogDetailPage = () => {
   const isLiked = devlog.likes?.some((id) => id === authUser?._id || id?._id === authUser?._id)
 
   return (
-    <div className="flex min-h-screen flex-col border-x border-base-300">
+    <div className="flex min-h-screen flex-col md:border-x border-base-300">
       {/* sticky header */}
       <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-base-300 bg-base-100/80 px-4 py-3 backdrop-blur">
         <button onClick={() => navigate("/devlog")} className="btn btn-circle btn-ghost btn-sm">

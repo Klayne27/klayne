@@ -503,30 +503,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                   Edit profile
                 </button>
               )}
-              {/* {isAdminUser && !isMyProfile && userProfile && (
-                <button
-                  onClick={openDeleteUserModal}
-                  className="btn btn-error btn-sm absolute top-4 flex items-center gap-1 rounded-full py-1 text-xs text-white transition duration-200 hover:scale-105 md:px-3 md:text-base"
-                  disabled={isDeletingUser}
-                >
-                  <MdDeleteForever size={20} />
-                </button>
-              )} */}
-
-              {/* {!isMyProfile && !hasBlockedYou && (
-                <button
-                  className={`absolute top-20 flex items-center gap-1 rounded-full border border-red-700 px-1.5 py-1 text-xs font-bold transition duration-200 md:px-3 md:text-base ${
-                    isBlockedByYou ? "bg-red-700 hover:bg-red-800" : "bg-red-700 hover:bg-red-800"
-                  } `}
-                  onClick={openBlockConfirmationModal}
-                  disabled={isBlocking}
-                >
-                  {!isBlockedByYou && <MdBlock size={20} />}
-                  {isBlocking ? "Loading..." : isBlockedByYou ? "Unblock" : "Block"}
-                </button>
-              )} */}
-
-              {/* <MuteButton profileUser={userProfile} /> */}
 
               {!isMyProfile && amIFollowing && !isBlockingRelationship && (
                 <button

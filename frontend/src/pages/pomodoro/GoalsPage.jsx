@@ -32,7 +32,7 @@ const GoalsPage = () => {
   }
 
   return (
-    <div className="template mx-auto min-h-screen max-w-2xl border-x border-accent bg-base-100 py-4 font-sans">
+    <div className="template mx-auto min-h-screen max-w-2xl md:border-x border-accent bg-base-100 py-4 font-sans">
       <div className="">
         <div className="mb-8 flex items-center space-x-4 px-4">
           <button onClick={() => navigate(-1)} className="template">

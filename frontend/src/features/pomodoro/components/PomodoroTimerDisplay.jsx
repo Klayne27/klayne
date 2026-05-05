@@ -162,15 +162,36 @@ function PomodoroTimerDisplay({
       {/* Progress Dots */}
       <div className="flex flex-col items-center gap-3">
         {settings?.sessionGoalCount > 0 && (
-          <div className="flex gap-2 rounded-full border border-white/5 bg-white/[0.02] px-3 py-2 shadow-inner">
-            {Array.from({ length: settings.sessionGoalCount }).map((_, i) => (
-              <div
-                key={i}
-                className={`h-1.5 w-1.5 rounded-full transition-all duration-500 ${
-                  i < sessionCount ? (isBreak ? "bg-teal-400" : "bg-primary") : "bg-slate-800"
-                } ${i === sessionCount && !isGoalReached ? "scale-125 ring-2 ring-white/10" : ""}`}
-              />
-            ))}
+          <div className="flex items-center gap-4 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 shadow-xl backdrop-blur-sm">
+            {/* Dots Container */}
+            <div className="flex gap-2">
+              {Array.from({ length: settings.sessionGoalCount }).map((_, i) => (
+                <div
+                  key={i}
+                  className={`h-2 w-2 rounded-full border border-gray-300 transition-all duration-700 ease-out ${
+                    i < sessionCount
+                      ? isBreak
+                        ? "bg-teal-400 shadow-[0_0_8px_rgba(45,212,191,0.5)]"
+                        : "bg-primary shadow-[0_0_8px_rgba(var(--primary-rgb),0.5)]"
+                      : "bg-white/50"
+                  } ${
+                    i === sessionCount && !isGoalReached
+                      ? "scale-125 animate-pulse ring-2 ring-white/20"
+                      : ""
+                  }`}
+                />
+              ))}
+            </div>
+
+            {/* Divider */}
+            <div className="h-3 w-[1px] bg-gray-300" />
+
+            {/* Counter Text */}
+            <div className="flex items-baseline gap-0.5 font-mono text-xs font-medium tracking-wider">
+              <span className={isBreak ? "text-teal-400" : "text-primary"}>{sessionCount}</span>
+              <span className="text-gray-500">/</span>
+              <span className="text-gray-500">{settings.sessionGoalCount}</span>
+            </div>
           </div>
         )}
       </div>

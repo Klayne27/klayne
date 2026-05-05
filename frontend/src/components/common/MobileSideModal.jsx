@@ -7,7 +7,7 @@ import { BiLogOut } from "react-icons/bi"
 import { useEffect } from "react"
 import { useState } from "react"
 import { TbUser, TbUserFilled, TbUserX } from "react-icons/tb"
-import { HiPaintBrush, HiOutlinePaintBrush } from "react-icons/hi2"
+import { HiPaintBrush, HiOutlinePaintBrush, HiOutlineLightBulb } from "react-icons/hi2"
 import { useSocket } from "../../context/SocketContext"
 import { MdLibraryBooks, MdOutlineLibraryBooks } from "react-icons/md"
 import { IoIosTimer } from "react-icons/io"
@@ -149,13 +149,12 @@ function MobileSideModal({
               </button>
             </div>
             <div className="flex flex-col">
-   
-                <UserFullName
-                  user={authUser}
-                  className={`min-w-0 truncate text-lg font-bold`}
-                  style={authUser.nameColor ? { color: authUser.nameColor } : undefined}
-                />
-         
+              <UserFullName
+                user={authUser}
+                className={`min-w-0 truncate text-lg font-bold`}
+                style={authUser.nameColor ? { color: authUser.nameColor } : undefined}
+              />
+
               <p className="min-w-0 truncate text-sm text-slate-500">@{authUser?.username}</p>
             </div>
             <div className="mt-4 flex gap-4 text-sm">
@@ -337,6 +336,24 @@ function MobileSideModal({
                 )}{" "}
                 <span className={`text-xl ${pathname === "/themes" ? "font-bold" : ""}`}>
                   Themes
+                </span>
+              </li>
+              <li
+                onClick={() => {
+                  if (pathname === "/suggestions") return
+                  navigate("/suggestions")
+                  setShowSideModal(false)
+                }}
+                className={`flex cursor-pointer items-center px-4 py-2 hover:bg-secondary ${
+                  isTouchDevice && activeButtonId === "modal-suggestions"
+                    ? "bg-secondary bg-opacity-50 transition duration-150"
+                    : "transition duration-150"
+                }`}
+              >
+                <HiOutlineLightBulb className="mr-4 size-7" />
+
+                <span className={`text-xl ${pathname === "/suggestions" ? "font-bold" : ""}`}>
+                  Suggestion
                 </span>
               </li>
               <li

@@ -310,7 +310,7 @@ const DevlogPage = () => {
   }
 
   return (
-    <div className="flex min-h-screen flex-col border-x border-base-300">
+    <div className="flex min-h-screen flex-col md:border-x border-base-300">
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-base-300 bg-base-100/80 px-4 py-3 backdrop-blur">
         <div>
           <h1 className="text-base font-black tracking-tight">Devlog</h1>
