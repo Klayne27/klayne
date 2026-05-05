@@ -5,6 +5,14 @@ const UNLOCK_RULES = [
   // ════════════════════════════════════════
   // ── LEVEL-GATED (one per level, 5–85) ────────────────────────────────────────
   {
+    id: "karla",
+    category: "fonts",
+    trigger: "level",
+    threshold: 4,
+    items: ["karla"],
+    description: "Reach Level 4",
+  },
+  {
     id: "scholarly_serif",
     category: "fonts",
     trigger: "level",

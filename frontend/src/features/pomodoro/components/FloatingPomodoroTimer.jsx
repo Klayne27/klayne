@@ -2,6 +2,7 @@ import { FaPause, FaPlay } from "react-icons/fa"
 import { Link } from "react-router-dom"
 import { useGetPomodoroSettings } from "../pomodoroHooks/usePomodoroQueries"
 import { usePomodoroTimerStore } from "../../../store/usePomodoroTimerStore"
+import FloatingPomodoroSkeleton from "../../../components/skeletons/FloatingPomodoroSkeleton"
 
 const FloatingPomodoroTimer = () => {
   const timer = usePomodoroTimerStore((s) => s.timer)
@@ -13,7 +14,7 @@ const FloatingPomodoroTimer = () => {
   const setIsActive = usePomodoroTimerStore((s) => s.setIsActive)
   const persistPause = usePomodoroTimerStore((s) => s.persistPause)
 
-  const { settings } = useGetPomodoroSettings()
+  const { settings, isSettingsLoading } = useGetPomodoroSettings()
   const engineActions = usePomodoroTimerStore((s) => s.engineActions)
 
   const minutes = Math.floor(timer / 60)
@@ -53,6 +54,8 @@ const FloatingPomodoroTimer = () => {
   }
 
   if (!settings || (timer === 0 && !isActive && !isGoalReached)) return null
+
+  if (isSettingsLoading) return <FloatingPomodoroSkeleton />
 
   return (
     <div className="mt-2 rounded-2xl border border-accent bg-base-100 p-4">

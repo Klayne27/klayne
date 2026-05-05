@@ -114,11 +114,9 @@ const ProfilePage = ({ feedType, setFeedType }) => {
   const openLightbox = useLightboxStore((s) => s.openLightbox)
 
   const equippedFont = userProfile?.equipped?.font
-  const equippedTheme = userProfile?.equipped?.theme
 
   // 2. Map them to your config values
   const fontVars = WARDROBE_CONFIG[equippedFont]?.cssVars || {}
-  const themeVars = WARDROBE_CONFIG[equippedTheme]?.cssVars || {}
 
   const activeOverlayClass = getOverlayClass(WARDROBE_CONFIG, userProfile?.equipped?.overlay)
 
@@ -335,10 +333,9 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     <>
       <ScrollToTop />
       <div
-        className={`template min-h-screen min-w-0 md:border-x flex-[4_4_0] overflow-hidden border-accent ${WARDROBE_CONFIG[userProfile?.equipped?.fonts] || ""} ${userProfile?.equipped?.theme ? "custom-gradient-bg" : ""}`}
+        className={`template min-h-screen min-w-0 md:border-x flex-[4_4_0] overflow-hidden border-accent ${WARDROBE_CONFIG[userProfile?.equipped?.fonts] || ""}`}
         style={{
           ...fontVars,
-          ...themeVars,
           fontFamily: "var(--user-font, inherit)", // Force the font variable
         }}
       >

@@ -22,6 +22,15 @@ export const WARDROBE_CONFIG = {
   // LEVEL-GATED  (trigger: "level", sorted by threshold ascending)
   // ══════════════════════════════════════════════════════════════════════════════
 
+  karla: {
+    label: "Karla",
+    category: "fonts",
+    rewardType: "progress",
+    unlockHint: "Level 4",
+    googleFont: "Karla",
+    preview: "Modern humanist sans-serif. Clean, friendly, highly readable.",
+    cssVars: { "--user-font": "'Karla', 'Helvetica Neue', Arial, sans-serif" },
+  },
   scholarly_serif: {
     label: "Scholarly Serif",
     category: "fonts",
