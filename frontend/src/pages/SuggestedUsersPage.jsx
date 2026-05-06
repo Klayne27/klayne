@@ -58,7 +58,7 @@ const SuggestedUsersPage = ({ mobile = false }) => {
   }
   const handleConfirmUnfollow = () => {
     if (userToUnfollow) {
-      follow(userToUnfollow._id)
+      follow({userIdToFollow: userToUnfollow._id})
       closeUnfollowModal()
     }
   }

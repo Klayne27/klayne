@@ -439,6 +439,19 @@ export async function emitNewBoardPostCount(userId) {
   }
 }
 
+export async function emitFollowRequestCount(userId) {
+  try {
+    const user = await User.findById(userId).select("followRequests").lean();
+    const count = user?.followRequests?.length ?? 0;
+    const socketIds = getReceiverSocketIds(userId.toString());
+    socketIds.forEach((id) => {
+      io.to(id).emit("followRequestCount", { count });
+    });
+  } catch (error) {
+    console.error(`Error in emitFollowRequestCount for user ${userId}:`, error);
+  }
+}
+
 export const createAndSendBoardNotification = async ({
   from,
   to,
@@ -693,6 +706,8 @@ io.on("connection", async (socket) => {
     emitNewVentUnreadDot(userId);
     await emitUnreadPublicChatStatus(userId);
     await emitNewBoardPostCount(userId); // ADD THIS
+    await emitFollowRequestCount(userId);
+
   } else {
     socket.disconnect(true);
     return;

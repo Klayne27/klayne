@@ -1,13 +1,13 @@
 import { useNavigate } from "react-router-dom"
 import { IoChatbubbleSharp, IoSettingsOutline } from "react-icons/io5"
-import { FaUser, FaHeart, FaRetweet, FaReply, FaWrench } from "react-icons/fa6"
+import { FaUser, FaHeart, FaRetweet, FaReply, FaWrench, FaUserCheck } from "react-icons/fa6"
 import { FaTrashCan } from "react-icons/fa6"
 import { formatPostDate } from "../utils/date"
 import { useAuthUser } from "../features/auth/authHooks/useAuthUser"
 import NotificationsSkeleton from "../components/skeletons/NotificationsSkeleton"
 import { FaArrowLeft } from "react-icons/fa6"
 import { FaAt } from "react-icons/fa"
-import { useRef } from "react"
+import { useRef, useState } from "react"
 import { getOptimizedImageUrl } from "../utils/cloudinaryUtils"
 import {
   useDeleteNotification,
@@ -15,8 +15,13 @@ import {
   useGetNotifications,
 } from "../features/notifications/notificationsHooks/useNotifications"
 import UserFullName from "../components/common/UserFullname"
+import { useSocket } from "../context/SocketContext"
+import FollowRequestsTab from "../features/notifications/components/FollowRequestsTab"
 
 const NotificationPage = () => {
+const [activeTab, setActiveTab] = useState("all") // "all" | "requests"
+const { followRequestCount } = useSocket()
+
   const { notifications, isLoading } = useGetNotifications()
   const { deleteNotification } = useDeleteNotification()
   const { deleteNotifications } = useDeleteNotifications()
@@ -25,6 +30,7 @@ const NotificationPage = () => {
   const dropdownToggleRef = useRef(null)
 
   const filteredNotifications = notifications?.filter((notification) => {
+    if (notification.type === "followRequest") return false // ← add this line
     if (
       (notification.type === "like" ||
         notification.type === "mention" ||
@@ -101,6 +107,8 @@ const NotificationPage = () => {
         return <IoChatbubbleSharp className="h-6 w-6 text-teal-400" />
       case "boardReply":
         return <FaReply className="h-6 w-6 text-sky-400" />
+      case "followRequestAccepted":
+        return <FaUserCheck className="h-6 w-6 text-green-400" />
       default:
         return null
     }
@@ -137,6 +145,8 @@ const NotificationPage = () => {
         return `@${displayUsername} commented on your board post.`
       case "boardReply":
         return `@${displayUsername} replied to your board comment.`
+      case "followRequestAccepted":
+        return `@${displayUsername} accepted your follow request.`
       default:
         return ""
     }
@@ -152,7 +162,7 @@ const NotificationPage = () => {
 
   return (
     <>
-      <div className="template mx-auto min-h-screen w-full flex-1 overflow-x-hidden border-accent md:border-x md:max-w-3xl lg:max-w-4xl">
+      <div className="template mx-auto min-h-screen w-full flex-1 overflow-x-hidden border-accent md:max-w-3xl md:border-x lg:max-w-4xl">
         <div className="sticky top-0 z-10 flex items-center gap-2 border-accent bg-opacity-20 px-3 py-2 backdrop-blur-md md:gap-4 md:px-4 md:py-3.5">
           <button
             onClick={() => navigate(-1)}
@@ -165,7 +175,6 @@ const NotificationPage = () => {
             <div tabIndex={0} role="button" className="btn btn-circle btn-ghost btn-sm">
               <IoSettingsOutline className="h-5 w-5" />
             </div>
-
             <ul
               tabIndex={0}
               className="menu dropdown-content z-[1] w-52 rounded-box border border-accent bg-base-100 p-2 shadow"
@@ -178,66 +187,100 @@ const NotificationPage = () => {
           </div>
         </div>
 
-        {isLoading && (
-          <div className="mt-4">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <NotificationsSkeleton key={i} />
-            ))}
-          </div>
-        )}
+        {/* ── Tab bar ─────────────────────────────────────────────────────── */}
+        <div className="flex border-b border-accent">
+          <button
+            onClick={() => setActiveTab("all")}
+            className={`flex-1 py-3 text-sm font-semibold transition-colors ${
+              activeTab === "all"
+                ? "border-b-2 border-primary text-primary"
+                : "text-slate-500 hover:text-slate-300"
+            }`}
+          >
+            All
+          </button>
+          <button
+            onClick={() => setActiveTab("requests")}
+            className={`relative flex flex-1 items-center justify-center gap-2 py-3 text-sm font-semibold transition-colors ${
+              activeTab === "requests"
+                ? "border-b-2 border-primary text-primary"
+                : "text-slate-500 hover:text-slate-300"
+            }`}
+          >
+            Requests
+            {followRequestCount > 0 && (
+              <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-bold text-white">
+                {followRequestCount}
+              </span>
+            )}
+          </button>
+        </div>
 
-        {filteredNotifications?.length === 0 && !isLoading && (
-          <div className="p-4 text-center font-bold">No notifications 🤔</div>
-        )}
+        {activeTab === "requests" ? (
+          <FollowRequestsTab />
+        ) : (
+          <>
+            {isLoading && (
+              <div className="mt-4">
+                {Array.from({ length: 10 }).map((_, i) => (
+                  <NotificationsSkeleton key={i} />
+                ))}
+              </div>
+            )}
+            {filteredNotifications?.length === 0 && !isLoading && (
+              <div className="p-4 text-center font-bold">No notifications 🤔</div>
+            )}
+            {filteredNotifications?.map((notification) => {
+              const isGoldVerified = notification.from.isGoldVerified
+              const isVerified = notification.from.isVerified
+              const isAnon = notification.isAnonymousInteraction
+              const isCha = notification.from.isCha
 
-        {filteredNotifications?.map((notification) => {
-          const isGoldVerified = notification.from.isGoldVerified
-          const isVerified = notification.from.isVerified
-          const isAnon = notification.isAnonymousInteraction
-          const isCha = notification.from.isCha
+              let imgToDisplay = null
 
-          let imgToDisplay = null
+              if (notification.postId) {
+                imgToDisplay = notification.postId
+              } else if (notification.boardCommentId) {
+                imgToDisplay = notification.boardCommentId
+              }
 
-          if (notification.postId) {
-            imgToDisplay = notification.postId
-          } else if (notification.boardCommentId) {
-            imgToDisplay = notification.boardCommentId
-          }
-
-          return (
-            <div
-              className="relative flex cursor-pointer gap-4 border-b border-accent p-4 transition-colors hover:bg-secondary"
-              key={notification._id}
-              onClick={(e) => handleNotificationItemClick(e, notification)}
-            >
-              <div className="mt-1 flex-shrink-0"> {getNotificationIcon(notification.type)}</div>
-              <div className="flex w-full min-w-0 flex-col gap-2">
-                <div className="flex items-start gap-2">
-                  <div
-                    className="avatar cursor-pointer"
-                    onClick={(e) =>
-                      !isAnon ? handleProfileClick(e, notification.from?.username) : ""
-                    }
-                  >
-                    <div className="w-10 rounded-full">
-                      <img
-                        src={
-                          isAnon
-                            ? "/avatar-placeholder.png"
-                            : getOptimizedImageUrl(
-                                notification.from?.profileImg?.imageUrl ||
-                                  "/avatar-placeholder.png",
-                                "avatar",
-                              )
-                        }
-                        alt="profile"
-                      />
-                    </div>
+              return (
+                <div
+                  className="relative flex cursor-pointer gap-4 border-b border-accent p-4 transition-colors hover:bg-secondary"
+                  key={notification._id}
+                  onClick={(e) => handleNotificationItemClick(e, notification)}
+                >
+                  <div className="mt-1 flex-shrink-0">
+                    {" "}
+                    {getNotificationIcon(notification.type)}
                   </div>
+                  <div className="flex w-full min-w-0 flex-col gap-2">
+                    <div className="flex items-start gap-2">
+                      <div
+                        className="avatar cursor-pointer"
+                        onClick={(e) =>
+                          !isAnon ? handleProfileClick(e, notification.from?.username) : ""
+                        }
+                      >
+                        <div className="w-10 rounded-full">
+                          <img
+                            src={
+                              isAnon
+                                ? "/avatar-placeholder.png"
+                                : getOptimizedImageUrl(
+                                    notification.from?.profileImg?.imageUrl ||
+                                      "/avatar-placeholder.png",
+                                    "avatar",
+                                  )
+                            }
+                            alt="profile"
+                          />
+                        </div>
+                      </div>
 
-                  <div className="flex min-w-0 flex-1 flex-col">
-                    <div className="flex min-w-0 items-center gap-[2px]">
-                      {/* <span
+                      <div className="flex min-w-0 flex-1 flex-col">
+                        <div className="flex min-w-0 items-center gap-[2px]">
+                          {/* <span
                         className={`min-w-0 truncate font-bold ${!isAnon ? "cursor-pointer hover:underline" : ""}`}
                         onClick={(e) =>
                           !isAnon ? handleProfileClick(e, notification.from?.username) : null
@@ -250,74 +293,76 @@ const NotificationPage = () => {
                       >
                         {isAnon ? "Anonymous" : notification.from?.fullName}
                       </span> */}
-                      <UserFullName
-                        user={notification.from}
-                        isAnon={isAnon}
-                        className={`min-w-0 truncate font-bold ${!isAnon ? "cursor-pointer hover:underline" : ""}`}
-                        onClick={(e) =>
-                          !isAnon ? handleProfileClick(e, notification.from?.username) : null
-                        }
-                      />
+                          <UserFullName
+                            user={notification.from}
+                            isAnon={isAnon}
+                            className={`min-w-0 truncate font-bold ${!isAnon ? "cursor-pointer hover:underline" : ""}`}
+                            onClick={(e) =>
+                              !isAnon ? handleProfileClick(e, notification.from?.username) : null
+                            }
+                          />
 
-                      {/* Only show verification badges if NOT anonymous */}
-                      {!isAnon && isVerified && (
-                        <img src="/verified2.png" className="size-[17px]" alt="Verified" />
-                      )}
+                          {/* Only show verification badges if NOT anonymous */}
+                          {!isAnon && isVerified && (
+                            <img src="/verified2.png" className="size-[17px]" alt="Verified" />
+                          )}
 
-                      {!isAnon && isGoldVerified && (
-                        <img
-                          src="/gold-verified2.png"
-                          className="size-[17px]"
-                          alt="Gold Verified"
-                        />
-                      )}
-                      {!isAnon && isCha && (
-                        <img src="/cha.png" className="size-[15px] rounded-md" />
-                      )}
+                          {!isAnon && isGoldVerified && (
+                            <img
+                              src="/gold-verified2.png"
+                              className="size-[17px]"
+                              alt="Gold Verified"
+                            />
+                          )}
+                          {!isAnon && isCha && (
+                            <img src="/cha.png" className="size-[15px] rounded-md" />
+                          )}
+                        </div>
+                        <div className="min-w-0 truncate text-sm">
+                          {getNotificationMessage(notification)}
+                        </div>
+                      </div>
+                      <div className="flex" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          className="group rounded-full p-2 transition duration-200 hover:bg-red-600 hover:bg-opacity-15 hover:text-red-500"
+                          onClick={() => deleteNotification(notification._id)}
+                        >
+                          <FaTrashCan
+                            className="cursor-pointer text-slate-500 transition duration-200 group-hover:text-red-600"
+                            size={15}
+                          />
+                        </button>
+                      </div>
                     </div>
-                    <div className="min-w-0 truncate text-sm">
-                      {getNotificationMessage(notification)}
-                    </div>
-                  </div>
-                  <div className="flex" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      className="group rounded-full p-2 transition duration-200 hover:bg-red-600 hover:bg-opacity-15 hover:text-red-500"
-                      onClick={() => deleteNotification(notification._id)}
-                    >
-                      <FaTrashCan
-                        className="cursor-pointer text-slate-500 transition duration-200 group-hover:text-red-600"
-                        size={15}
-                      />
-                    </button>
-                  </div>
-                </div>
-                {/* Post Content Display */}
-                {(notification.postId?.text ||
-                  imgToDisplay?.img ||
-                  notification.boardCommentId?.content) && (
-                  <div className="mt-2 rounded-xl border border-accent p-3">
-                    {notification.postId?.text ||
-                      (notification.boardCommentId?.content && (
-                        <p className="text-sm">{contentToDisplay(notification)}</p>
-                      ))}
-                    {imgToDisplay?.img && (
-                      <div className="flex justify-center">
-                        <img
-                          src={getOptimizedImageUrl(imgToDisplay.img, "post")}
-                          className="mt-2 max-h-72 rounded-xl object-contain"
-                          alt="Content"
-                        />
+                    {/* Post Content Display */}
+                    {(notification.postId?.text ||
+                      imgToDisplay?.img ||
+                      notification.boardCommentId?.content) && (
+                      <div className="mt-2 rounded-xl border border-accent p-3">
+                        {notification.postId?.text ||
+                          (notification.boardCommentId?.content && (
+                            <p className="text-sm">{contentToDisplay(notification)}</p>
+                          ))}
+                        {imgToDisplay?.img && (
+                          <div className="flex justify-center">
+                            <img
+                              src={getOptimizedImageUrl(imgToDisplay.img, "post")}
+                              className="mt-2 max-h-72 rounded-xl object-contain"
+                              alt="Content"
+                            />
+                          </div>
+                        )}
                       </div>
                     )}
+                    <span className="text-sm text-slate-500">
+                      {formatPostDate(notification.createdAt)}
+                    </span>
                   </div>
-                )}
-                <span className="text-sm text-slate-500">
-                  {formatPostDate(notification.createdAt)}
-                </span>
-              </div>
-            </div>
-          )
-        })}
+                </div>
+              )
+            })}
+          </>
+        )}
       </div>
     </>
   )

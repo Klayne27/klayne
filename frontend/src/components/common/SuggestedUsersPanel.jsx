@@ -34,7 +34,7 @@ const SuggestedUsersPanel = () => {
   }
   const handleConfirmUnfollow = () => {
     if (userToUnfollow) {
-      follow(userToUnfollow._id)
+      follow({userIdToFollow: userToUnfollow._id})
       closeUnfollowModal()
     }
   }

@@ -17,6 +17,7 @@ import ScheduledPostsModal from "./ScheduledPostsModal"
 import EditScheduledPostModal from "./EditSchedulePostModal"
 import { PollInputs } from "./PollInput"
 import { useCreatePosts, useCreateVentPost, useUpdatePost } from "../postsHooks/usePostsMutations"
+import { useMentionSuggestions } from "../../../hooks/customHooks/useMentionSuggestions"
 
 const PostModal = ({
   onClose,
@@ -29,6 +30,7 @@ const PostModal = ({
   // Store state
   const {
     input,
+    setInput,
     selectedFile,
     previewImage,
     scheduledAt,
@@ -282,6 +284,7 @@ const PostModal = ({
             onScheduleClick={scheduleModal.openScheduleModal}
             focusedMentionIndex={postModal.focusedMentionIndex}
             onMentionKeyDown={postModal.handleMentionKeyDown}
+            onMentionSelect={postModal.handleSelectMention}
           />
 
           <MediaPreview

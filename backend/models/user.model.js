@@ -44,6 +44,17 @@ const userSchema = new mongoose.Schema(
       default: null, // null = use default theme color
       match: [/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/, "Invalid hex color"],
     },
+    isPrivate: {
+      type: Boolean,
+      default: false,
+    },
+    followRequests: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        default: [],
+      },
+    ],
     followers: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -58,6 +69,7 @@ const userSchema = new mongoose.Schema(
         default: [],
       },
     ],
+
     blockedUsers: [
       {
         type: mongoose.Schema.Types.ObjectId,

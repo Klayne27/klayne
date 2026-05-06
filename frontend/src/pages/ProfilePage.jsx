@@ -166,6 +166,9 @@ const ProfilePage = ({ feedType, setFeedType }) => {
 
   const isBlockingRelationship = isBlockedByYou || hasBlockedYou
 
+  const isPrivateAndNotFollowing =
+    userProfile?.isPrivate && !amIFollowing && authUser?._id !== userProfile?._id
+
   const { isTouchDevice, activeButtonId, handleTouchCancel, handleTouchEnd, handleTouchStart } =
     useTouchHoverEffect()
 
@@ -212,7 +215,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
 
   const handleConfirmUnfollow = () => {
     if (userToUnfollow) {
-      follow(userToUnfollow._id)
+      follow({userIdToFollow: userToUnfollow._id})
       closeUnfollowModal()
     }
   }
@@ -333,7 +336,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     <>
       <ScrollToTop />
       <div
-        className={`template min-h-screen min-w-0 md:border-x flex-[4_4_0] overflow-hidden border-accent ${WARDROBE_CONFIG[userProfile?.equipped?.fonts] || ""}`}
+        className={`template min-h-screen min-w-0 flex-[4_4_0] overflow-hidden border-accent md:border-x ${WARDROBE_CONFIG[userProfile?.equipped?.fonts] || ""}`}
         style={{
           ...fontVars,
           fontFamily: "var(--user-font, inherit)", // Force the font variable
@@ -369,8 +372,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
             <div className="group/cover relative">
               <div className={`group/cover relative overflow-hidden ${activeOverlayClass}`}>
                 {" "}
-                {/* <div className="sakura-layer-3 pointer-events-none absolute inset-0 z-0" /> */}
-                {/* <div className="sakura-mist" /> */}
                 <img
                   src={getOptimizedImageUrl(
                     userProfile?.coverImg?.imageUrl || "/cover.png",
@@ -408,21 +409,19 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                 ref={profileImgRef}
                 onChange={(e) => handleImgChange(e, "profileImg")}
               />
-              <div className="absolute -bottom-16 left-4">
+              <div className="absolute -bottom-16 left-4 border-4 rounded-full border-base-100">
                 <div
-                  className="group/avatar relative cursor-pointer"
+                  className="group/avatar relative cursor-pointer rounded-full"
                   onClick={() => {
                     const url =
                       profileImg || userProfile?.profileImg?.imageUrl || "/avatar-placeholder.png"
                     openLightbox({ imageUrl: url })
                   }}
                 >
-                  {/* 1. Use the component instead of the raw <img> */}
+                  
                   <UserAvatar
                     user={{
                       ...userProfile,
-                      // If a local profileImg exists (from a fresh upload),
-                      // we override the nested imageUrl so UserAvatar displays the preview
                       profileImg: profileImg ? { imageUrl: profileImg } : userProfile?.profileImg,
                     }}
                     size="xxl"
@@ -450,7 +449,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               {!isMyProfile && (
                 <DropdownMenu icon={<BsThreeDots size={20} />}>
                   {/* MUTE ACTION */}
-                  {(
+                  {
                     <button
                       className="flex w-full items-center gap-3 px-4 py-3 text-sm font-bold transition hover:bg-white/10"
                       onClick={() => {
@@ -464,7 +463,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                       {isMuted ? <BsVolumeUp size={18} /> : <BsVolumeMute size={18} />}
                       {isMuted ? "Unmute" : "Mute"}
                     </button>
-                  )}
+                  }
 
                   {/* BLOCK ACTION */}
                   {!hasBlockedYou && (
@@ -520,7 +519,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                 <FollowButton
                   user={userProfile}
                   isFollowing={amIFollowing}
-                  currentUserId={authUser?._id}
+                  hasRequestedFollow={userProfile?.hasRequestedFollow}
                   openUnfollowModal={openUnfollowModal}
                 />
               )}
@@ -579,6 +578,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
         {showFullProfileContent && userProfile && (
           <>
             <div className="mt-3 flex flex-col gap-4 px-4">
+              {/* ── Basic info — always visible for non-blocked profiles ── */}
               <div className="flex flex-col">
                 <div className="flex items-center gap-1">
                   <span
@@ -593,9 +593,9 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                     )}
                     {userProfile?.isGoldVerified && (
                       <img src="/gold-verified2.png" className="size-[18px]" />
-                    )}{" "}
+                    )}
                     {userProfile?.isCha && (
-                      <img src="/cha.png " className="size-[16px] rounded-md" />
+                      <img src="/cha.png" className="size-[16px] rounded-md" />
                     )}
                   </span>
                 </div>
@@ -606,17 +606,15 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               <div className="flex flex-wrap gap-2">
                 {userProfile?.link && (
                   <div className="flex items-center gap-1">
-                    <>
-                      <PiLinkSimpleBold className="size-4 text-slate-500" />
-                      <a
-                        href={getFullProfileLink(userProfile?.link)}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-sm text-primary hover:underline"
-                      >
-                        {formatProfileLink(userProfile?.link)}
-                      </a>
-                    </>
+                    <PiLinkSimpleBold className="size-4 text-slate-500" />
+                    <a
+                      href={getFullProfileLink(userProfile?.link)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sm text-primary hover:underline"
+                    >
+                      {formatProfileLink(userProfile?.link)}
+                    </a>
                   </div>
                 )}
                 <div className="flex items-center gap-2">
@@ -626,6 +624,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                   </span>
                 </div>
               </div>
+
               {(userProfile?.levelOfEducation || userProfile?.majorOrField) && (
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                   {userProfile?.levelOfEducation && (
@@ -636,7 +635,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                       </span>
                     </div>
                   )}
-
                   {userProfile?.majorOrField && (
                     <div className="flex items-center gap-1.5">
                       <MdSchool className="size-4 text-slate-500" />
@@ -650,6 +648,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                   )}
                 </div>
               )}
+
               {userProfile?.relationshipStatus && (
                 <div className="flex flex-col">
                   <p className="text-sm text-slate-500">Relationship Status</p>
@@ -658,132 +657,142 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                   </span>
                 </div>
               )}
+
+              {/* ── Follow counts — visible but NOT clickable when profile is locked ── */}
               <div className="flex gap-4">
-                {" "}
-                <div className="flex gap-4">
-                  <div
-                    className="flex cursor-pointer items-center gap-1 hover:underline"
-                    onClick={() => openFollowListModal("following")}
-                  >
-                    <span className="text-sm font-bold">
-                      {formatCount(userProfile?.following?.length)}
-                    </span>
-                    <span className="text-sm text-slate-500">Following</span>
-                  </div>
-                  <div
-                    className="flex cursor-pointer items-center gap-1 hover:underline"
-                    onClick={() => openFollowListModal("followers")}
-                  >
-                    <span className="text-sm font-bold">
-                      {formatCount(userProfile?.followers?.length)}
-                    </span>
-                    <span className="text-sm text-slate-500">Followers</span>
-                  </div>
-
-                  {/* NEW */}
-                  <div className="flex items-center gap-1">
-                    <span className="text-sm font-bold">
-                      {formatCount(totalLikes.toLocaleString())}
-                    </span>
-                    <span className="text-sm text-slate-500">Likes</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-sm font-bold">
-                      {formatCount(totalReposts.toLocaleString())}
-                    </span>
-                    <span className="text-sm text-slate-500">Reposts</span>
-                  </div>
+                <div
+                  className={`flex items-center gap-1 ${
+                    isPrivateAndNotFollowing ? "cursor-default" : "cursor-pointer hover:underline"
+                  }`}
+                  onClick={() => !isPrivateAndNotFollowing && openFollowListModal("following")}
+                >
+                  <span className="text-sm font-bold">
+                    {formatCount(userProfile?.following?.length)}
+                  </span>
+                  <span className="text-sm text-slate-500">Following</span>
+                </div>
+                <div
+                  className={`flex items-center gap-1 ${
+                    isPrivateAndNotFollowing ? "cursor-default" : "cursor-pointer hover:underline"
+                  }`}
+                  onClick={() => !isPrivateAndNotFollowing && openFollowListModal("followers")}
+                >
+                  <span className="text-sm font-bold">
+                    {formatCount(userProfile?.followers?.length)}
+                  </span>
+                  <span className="text-sm text-slate-500">Followers</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-sm font-bold">
+                    {formatCount(totalLikes.toLocaleString())}
+                  </span>
+                  <span className="text-sm text-slate-500">Likes</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-sm font-bold">
+                    {formatCount(totalReposts.toLocaleString())}
+                  </span>
+                  <span className="text-sm text-slate-500">Reposts</span>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between px-1">
-                  <div className="flex items-center gap-2">
-                    <BiHealth className="text-primary" size={18} />
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                      Study Activity
-                    </h3>
-                  </div>
-
-                  <div className="flex gap-4">
-                    <div className="flex flex-col items-end">
-                      <span className="text-xs text-slate-500">Total Sessions</span>
-                      <span className="text-sm font-bold">
-                        {formatCount(userProfile?.totalSessionsCompleted) || 0}
-                      </span>
+              {/* ── Private account gate — everything below is locked ── */}
+              {isPrivateAndNotFollowing ? (
+                <div className="flex flex-col items-center gap-3 py-10 text-center">
+                  <RiLockFill className="text-slate-400" size={36} />
+                  <p className="text-base font-bold">This account is private</p>
+                  <p className="max-w-xs text-sm text-slate-500">
+                    Follow this account to see their study activity and posts.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {/* ── Study activity heatmap ── */}
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between px-1">
+                      <div className="flex items-center gap-2">
+                        <BiHealth className="text-primary" size={18} />
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                          Study Activity
+                        </h3>
+                      </div>
+                      <div className="flex gap-4">
+                        <div className="flex flex-col items-end">
+                          <span className="text-xs text-slate-500">Total Sessions</span>
+                          <span className="text-sm font-bold">
+                            {formatCount(userProfile?.totalSessionsCompleted) || 0}
+                          </span>
+                        </div>
+                        <div className="flex flex-col items-end">
+                          <span className="text-xs text-slate-500">Total Time</span>
+                          <span className="text-sm font-bold">
+                            {formatStudyTime(userProfile?.totalStudyDuration || 0)}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex flex-col items-end">
-                      <span className="text-xs text-slate-500">Total Time</span>
-                      <span className="text-sm font-bold">
-                        {formatStudyTime(userProfile?.totalStudyDuration || 0)}
-                      </span>
+
+                    <div className="overflow-x-auto">
+                      <div className="min-w-[500px]">
+                        <ReactCalendarHeatmap
+                          startDate={new Date("2026-01-01")}
+                          endDate={new Date("2026-12-31")}
+                          values={heatmapData}
+                          gutterSize={3}
+                          classForValue={(value) => {
+                            if (!value || !value.count) return "color-empty"
+                            return `color-scale-${Math.min(Math.ceil(value.count / 2), 4)}`
+                          }}
+                          tooltipDataAttrs={(value) => {
+                            const formattedDate = value?.date
+                              ? formatHeatmapDate(value.date)
+                              : "Unknown date"
+                            if (!value || !value.count) {
+                              return {
+                                "data-tooltip-id": "study-tooltip",
+                                "data-tooltip-content": `${formattedDate}: No activity recorded`,
+                              }
+                            }
+                            const timeLabel = formatStudyTime(value.duration || 0)
+                            const sessionLabel = value.count === 1 ? "session" : "sessions"
+                            return {
+                              "data-tooltip-id": "study-tooltip",
+                              "data-tooltip-content": `${formattedDate}: ${value.count} ${sessionLabel} (${timeLabel})`,
+                            }
+                          }}
+                        />
+                        <Tooltip
+                          id="study-tooltip"
+                          className="z-50 !opacity-100 shadow-xl"
+                          style={{
+                            backgroundColor: "var(--fallback-b2,oklch(var(--b2)))",
+                            color: "var(--fallback-bc,oklch(var(--bc)))",
+                            borderRadius: "12px",
+                            padding: "6px 12px",
+                          }}
+                          border="1px solid var(--fallback-b3,oklch(var(--b3)))"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-2 px-1">
+                      <span className="text-[10px] text-slate-500">Less</span>
+                      <div className="flex items-center gap-1">
+                        <div className="size-2 rounded-[2px] bg-[#161b22]" />
+                        <div className="size-2 rounded-[2px] bg-[#1e6334]" />
+                        <div className="size-2 rounded-[2px] bg-[#27813f]" />
+                        <div className="size-2 rounded-[2px] bg-[#36ad56]" />
+                        <div className="size-2 rounded-[2px] bg-[#42e46a]" />
+                      </div>
+                      <span className="text-[10px] text-slate-500">More</span>
                     </div>
                   </div>
-                </div>
-
-                <div className="overflow-x-auto">
-                  <div className="min-w-[500px]">
-                    <ReactCalendarHeatmap
-                      startDate={new Date("2026-01-01")}
-                      endDate={new Date("2026-12-31")}
-                      values={heatmapData}
-                      gutterSize={3}
-                      classForValue={(value) => {
-                        if (!value || !value.count) return "color-empty"
-                        const scale = Math.ceil(value.count / 2)
-
-                        return `color-scale-${Math.min(scale, 4)}`
-                      }}
-                      tooltipDataAttrs={(value) => {
-                        const date = value?.date
-                        const formattedDate = date ? formatHeatmapDate(date) : "Unknown date"
-
-                        if (!value || !value.count) {
-                          return {
-                            "data-tooltip-id": "study-tooltip",
-                            "data-tooltip-content": `${formattedDate}: No activity recorded`,
-                          }
-                        }
-
-                        const timeLabel = formatStudyTime(value.duration || 0)
-                        const sessionLabel = value.count === 1 ? "session" : "sessions"
-
-                        return {
-                          "data-tooltip-id": "study-tooltip",
-                          "data-tooltip-content": `${formattedDate}: ${value.count} ${sessionLabel} (${timeLabel})`,
-                        }
-                      }}
-                    />
-
-                    <Tooltip
-                      id="study-tooltip"
-                      className="z-50 !opacity-100 shadow-xl"
-                      style={{
-                        backgroundColor: "var(--fallback-b2,oklch(var(--b2)))",
-                        color: "var(--fallback-bc,oklch(var(--bc)))",
-                        borderRadius: "12px",
-                        padding: "6px 12px",
-                      }}
-                      border="1px solid var(--fallback-b3,oklch(var(--b3)))"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-2 px-1">
-                  <span className="text-[10px] text-slate-500">Less</span>
-                  <div className="flex items-center gap-1">
-                    <div className="size-2 rounded-[2px] bg-[#161b22]"></div>
-                    <div className="size-2 rounded-[2px] bg-[#1e6334]"></div>
-                    <div className="size-2 rounded-[2px] bg-[#27813f]"></div>
-                    <div className="size-2 rounded-[2px] bg-[#36ad56]"></div>
-                    <div className="size-2 rounded-[2px] bg-[#42e46a]"></div>
-                  </div>
-                  <span className="text-[10px] text-slate-500">More</span>
-                </div>
-              </div>
+                </>
+              )}
             </div>
 
-            {!isMyProfile && isMuted && (
+            {/* ── Mute notice ── */}
+            {!isMyProfile && isMuted && !isPrivateAndNotFollowing && (
               <div className="mt-4 px-4 py-3 transition">
                 <p className="text-sm text-slate-500">
                   You have muted posts from this account.{" "}
@@ -797,76 +806,60 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               </div>
             )}
 
-            <div className="mt-4 flex w-full border-b border-accent">
-              {/* Posts Tab */}
-              <div
-                className={`relative flex flex-1 cursor-pointer justify-center p-3 transition duration-150 ${!isTouchDevice ? "hover:bg-secondary" : ""} ${
-                  isTouchDevice && activeButtonId === "posts" ? "bg-secondary bg-opacity-50" : ""
-                } ${feedType === "posts" ? "font-bold" : "opacity-50"} `}
-                onClick={() => {
-                  setFeedType("posts")
-                }}
-                onTouchStart={() => handleTouchStart("posts")}
-                onTouchEnd={handleTouchEnd}
-                onTouchCancel={handleTouchCancel}
-              >
-                Posts
-                {feedType === "posts" && (
-                  <div className="absolute bottom-0 h-1 w-10 rounded-full bg-primary" />
-                )}
-              </div>
-              {/* Replies Tab */}
-              <div
-                className={`relative flex flex-1 cursor-pointer justify-center p-3 transition duration-150 ${!isTouchDevice ? "hover:bg-secondary" : ""} ${
-                  isTouchDevice && activeButtonId === "userReplies"
-                    ? "bg-secondary bg-opacity-50"
-                    : ""
-                } {/* Active background for touch */} ${
-                  feedType === "userReplies" ? "font-bold" : "opacity-50"
-                } {/* Existing text styling */} active`}
-                onClick={() => {
-                  setFeedType("userReplies")
-                }}
-                onTouchStart={() => handleTouchStart("userReplies")}
-                onTouchEnd={handleTouchEnd}
-                onTouchCancel={handleTouchCancel}
-              >
-                Replies
-                {feedType === "userReplies" && (
-                  <div className="absolute bottom-0 h-1 w-10 rounded-full bg-primary" />
-                )}
-              </div>
-              <div
-                className={`relative flex flex-1 cursor-pointer justify-center p-3 transition duration-150 ${!isTouchDevice ? "hover:bg-secondary" : ""} ${
-                  isTouchDevice && activeButtonId === "userMedia"
-                    ? "bg-secondary bg-opacity-50"
-                    : ""
-                } {/* Active background for touch */} ${
-                  feedType === "userMedia" ? "font-bold" : "opacity-50"
-                } {/* Existing text styling */} active`}
-                onClick={() => {
-                  setFeedType("userMedia")
-                }}
-                onTouchStart={() => handleTouchStart("userMedia")}
-                onTouchEnd={handleTouchEnd}
-                onTouchCancel={handleTouchCancel}
-              >
-                Media
-                {feedType === "userMedia" && (
-                  <div className="absolute bottom-0 h-1 w-10 rounded-full bg-primary" />
-                )}
-              </div>
-              {/* Likes Tab */}
-              {
+            {/* ── Post tabs — hidden for locked profiles ── */}
+            {!isPrivateAndNotFollowing && (
+              <div className="mt-4 flex w-full border-b border-accent">
+                <div
+                  className={`relative flex flex-1 cursor-pointer justify-center p-3 transition duration-150 ${!isTouchDevice ? "hover:bg-secondary" : ""} ${
+                    isTouchDevice && activeButtonId === "posts" ? "bg-secondary bg-opacity-50" : ""
+                  } ${feedType === "posts" ? "font-bold" : "opacity-50"}`}
+                  onClick={() => setFeedType("posts")}
+                  onTouchStart={() => handleTouchStart("posts")}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchCancel={handleTouchCancel}
+                >
+                  Posts
+                  {feedType === "posts" && (
+                    <div className="absolute bottom-0 h-1 w-10 rounded-full bg-primary" />
+                  )}
+                </div>
+                <div
+                  className={`relative flex flex-1 cursor-pointer justify-center p-3 transition duration-150 ${!isTouchDevice ? "hover:bg-secondary" : ""} ${
+                    isTouchDevice && activeButtonId === "userReplies"
+                      ? "bg-secondary bg-opacity-50"
+                      : ""
+                  } ${feedType === "userReplies" ? "font-bold" : "opacity-50"}`}
+                  onClick={() => setFeedType("userReplies")}
+                  onTouchStart={() => handleTouchStart("userReplies")}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchCancel={handleTouchCancel}
+                >
+                  Replies
+                  {feedType === "userReplies" && (
+                    <div className="absolute bottom-0 h-1 w-10 rounded-full bg-primary" />
+                  )}
+                </div>
+                <div
+                  className={`relative flex flex-1 cursor-pointer justify-center p-3 transition duration-150 ${!isTouchDevice ? "hover:bg-secondary" : ""} ${
+                    isTouchDevice && activeButtonId === "userMedia"
+                      ? "bg-secondary bg-opacity-50"
+                      : ""
+                  } ${feedType === "userMedia" ? "font-bold" : "opacity-50"}`}
+                  onClick={() => setFeedType("userMedia")}
+                  onTouchStart={() => handleTouchStart("userMedia")}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchCancel={handleTouchCancel}
+                >
+                  Media
+                  {feedType === "userMedia" && (
+                    <div className="absolute bottom-0 h-1 w-10 rounded-full bg-primary" />
+                  )}
+                </div>
                 <div
                   className={`relative flex flex-1 cursor-pointer justify-center p-3 transition duration-150 ${!isTouchDevice ? "hover:bg-secondary" : ""} ${
                     isTouchDevice && activeButtonId === "likes" ? "bg-secondary bg-opacity-50" : ""
-                  } {/* Active background for touch */} ${
-                    feedType === "likes" ? "font-bold" : "opacity-50"
-                  } {/* Existing text styling */} active`}
-                  onClick={() => {
-                    setFeedType("likes")
-                  }}
+                  } ${feedType === "likes" ? "font-bold" : "opacity-50"}`}
+                  onClick={() => setFeedType("likes")}
                   onTouchStart={() => handleTouchStart("likes")}
                   onTouchEnd={handleTouchEnd}
                   onTouchCancel={handleTouchCancel}
@@ -876,19 +869,24 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                     <div className="absolute bottom-0 h-1 w-10 rounded-full bg-primary" />
                   )}
                 </div>
-              }
-            </div>
-            {isMyProfile && feedType === "likes" && authUser?.isLikedFeedPrivate && (
-              <div className="m-1 flex flex-col items-start rounded-lg bg-[#02113D] px-4 py-2.5">
-                <p className="flex items-center gap-3 text-[15px]">
-                  <RiLockFill />
-                  Your likes are private. Only you can see them.
-                </p>
               </div>
             )}
+
+            {/* Private likes notice — only makes sense when content is unlocked */}
+            {!isPrivateAndNotFollowing &&
+              isMyProfile &&
+              feedType === "likes" &&
+              authUser?.isLikedFeedPrivate && (
+                <div className="m-1 flex flex-col items-start rounded-lg bg-[#02113D] px-4 py-2.5">
+                  <p className="flex items-center gap-3 text-[15px]">
+                    <RiLockFill />
+                    Your likes are private. Only you can see them.
+                  </p>
+                </div>
+              )}
           </>
         )}
-        {showFullProfileContent && userProfile && !isBlockedByYou && (
+        {showFullProfileContent && userProfile && !isBlockedByYou && !isPrivateAndNotFollowing && (
           <Posts
             feedType={feedType}
             username={username}

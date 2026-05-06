@@ -17,11 +17,11 @@ import {
   extractAndValidateMentions,
   getBlockingUsers,
   getMutedUsers,
+  getPrivateExcludedIds,
   isBlockedOrBlockedBy,
 } from "../lib/utils/helpers.js";
 import Image from "../models/image.model.js";
 import { extractHashtags, syncHashtagCounts } from "../lib/utils/hashtagUtils.js";
-
 
 export const getPostThread = async (req, res) => {
   try {
@@ -171,6 +171,20 @@ export const createReply = async (req, res) => {
     const parent = await Post.findById(parentId).populate("user");
     if (!parent) return res.status(404).json({ error: "Post not found." });
 
+    const parentAuthor = parent.user;
+
+    if (parentAuthor?.isPrivate) {
+      const isOwn = parentAuthor._id.toString() === userId.toString();
+      const isFollower = parentAuthor.followers?.some(
+        (fId) => fId.toString() === userId.toString(),
+      );
+      if (!isOwn && !isFollower) {
+        return res.status(403).json({
+          error: "This account is private. Follow them to reply to their posts.",
+        });
+      }
+    }
+
     if (!text && !img && !video) {
       return res.status(400).json({ error: "Reply must have text, image, or video." });
     }
@@ -212,7 +226,7 @@ export const createReply = async (req, res) => {
       mediaType = "video";
     }
 
-    const mentionedUsersIds = await extractAndValidateMentions(text);
+const mentionedUsersIds = await extractAndValidateMentions(text, userId);
 
     // ── Extract hashtags ───────────────────────────────────────────────────
     const tags = extractHashtags(text);
@@ -319,9 +333,8 @@ export const getAllPosts = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const userId = req.user?._id;
-    if (!userId) {
+    if (!userId)
       return res.status(401).json({ error: "Unauthorized: User ID not found" });
-    }
 
     const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
     const { all: mutedUserIds } = await getMutedUsers(userId);
@@ -334,8 +347,18 @@ export const getAllPosts = async (req, res) => {
       ]),
     ];
 
-    const now = new Date();
+    // ── NEW: private users the current user doesn't follow ────────────────
+    const privateExcludedIds = await getPrivateExcludedIds(userId);
 
+    // Combined exclusion list used for both the post author and repost author
+    const excludedUserIds = [
+      ...blockedAndBlockingObjectIds,
+      ...mutedObjectIds,
+      ...privateExcludedIds, // ← ADD
+    ];
+    // ─────────────────────────────────────────────────────────────────────
+
+    const now = new Date();
     const scheduledPostConditions = {
       $or: [
         { isScheduled: { $ne: true } },
@@ -381,16 +404,47 @@ export const getAllPosts = async (req, res) => {
       pollOptions: 1,
     };
 
+    // ── CHANGE: replace the two separate arrays with excludedUserIds ──────
     const initialMatchConditions = {
       isVent: { $ne: true },
       isIC: { $ne: true },
       parentPost: null,
-
       "deletedFor.user": { $ne: userId },
       ...scheduledPostConditions,
-      user: { $nin: [...blockedAndBlockingObjectIds, ...mutedObjectIds] },
+      user: { $nin: excludedUserIds }, // ← was [...blocked, ...muted]
     };
 
+    // ── Repost author filter — also excludes private non-followed ─────────
+    const repostedFromFilter = {
+      $or: [
+        { repostedFrom: { $eq: null } },
+        {
+          $and: [
+            { repostedFrom: { $ne: null } },
+            { "repostedFrom.user": { $ne: null } },
+            {
+              "repostedFrom.user._id": {
+                $nin: excludedUserIds, // ← was [...blocked, ...muted]
+              },
+            },
+            {
+              $or: [
+                { "repostedFrom.isScheduled": { $ne: true } },
+                {
+                  $and: [
+                    { "repostedFrom.isScheduled": true },
+                    { "repostedFrom.scheduledAt": { $ne: null } },
+                    { "repostedFrom.scheduledAt": { $lte: now } },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    // totalCount aggregate — same structure as before, just use the new vars
     const totalPostsResult = await Post.aggregate([
       {
         $lookup: {
@@ -402,16 +456,14 @@ export const getAllPosts = async (req, res) => {
         },
       },
       { $unwind: { path: "$repostedFromPostData", preserveNullAndEmptyArrays: true } },
-
       {
         $match: {
           isVent: { $ne: true },
           isIC: { $ne: true },
           parentPost: null,
-
           "deletedFor.user": { $ne: userId },
           ...scheduledPostConditions,
-          user: { $nin: [...blockedAndBlockingObjectIds, ...mutedObjectIds] },
+          user: { $nin: excludedUserIds },
           "repostedFromPostData.isVent": { $ne: true },
           "repostedFromPostData.isIC": { $ne: true },
         },
@@ -439,40 +491,13 @@ export const getAllPosts = async (req, res) => {
         },
       },
       { $unwind: { path: "$repostedFrom", preserveNullAndEmptyArrays: true } },
-      {
-        $match: {
-          $or: [
-            { repostedFrom: { $eq: null } },
-            {
-              $and: [
-                { repostedFrom: { $ne: null } },
-                {
-                  "repostedFrom.user._id": {
-                    $nin: [...blockedAndBlockingObjectIds, ...mutedObjectIds],
-                  },
-                },
-                {
-                  $or: [
-                    { "repostedFrom.isScheduled": { $ne: true } },
-                    {
-                      $and: [
-                        { "repostedFrom.isScheduled": true },
-                        { "repostedFrom.scheduledAt": { $ne: null } },
-                        { "repostedFrom.scheduledAt": { $lte: now } },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      },
+      { $match: repostedFromFilter }, // ← unified repost filter
       { $count: "count" },
     ]);
 
     const totalCount = totalPostsResult.length > 0 ? totalPostsResult[0].count : 0;
 
+    // posts aggregate — same structure, same substitutions
     const posts = await Post.aggregate([
       {
         $lookup: {
@@ -489,10 +514,9 @@ export const getAllPosts = async (req, res) => {
           isVent: { $ne: true },
           isIC: { $ne: true },
           parentPost: null,
-
           "deletedFor.user": { $ne: userId },
           ...scheduledPostConditions,
-          user: { $nin: [...blockedAndBlockingObjectIds, ...mutedObjectIds] },
+          user: { $nin: excludedUserIds },
           "repostedFromPostData.isVent": { $ne: true },
           "repostedFromPostData.isIC": { $ne: true },
         },
@@ -524,7 +548,7 @@ export const getAllPosts = async (req, res) => {
       { $unwind: "$user" },
       {
         $lookup: {
-          from: "images", // The name of your image collection
+          from: "images",
           localField: "image",
           foreignField: "_id",
           as: "image",
@@ -573,36 +597,7 @@ export const getAllPosts = async (req, res) => {
         },
       },
       { $unwind: { path: "$repostedFrom", preserveNullAndEmptyArrays: true } },
-      {
-        $match: {
-          $or: [
-            { repostedFrom: { $eq: null } },
-            {
-              $and: [
-                { repostedFrom: { $ne: null } },
-                { "repostedFrom.user": { $ne: null } },
-                {
-                  "repostedFrom.user._id": {
-                    $nin: [...blockedAndBlockingObjectIds, ...mutedObjectIds],
-                  },
-                },
-                {
-                  $or: [
-                    { "repostedFrom.isScheduled": { $ne: true } },
-                    {
-                      $and: [
-                        { "repostedFrom.isScheduled": true },
-                        { "repostedFrom.scheduledAt": { $ne: null } },
-                        { "repostedFrom.scheduledAt": { $lte: now } },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      },
+      { $match: repostedFromFilter }, // ← same unified filter here too
       {
         $lookup: {
           from: "posts",
@@ -655,15 +650,12 @@ export const getAllPosts = async (req, res) => {
         },
       },
     ]);
-    const finalFilteredPosts = posts.filter((post) => {
-      if (post.repostedFrom && post.repostedFrom.repostedFrom) {
-        return false;
-      }
-      return true;
-    });
+
+    const finalFilteredPosts = posts.filter(
+      (post) => !(post.repostedFrom && post.repostedFrom.repostedFrom),
+    );
 
     const hasNextPage = page * limit < totalCount;
-
     await User.findByIdAndUpdate(userId, { lastReadFeedTimestamp: new Date() });
     emitNewPostCount(userId.toString());
 
@@ -672,10 +664,7 @@ export const getAllPosts = async (req, res) => {
       .json({ posts: finalFilteredPosts, hasNextPage, totalPosts: totalCount });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
-    console.error(
-      "Error in getAllPosts controller (optimized aggregation, fixed reposts): ",
-      error,
-    );
+    console.error("Error in getAllPosts:", error);
   }
 };
 
@@ -692,6 +681,8 @@ export const getICPosts = async (req, res) => {
 
     const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
     const { all: mutedUserIds } = await getMutedUsers(userId);
+    const privateExcludedIds = await getPrivateExcludedIds(userId);
+
     const mutedObjectIds = mutedUserIds.map((id) => new mongoose.Types.ObjectId(id));
 
     const blockedAndBlockingObjectIds = [
@@ -699,6 +690,12 @@ export const getICPosts = async (req, res) => {
         ...blockedByMe.map((id) => new mongoose.Types.ObjectId(id)),
         ...blockedMe.map((id) => new mongoose.Types.ObjectId(id)),
       ]),
+    ];
+
+    const excludedUserIds = [
+      ...blockedAndBlockingObjectIds,
+      ...mutedObjectIds,
+      ...privateExcludedIds,
     ];
 
     const now = new Date();
@@ -752,7 +749,7 @@ export const getICPosts = async (req, res) => {
       parentPost: null,
       "deletedFor.user": { $ne: userId },
       ...scheduledPostConditions,
-      user: { $nin: [...blockedAndBlockingObjectIds, ...mutedObjectIds] },
+      user: { $nin: excludedUserIds },
     };
 
     const totalPostsResult = await Post.aggregate([
@@ -774,7 +771,7 @@ export const getICPosts = async (req, res) => {
           "deletedFor.user": { $ne: userId },
           parentPost: null,
           ...scheduledPostConditions,
-          user: { $nin: [...blockedAndBlockingObjectIds, ...mutedObjectIds] },
+          user: { $nin: excludedUserIds },
           "repostedFromPostData.isVent": { $ne: true },
         },
       },
@@ -810,7 +807,7 @@ export const getICPosts = async (req, res) => {
                 { repostedFrom: { $ne: null } },
                 {
                   "repostedFrom.user._id": {
-                    $nin: [...blockedAndBlockingObjectIds, ...mutedObjectIds],
+                    $nin: excludedUserIds,
                   },
                 },
                 {
@@ -853,7 +850,7 @@ export const getICPosts = async (req, res) => {
           "deletedFor.user": { $ne: userId },
           parentPost: null,
           ...scheduledPostConditions,
-          user: { $nin: [...blockedAndBlockingObjectIds, ...mutedObjectIds] },
+          user: { $nin: excludedUserIds },
           "repostedFromPostData.isVent": { $ne: true },
         },
       },
@@ -943,7 +940,7 @@ export const getICPosts = async (req, res) => {
                 { "repostedFrom.user": { $ne: null } },
                 {
                   "repostedFrom.user._id": {
-                    $nin: [...blockedAndBlockingObjectIds, ...mutedObjectIds],
+                    $nin: excludedUserIds,
                   },
                 },
                 {
@@ -1290,6 +1287,7 @@ export const getFollowingPosts = async (req, res) => {
 
     const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
     const { all: mutedUserIds } = await getMutedUsers(userId);
+
     const mutedObjectIds = mutedUserIds.map((id) => new mongoose.Types.ObjectId(id));
 
     const blockedAndBlockingObjectIds = [
@@ -1453,7 +1451,6 @@ export const getUserPosts = async (req, res) => {
   try {
     const { username } = req.params;
     const user = await User.findOne({ username });
-
     if (!user) return res.status(404).json({ error: "User not found" });
 
     const page = parseInt(req.query.page) || 1;
@@ -1476,6 +1473,13 @@ export const getUserPosts = async (req, res) => {
       ]),
     ];
 
+    // ── NEW: private profiles the viewer doesn't follow ───────────────────
+    const privateExcludedIds = await getPrivateExcludedIds(currentUserId);
+
+    // Combined exclusion — used to filter reposts of private authors
+    const excludedAuthorIds = [...blockedAndBlockingObjectIds, ...privateExcludedIds];
+    // ─────────────────────────────────────────────────────────────────────
+
     const now = new Date();
 
     const queryConditions = {
@@ -1496,35 +1500,7 @@ export const getUserPosts = async (req, res) => {
             },
           ],
         },
-        {
-          $or: [
-            { user: user._id },
-            {
-              $and: [
-                { user: user._id },
-                { repostedFrom: { $ne: null } },
-                {
-                  "repostedFrom.user": {
-                    $nin: blockedAndBlockingObjectIds,
-                  },
-                },
-                {
-                  $or: [
-                    { "repostedFrom.isScheduled": { $ne: true } },
-                    { "repostedFrom.user": currentUserId },
-                    {
-                      $and: [
-                        { "repostedFrom.isScheduled": true },
-                        { "repostedFrom.scheduledAt": { $ne: null } },
-                        { "repostedFrom.scheduledAt": { $lte: now } },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
+        { $or: [{ user: user._id }] },
       ],
     };
 
@@ -1538,10 +1514,7 @@ export const getUserPosts = async (req, res) => {
         path: "user",
         select:
           "username fullName profileImg badges isAdmin isCha isVerified isGoldVerified preferredBadge nameColor equipped",
-        populate: {
-          path: "profileImg coverImg",
-          select: "imageUrl publicId",
-        },
+        populate: { path: "profileImg coverImg", select: "imageUrl publicId" },
       })
       .populate({
         path: "repostedFrom",
@@ -1552,10 +1525,7 @@ export const getUserPosts = async (req, res) => {
               "username fullName profileImg badges isAdmin isCha isVerified isGoldVerified preferredBadge nameColor equipped",
             populate: { path: "profileImg coverImg", select: "imageUrl publicId" },
           },
-          {
-            path: "image",
-            select: "imageUrl",
-          },
+          { path: "image", select: "imageUrl" },
         ],
         select:
           "text img video mediaType likes bookmarkedBy repostsCount isIC repostedBy createdAt user isScheduled scheduledAt image",
@@ -1574,43 +1544,39 @@ export const getUserPosts = async (req, res) => {
       )
         return false;
 
+      // ── NEW: hide reposts whose original author is private + not followed ──
+      if (post.repostedFrom && repostedFromOwnerId) {
+        if (excludedAuthorIds.some((id) => id.equals(repostedFromOwnerId))) return false;
+      }
+      // ───────────────────────────────────────────────────────────────────────
+
       if (currentUserId) {
         const isDeletedForMe = post.deletedFor?.some((entry) =>
           entry.user.equals(currentUserId),
         );
-        if (isDeletedForMe) {
-          return false;
-        }
+        if (isDeletedForMe) return false;
       }
 
-      if (post.repostedFrom && post.repostedFrom.repostedFrom) {
-        return false;
-      }
-      if (post.repostedFrom && !post.repostedFrom.user) {
-        return false;
-      }
+      if (post.repostedFrom && post.repostedFrom.repostedFrom) return false;
+      if (post.repostedFrom && !post.repostedFrom.user) return false;
       if (
-        post.repostedFrom &&
-        post.repostedFrom.isScheduled &&
-        post.repostedFrom.scheduledAt &&
-        new Date(post.repostedFrom.scheduledAt) > now
-      ) {
-        if (!currentUserId || !post.repostedFrom.user._id.equals(currentUserId)) {
-          return false;
-        }
-      }
+        post.repostedFrom?.isScheduled &&
+        post.repostedFrom?.scheduledAt &&
+        new Date(post.repostedFrom.scheduledAt) > now &&
+        (!currentUserId || !post.repostedFrom.user._id.equals(currentUserId))
+      )
+        return false;
 
       return true;
     });
 
     const hasNextPage = page * limit < totalUserPosts;
-
     res
       .status(200)
       .json({ posts: finalUserPosts, hasNextPage, totalPosts: totalUserPosts });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
-    console.log("Error in getUserPosts controller: ", error);
+    console.error("Error in getUserPosts:", error);
   }
 };
 
@@ -2174,7 +2140,7 @@ export const createPost = async (req, res) => {
       mediaType = "video";
     }
 
-    const mentionedUsersIds = await extractAndValidateMentions(text);
+const mentionedUsersIds = await extractAndValidateMentions(text, userId);
 
     // ── Extract hashtags early so they can be stored on the post ──────────
     const tags = extractHashtags(text);
@@ -2357,7 +2323,8 @@ export const editPost = async (req, res) => {
     post.text = text;
     post.updatedAt = new Date();
     post.hashtags = newTags;
-    post.mentionedUsers = await extractAndValidateMentions(text);
+    post.mentionedUsers = await extractAndValidateMentions(text, userId);
+
 
     await post.save();
 
@@ -2927,7 +2894,7 @@ export const updateScheduledPost = async (req, res) => {
       return res.status(400).json({ error: "Scheduled post must have text content." });
     }
 
-    const mentionedUsersIds = await extractAndValidateMentions(text);
+const mentionedUsersIds = await extractAndValidateMentions(text, userId);
 
     post.text = text;
     post.img = null;
@@ -3335,8 +3302,6 @@ export const getVentPosts = async (req, res) => {
     console.error("Error in getVentPosts controller: ", error);
   }
 };
-
-
 
 export const getPostHistory = async (req, res) => {
   try {

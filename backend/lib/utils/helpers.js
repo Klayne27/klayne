@@ -44,24 +44,34 @@ export const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
   return currentUserBlockedTarget || targetUserBlockedCurrentUser;
 };
 
-export const extractAndValidateMentions = async (text) => {
+export const extractAndValidateMentions = async (text, mentionerUserId = null) => {
   const mentionRegex = /@([a-zA-Z0-9](?:[a-zA-Z0-9._-]{0,28}[a-zA-Z0-9])?)/g;
   let match;
-  const mentionedUsernames = new Set(); // Use a Set to avoid duplicate usernames
+  const mentionedUsernames = new Set();
 
   while ((match = mentionRegex.exec(text)) !== null) {
-    mentionedUsernames.add(match[1].toLowerCase()); // Store in lowercase for case-insensitive lookup
+    mentionedUsernames.add(match[1].toLowerCase());
   }
 
-  const mentionedUsersIds = [];
-  if (mentionedUsernames.size > 0) {
-    const users = await User.find({
-      username: { $in: Array.from(mentionedUsernames) },
-    }).select("_id username"); // Select only ID and username
+  if (mentionedUsernames.size === 0) return [];
 
-    users.forEach((user) => mentionedUsersIds.push(user._id));
+  const query = {
+    username: { $in: Array.from(mentionedUsernames) },
+  };
+
+  // ── NEW: if a mentioner is provided, only resolve mentions for users who
+  //    follow them (they've opted in to seeing that person's content) or the
+  //    mentioner themselves. Uses the `following` index on the target user:
+  //    { following: mentionerUserId } = "this user follows the mentioner".
+  if (mentionerUserId) {
+    query.$or = [
+      { following: new mongoose.Types.ObjectId(mentionerUserId.toString()) },
+      { _id: new mongoose.Types.ObjectId(mentionerUserId.toString()) },
+    ];
   }
-  return mentionedUsersIds;
+
+  const users = await User.find(query).select("_id username");
+  return users.map((u) => u._id);
 };
 
 import mongoose from "mongoose";
@@ -196,6 +206,10 @@ export const getDynamicPushTitle = (type) => {
       return "New Board Comment"; // ADD
     case "boardReply":
       return "New Board Reply"; // ADD
+    case "followRequest":
+      return "New Follow Request";
+    case "followRequestAccepted":
+      return "Follow Request Accepted";
     default:
       return "New Notification";
   }
@@ -225,6 +239,10 @@ export const getDynamicPushBody = (type, username) => {
       return `@${username} commented on your board post.`; // ADD
     case "boardReply":
       return `@${username} replied to your board comment.`; // ADD
+    case "followRequest":
+      return `@${username} wants to follow you.`;
+    case "followRequestAccepted":
+      return `@${username} accepted your follow request.`;
     default:
       return "You have a new notification on Klayne!";
   }
@@ -360,8 +378,24 @@ export const handleXPAndLeveling = async (user, duration) => {
 // lib/utils/helpers.js
 export const getMutedUsers = async (userId) => {
   const user = await User.findById(userId).select("mutedUsers").lean();
-  const all     = user?.mutedUsers || [];
-  const standard = all.filter(m => m.muteType === "standard").map(m => m.user.toString());
-  const total    = all.filter(m => m.muteType === "total").map(m => m.user.toString());
+  const all = user?.mutedUsers || [];
+  const standard = all
+    .filter((m) => m.muteType === "standard")
+    .map((m) => m.user.toString());
+  const total = all.filter((m) => m.muteType === "total").map((m) => m.user.toString());
   return { standard, total, all: [...new Set([...standard, ...total])] };
 };
+
+export async function getPrivateExcludedIds(currentUserId) {
+  // Single query: private accounts where the current user is not a follower
+  const privateNotFollowing = await User.find({
+    isPrivate: true,
+    _id: { $ne: currentUserId },
+    followers: { $not: { $elemMatch: { $eq: currentUserId } } },
+  })
+    .select("_id")
+    .lean();
+
+  const ids = privateNotFollowing.map((u) => new mongoose.Types.ObjectId(u._id));
+  return ids; // same list used for both post author AND repostedFrom author
+}

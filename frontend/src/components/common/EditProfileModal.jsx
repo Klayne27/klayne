@@ -4,7 +4,11 @@ import { FaEye, FaEyeSlash } from "react-icons/fa6"
 import { TbCameraPlus } from "react-icons/tb"
 import LoadingSpinner from "../common/LoadingSpinner"
 import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
-import { useToggleLikedFeedPrivacy, useUpdateUserProfile } from "../../features/users/usersHooks/useUserMutations"
+import {
+  useToggleLikedFeedPrivacy,
+  useUpdateUserProfile,
+} from "../../features/users/usersHooks/useUserMutations"
+import ConfirmationModal from "./ConfirmationModal"
 
 const EditProfileModal = ({ authUser }) => {
   const [formData, setFormData] = useState({
@@ -19,86 +23,48 @@ const EditProfileModal = ({ authUser }) => {
     relationshipStatus: "",
     levelOfEducation: "",
     majorOrField: "",
+    isPrivate: false,
+    isLikedFeedPrivate: true,
   })
+
+  // State for the confirmation modal
+  const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false)
 
   const [profileImg, setProfileImg] = useState(null)
   const [coverImg, setCoverImg] = useState(null)
-
   const coverImgRef = useRef(null)
   const profileImgRef = useRef(null)
-
   const navigate = useNavigate()
 
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false)
   const [focusedInput, setFocusedInput] = useState(null)
-  const [isLikedFeedPrivate, setIsLikedFeedPrivate] = useState(false)
 
   const curPasswordRef = useRef(null)
   const newPasswordRef = useRef(null)
   const confirmNewPasswordRef = useRef(null)
 
-  const { updateProfile, isUpdatingProfile, isSuccess, newUsername } =
-    useUpdateUserProfile()
+  const { updateProfile, isUpdatingProfile, isSuccess, newUsername } = useUpdateUserProfile()
   const { toggleLikedFeedPrivacy, isTogglingPrivacy } = useToggleLikedFeedPrivacy()
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target
-
-    let newValue = value
-
-    if (name === "fullName" && newValue.length > 50) {
-      newValue = newValue.slice(0, 50)
-    } else if (name === "username") {
-      newValue = newValue.replace(/\s/g, "").slice(0, 50)
-    } else if (name === "bio" && newValue.length > 160) {
-      newValue = newValue.slice(0, 160)
-    } else if (name === "link" && newValue.length > 100) {
-      newValue = newValue.slice(0, 100)
-    }
-
-    setFormData({ ...formData, [name]: newValue })
-  }
-
-  const handleImgChange = (e, imgType) => {
-    const file = e.target.files[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = () => {
-        if (imgType === "profileImg") {
-          setProfileImg(reader.result)
-        } else if (imgType === "coverImg") {
-          setCoverImg(reader.result)
-        }
-      }
-      reader.readAsDataURL(file)
-    }
-  }
-
-  const charLimits = {
-    fullName: 50,
-    username: 50,
-    bio: 160,
-    link: 100,
-  }
 
   useEffect(() => {
     if (authUser) {
       setFormData({
-        fullName: authUser?.fullName,
-        username: authUser?.username,
-        email: authUser?.email,
-        bio: authUser?.bio,
-        link: authUser?.link,
+        fullName: authUser?.fullName || "",
+        username: authUser?.username || "",
+        email: authUser?.email || "",
+        bio: authUser?.bio || "",
+        link: authUser?.link || "",
         relationshipStatus: authUser?.relationshipStatus || "",
         levelOfEducation: authUser?.levelOfEducation || "",
         majorOrField: authUser?.majorOrField || "",
         newPassword: "",
         currentPassword: "",
         confirmNewPassword: "",
+        isPrivate: authUser?.isPrivate ?? false,
+        isLikedFeedPrivate: authUser?.isLikedFeedPrivate ?? true,
       })
-      setIsLikedFeedPrivate(authUser?.isLikedFeedPrivate || false)
     }
   }, [authUser])
 
@@ -109,9 +75,44 @@ const EditProfileModal = ({ authUser }) => {
     }
   }, [isSuccess, newUsername, navigate])
 
-  const handleTogglePrivacy = () => {
-    toggleLikedFeedPrivacy(!isLikedFeedPrivate)
-    setIsLikedFeedPrivate(!isLikedFeedPrivate)
+  const handleInputChange = (e) => {
+    const { name, value } = e.target
+    let newValue = value
+
+    if (name === "fullName" && newValue.length > 50) newValue = newValue.slice(0, 50)
+    if (name === "username") newValue = newValue.replace(/\s/g, "").slice(0, 50)
+    if (name === "bio" && newValue.length > 160) newValue = newValue.slice(0, 160)
+    if (name === "link" && newValue.length > 100) newValue = newValue.slice(0, 100)
+
+    setFormData({ ...formData, [name]: newValue })
+  }
+
+  const handleImgChange = (e, imgType) => {
+    const file = e.target.files[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = () => {
+        if (imgType === "profileImg") setProfileImg(reader.result)
+        else if (imgType === "coverImg") setCoverImg(reader.result)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  // Intercept the toggle
+  const handlePrivacyToggleRequest = () => {
+    // If we are turning it ON (currently false), show modal
+    if (!formData.isPrivate) {
+      setIsPrivacyModalOpen(true)
+    } else {
+      // If turning it OFF, just do it directly (Instagram logic)
+      setFormData((prev) => ({ ...prev, isPrivate: false }))
+    }
+  }
+
+  const confirmPrivacyToggle = () => {
+    setFormData((prev) => ({ ...prev, isPrivate: true }))
+    setIsPrivacyModalOpen(false)
   }
 
   const handleUpdate = (e) => {
@@ -119,6 +120,7 @@ const EditProfileModal = ({ authUser }) => {
     updateProfile({ ...formData, profileImg, coverImg })
   }
 
+  const charLimits = { fullName: 50, username: 50, bio: 160, link: 100 }
   return (
     <>
       <dialog id="edit_profile_modal" className="modal">
@@ -385,25 +387,48 @@ const EditProfileModal = ({ authUser }) => {
               </>
             )}
             <h1 className="text-xl font-bold">Privacy</h1>
+
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-0.5">
+                <h3 className="text-md font-medium">Private Account</h3>
+                <p className="text-xs text-slate-500">
+                  Only approved followers can see your posts.
+                </p>
+              </div>
+              <label className="relative inline-flex cursor-pointer items-center">
+                <input
+                  type="checkbox"
+                  className="peer sr-only"
+                  checked={formData.isPrivate}
+                  onChange={handlePrivacyToggleRequest}
+                />
+                <div className="peer h-6 w-11 rounded-full bg-gray-600 after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full peer-checked:after:border-white rtl:peer-checked:after:-translate-x-full" />
+                <span className="ms-3 w-16 text-left text-sm font-medium text-slate-500">
+                  {formData.isPrivate ? "Private" : "Public"}
+                </span>
+              </label>
+            </div>
+
             <div className="flex items-center justify-between">
               <h3 className="text-md">Liked Posts</h3>
-              {isTogglingPrivacy ? (
-                <LoadingSpinner size="sm" />
-              ) : (
-                <label className="relative inline-flex cursor-pointer items-center">
-                  <input
-                    type="checkbox"
-                    className="peer sr-only"
-                    checked={isLikedFeedPrivate}
-                    onChange={handleTogglePrivacy}
-                    disabled={isTogglingPrivacy}
-                  />
-                  <div className="peer h-6 w-11 rounded-full bg-gray-600 after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full peer-checked:after:border-white rtl:peer-checked:after:-translate-x-full"></div>
-                  <span className="ms-3 w-16 text-left text-sm font-medium text-slate-500">
-                    {isLikedFeedPrivate ? "Private" : "Public"}
-                  </span>
-                </label>
-              )}
+
+              <label className="relative inline-flex cursor-pointer items-center">
+                <input
+                  type="checkbox"
+                  className="peer sr-only"
+                  checked={formData.isLikedFeedPrivate}
+                  onChange={() =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      isLikedFeedPrivate: !prev.isLikedFeedPrivate,
+                    }))
+                  }
+                />
+                <div className="peer h-6 w-11 rounded-full bg-gray-600 after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full peer-checked:after:border-white rtl:peer-checked:after:-translate-x-full"></div>
+                <span className="ms-3 w-16 text-left text-sm font-medium text-slate-500">
+                  {formData.isLikedFeedPrivate ? "Private" : "Public"}
+                </span>
+              </label>
             </div>
             <button className="btn btn-primary btn-sm rounded-full text-white">
               {isUpdatingProfile ? "Updating..." : "Update"}
@@ -414,6 +439,23 @@ const EditProfileModal = ({ authUser }) => {
           <button className="outline-none">close</button>
         </form>
       </dialog>
+
+      <ConfirmationModal
+        isOpen={isPrivacyModalOpen}
+        onClose={() => setIsPrivacyModalOpen(false)}
+        onConfirm={confirmPrivacyToggle}
+        modalTitle="Switch to Private Account?"
+        confirmButtonText="Switch to Private"
+        message={
+          <div className="flex flex-col gap-3">
+            <p>Only your followers will be able to see your posts.</p>
+            <p>
+              This won't change who can message or mention you, but you won't be able to
+              mention people who don't follow you.
+            </p>
+          </div>
+        }
+      />
     </>
   )
 }

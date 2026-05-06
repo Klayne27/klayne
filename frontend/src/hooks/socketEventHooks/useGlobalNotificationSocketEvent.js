@@ -2,9 +2,10 @@ import { useQueryClient } from "@tanstack/react-query"
 import { useEffect } from "react"
 import { useSocket } from "../../context/SocketContext"
 import { notificationKeys } from "../../features/notifications/notificationsHooks/notificationKeys"
+import { userKeys } from "../../features/users/usersHooks/userKeys"
 
 export const useGlobalNotificationSocketEvent = () => {
-  const { socket, setHasUnreadNotifications } = useSocket()
+  const { socket, setHasUnreadNotifications, setFollowRequestCount } = useSocket()
   const queryClient = useQueryClient()
 
   useEffect(() => {
@@ -24,11 +25,18 @@ export const useGlobalNotificationSocketEvent = () => {
         setHasUnreadNotifications(true)
       }
 
+      const handleNewFollowRequest = ({ count }) => {
+        setFollowRequestCount(count)
+        queryClient.invalidateQueries({ queryKey: userKeys.followRequests() })
+      }
+
+      socket.on("followRequestCount", handleNewFollowRequest)
       socket.on("newNotification", handleNewNotification)
 
       return () => {
         socket.off("newNotification", handleNewNotification)
+        socket.off("followRequestCount", handleNewFollowRequest)
       }
     }
-  }, [socket, queryClient, setHasUnreadNotifications])
+  }, [socket, queryClient, setHasUnreadNotifications, setFollowRequestCount])
 }

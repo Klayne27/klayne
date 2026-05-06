@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
+  acceptFollowRequestApi,
   blockUnblockUserApi,
+  declineFollowRequestApi,
   deleteUserAccountAdminApi,
   deleteUserAccountApi,
   followApi,
@@ -57,59 +59,58 @@ export const useUpdateUserProfile = () => {
 
 export const useFollow = () => {
   const queryClient = useQueryClient()
-  //   const { authUser } = useAuthUser()
+
   const {
     mutate: follow,
     isPending,
     error: followError,
   } = useMutation({
-    mutationFn: (userIdToFollow) => followApi(userIdToFollow),
-    onMutate: async (userIdToFollow) => {
+    // 1. Accept an object instead of just an ID
+    mutationFn: ({ userIdToFollow }) => followApi(userIdToFollow),
+
+    onMutate: async ({ userIdToFollow, isTargetPrivate }) => {
       await queryClient.cancelQueries({ queryKey: userKeys.auth() })
-      // await queryClient.cancelQueries({ queryKey: ["userProfile", userIdToFollow] })
       const previousAuthUser = queryClient.getQueryData(userKeys.auth())
-      // const previousUserProfile = queryClient.getQueryData(["userProfile", userIdToFollow])
+
       if (previousAuthUser) {
         queryClient.setQueryData(userKeys.auth(), (oldData) => {
           if (!oldData) return oldData
+
           const isCurrentlyFollowing = oldData.following.includes(userIdToFollow)
-          let newFollowing
+
+          let newFollowing = [...oldData.following]
+
           if (isCurrentlyFollowing) {
-            newFollowing = oldData.following.filter((id) => id !== userIdToFollow)
+            // Unfollow is always safe to do optimistically
+            newFollowing = newFollowing.filter((id) => id !== userIdToFollow)
           } else {
-            newFollowing = [...oldData.following, userIdToFollow]
+            // ONLY add to following list if the account is NOT private
+            if (!isTargetPrivate) {
+              newFollowing.push(userIdToFollow)
+            }
+            // If private, we don't modify the 'following' array optimistically.
+            // The UI should instead rely on a "pendingRequest" check if you have one.
           }
+
           return { ...oldData, following: newFollowing }
         })
       }
-      // if (previousUserProfile) {
-      //   queryClient.setQueryData(["userProfile", userIdToFollow], (oldData) => {
-      //     if (!oldData) return oldData
-      //     const isCurrentlyFollowedByAuthUser = oldData.followers.includes(authUser._id)
-      //     let newFollowers
-      //     if (isCurrentlyFollowedByAuthUser) {
-      //       newFollowers = oldData.followers.filter((id) => id !== authUser._id)
-      //     } else {
-      //       newFollowers = [...oldData.followers, authUser._id]
-      //     }
-      //     return { ...oldData, followers: newFollowers }
-      //   })
-      // }
       return { previousAuthUser }
     },
-    onError: (error, userIdToFollow, context) => {
+
+    onError: (error, variables, context) => {
       queryClient.setQueryData(userKeys.auth(), context.previousAuthUser)
-      // queryClient.setQueryData(["userProfile", userIdToFollow], context.previousUserProfile)
       showAppToast(error.message || "Failed to perform action", "error")
     },
-    onSettled: (data, error, userIdToFollow) => {
+
+    onSettled: (data, error, variables) => {
+      const { userIdToFollow } = variables
       queryClient.invalidateQueries({ queryKey: userKeys.auth() })
-      queryClient.invalidateQueries({ queryKey: ["followersList", userIdToFollow] })
-      queryClient.invalidateQueries({ queryKey: ["followingList", userIdToFollow] })
-      // queryClient.invalidateQueries({ queryKey: conversationKeys.list() })
-      // queryClient.invalidateQueries({
-      //   queryKey: conversationKeys.betweenUsers(userIdToFollow),
-      // })
+      queryClient.invalidateQueries({ queryKey: ["userProfile", userIdToFollow] })
+
+      if (data?.action === "requested" || data?.action === "cancelled") {
+        queryClient.invalidateQueries({ queryKey: userKeys.followRequests() })
+      }
     },
   })
 
@@ -467,4 +468,40 @@ export const useUnmuteUser = (userId) => {
   })
 
   return { unmuteUser, isUnmuting }
+}
+
+export const useAcceptFollowRequest = () => {
+  const queryClient = useQueryClient()
+
+  const { mutate: acceptRequest, isPending: isAccepting } = useMutation({
+    mutationFn: acceptFollowRequestApi,
+    onSuccess: (_, requesterId) => {
+      // Remove from list optimistically
+      queryClient.setQueryData(userKeys.followRequests(), (prev = []) =>
+        prev.filter((u) => u._id !== requesterId),
+      )
+      queryClient.invalidateQueries({ queryKey: userKeys.auth() })
+      
+      showAppToast("Follow request accepted.", "success")
+    },
+    onError: (err) => showAppToast(err.message, "error"),
+  })
+
+  return { acceptRequest, isAccepting }
+}
+
+export const useDeclineFollowRequest = () => {
+  const queryClient = useQueryClient()
+
+  const { mutate: declineRequest, isPending: isDeclining } = useMutation({
+    mutationFn: declineFollowRequestApi,
+    onSuccess: (_, requesterId) => {
+      queryClient.setQueryData(userKeys.followRequests(), (prev = []) =>
+        prev.filter((u) => u._id !== requesterId),
+      )
+    },
+    onError: (err) => showAppToast(err.message, "error"),
+  })
+
+  return { declineRequest, isDeclining }
 }

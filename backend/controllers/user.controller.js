@@ -5,7 +5,7 @@ import bcrypt from "bcryptjs";
 import Post from "../models/post.model.js";
 import Conversation from "../models/conversation.model.js";
 import Message from "../models/message.model.js";
-import { createAndSendNotification } from "../lib/socket.js";
+import { createAndSendNotification, emitFollowRequestCount } from "../lib/socket.js";
 import mongoose from "mongoose";
 import PublicChatMessage from "../models/publicMessage.model.js";
 import { getBlockingUsers, getMutedUsers } from "../lib/utils/helpers.js";
@@ -29,28 +29,28 @@ export const getUserProfile = async (req, res) => {
         populate: {
           path: "user",
           select:
-            "username fullName profileImg isCha isVerified isGoldVerified  badges preferredBadge nameColor equipped",
+            "username fullName profileImg isCha isVerified isGoldVerified badges preferredBadge nameColor equipped",
         },
       })
-      .populate("profileImg", "imageUrl") // Populate the profile image
-      .populate("coverImg", "imageUrl"); // Populate the cover image
+      .populate("profileImg", "imageUrl")
+      .populate("coverImg", "imageUrl");
 
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
+    if (!user) return res.status(404).json({ error: "User not found" });
 
     let isBlockedByYou = false;
     let hasBlockedYou = false;
+    let hasRequestedFollow = false;
 
     if (currentUserId && currentUserId.toString() !== user._id.toString()) {
       const currentUser = await User.findById(currentUserId).select(
         "blockedUsers blockedBy",
       );
-
       if (currentUser) {
-        isBlockedByYou = currentUser.blockedUsers.includes(user._id);
-        hasBlockedYou = currentUser.blockedBy.includes(user._id);
+        isBlockedByYou = currentUser.blockedUsers.some((id) => id.equals(user._id));
+        hasBlockedYou = currentUser.blockedBy.some((id) => id.equals(user._id));
       }
+      // Check if current user has a pending follow request
+      hasRequestedFollow = user.followRequests.some((id) => id.equals(currentUserId));
     }
 
     if (hasBlockedYou) {
@@ -68,15 +68,26 @@ export const getUserProfile = async (req, res) => {
       });
     }
 
+    const userObj = user.toObject();
+
     const profileData = {
-      ...user.toObject(),
-      isBlockedByYou: isBlockedByYou,
-      hasBlockedYou: hasBlockedYou,
+      ...userObj,
+      // Only expose the raw requests array to the owner (for count)
+      followRequests: currentUserId?.equals(user._id)
+        ? userObj.followRequests
+        : undefined,
+      followRequestsCount: currentUserId?.equals(user._id)
+        ? user.followRequests.length
+        : undefined,
+      // Visitors only need these two booleans
+      hasRequestedFollow,
+      isBlockedByYou,
+      hasBlockedYou,
     };
 
     res.status(200).json(profileData);
   } catch (error) {
-    console.log("Error in getUserProfile: ", error.message);
+    console.error("Error in getUserProfile:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -132,12 +143,16 @@ export const getFollowers = async (req, res) => {
 export const followUnfollowUser = async (req, res) => {
   try {
     const { userId } = req.params;
-    const userToModify = await User.findById(userId);
-    const currentUser = await User.findById(req.user._id);
+    const currentUserId = req.user._id;
 
-    if (userId === req.user._id.toString()) {
+    if (userId === currentUserId.toString()) {
       return res.status(400).json({ error: "You can't follow/unfollow yourself" });
     }
+
+    const [userToModify, currentUser] = await Promise.all([
+      User.findById(userId),
+      User.findById(currentUserId),
+    ]);
 
     if (!userToModify || !currentUser) {
       return res.status(400).json({ error: "User not found" });
@@ -154,54 +169,81 @@ export const followUnfollowUser = async (req, res) => {
         .json({ error: "This user has blocked you. You cannot follow them." });
     }
 
-    const isFollowing = currentUser.following.includes(userId);
+    const isFollowing = currentUser.following.map(String).includes(userId);
+    const hasPendingRequest = userToModify.followRequests
+      .map(String)
+      .includes(currentUserId.toString());
 
     if (isFollowing) {
-      // --- UNFOLLOW LOGIC ---
-      await User.findByIdAndUpdate(userId, { $pull: { followers: req.user._id } });
-      await User.findByIdAndUpdate(req.user._id, { $pull: { following: userId } });
+      // ── UNFOLLOW ───────────────────────────────────────────────────────────
+      await Promise.all([
+        User.findByIdAndUpdate(userId, { $pull: { followers: currentUserId } }),
+        User.findByIdAndUpdate(currentUserId, { $pull: { following: userId } }),
+        Conversation.updateOne(
+          { participants: { $all: [currentUserId, userId] } },
+          { $addToSet: { hiddenFor: currentUserId } },
+          { timestamps: false },
+        ),
+      ]);
 
-      await Conversation.updateOne(
-        { participants: { $all: [req.user._id, userId] } },
-        { $addToSet: { hiddenFor: req.user._id } },
-        { timestamps: false },
-      );
+      return res
+        .status(200)
+        .json({ message: "Unfollowed successfully.", action: "unfollowed" });
+    } else if (hasPendingRequest) {
+      // ── CANCEL PENDING REQUEST ─────────────────────────────────────────────
+      await User.findByIdAndUpdate(userId, { $pull: { followRequests: currentUserId } });
+      // Emit updated count to target
+      await emitFollowRequestCount(userId);
 
-      res.status(200).json({ message: "User unfollowed successfully" });
+      return res
+        .status(200)
+        .json({ message: "Follow request cancelled.", action: "cancelled" });
+    } else if (userToModify.isPrivate) {
+      // ── SEND FOLLOW REQUEST (private profile) ──────────────────────────────
+      await User.findByIdAndUpdate(userId, {
+        $addToSet: { followRequests: currentUserId },
+      });
+      await emitFollowRequestCount(userId);
+
+      return res
+        .status(200)
+        .json({ message: "Follow request sent.", action: "requested" });
     } else {
-      // --- FOLLOW LOGIC ---
-      await User.findByIdAndUpdate(userId, { $push: { followers: req.user._id } });
-      await User.findByIdAndUpdate(req.user._id, { $push: { following: userId } });
+      // ── FOLLOW (public profile) ────────────────────────────────────────────
+      await Promise.all([
+        User.findByIdAndUpdate(userId, { $addToSet: { followers: currentUserId } }),
+        User.findByIdAndUpdate(currentUserId, { $addToSet: { following: userId } }),
+      ]);
 
-      const existingConversation = await Conversation.findOne({
-        participants: { $all: [req.user._id, userId] },
+      const existingConv = await Conversation.findOne({
+        participants: { $all: [currentUserId, userId] },
       });
 
-      if (existingConversation) {
+      if (existingConv) {
         await Conversation.updateOne(
-          { _id: existingConversation._id },
-          { $pull: { hiddenFor: req.user._id } },
+          { _id: existingConv._id },
+          { $pull: { hiddenFor: currentUserId } },
           { timestamps: false },
         );
       } else {
-        const newConversation = new Conversation({
-          participants: [req.user._id, userId],
+        await new Conversation({
+          participants: [currentUserId, userId],
           hiddenFor: [userToModify._id],
-        });
-        await newConversation.save();
+        }).save();
       }
 
       await createAndSendNotification({
         type: "follow",
-        from: req.user._id,
+        from: currentUserId,
         to: userToModify._id,
       });
-      // --------------------------------------------------------------------
 
-      res.status(200).json({ message: "User followed successfully" });
+      return res
+        .status(200)
+        .json({ message: "Followed successfully.", action: "followed" });
     }
   } catch (error) {
-    console.log("Error in followUnfollowUser", error.message);
+    console.error("Error in followUnfollowUser:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -340,6 +382,8 @@ export const updateUser = async (req, res) => {
     relationshipStatus,
     levelOfEducation, // Added
     majorOrField, // Added
+    isPrivate,
+    isLikedFeedPrivate
   } = req.body;
   let { username } = req.body;
   const { profileImg, coverImg } = req.body;
@@ -453,6 +497,9 @@ export const updateUser = async (req, res) => {
     if (username !== undefined) user.username = username;
     if (bio !== undefined) user.bio = bio;
     if (link !== undefined) user.link = link;
+    if (isPrivate !== undefined) user.isPrivate = isPrivate;
+    if (isLikedFeedPrivate !== undefined) user.isLikedFeedPrivate = isLikedFeedPrivate
+
 
     if (relationshipStatus !== undefined) {
       user.relationshipStatus = relationshipStatus;
@@ -589,25 +636,49 @@ export const deleteUserAccount = async (req, res) => {
 
 export const searchUsers = async (req, res) => {
   try {
-    const { q } = req.query;
+    const { q, mentionMode } = req.query;
+    const currentUserId = req.user?._id;
 
-    if (!q) {
-      return res.status(200).json([]);
-    }
+    if (!q) return res.status(200).json([]);
 
-    const users = await User.find({
+    const textFilter = {
       $or: [
         { username: { $regex: `^${q}`, $options: "i" } },
         { fullName: { $regex: `^${q}`, $options: "i" } },
       ],
-    })
+    };
+
+    if (mentionMode === "true" && currentUserId) {
+      // ── Mention mode: only surface users who follow the current user ──────
+      // `{ following: currentUserId }` matches users whose following array
+      // contains currentUserId, i.e. "users who follow me".
+      const users = await User.find({
+        $and: [
+          textFilter,
+          {
+            $or: [
+              { following: new mongoose.Types.ObjectId(currentUserId.toString()) },
+              { _id: currentUserId }, // always allow mentioning yourself
+            ],
+          },
+        ],
+      })
+        .select("-password")
+        .populate("profileImg", "imageUrl")
+        .limit(5);
+
+      return res.status(200).json(users);
+    }
+
+    // ── Standard search (unchanged) ────────────────────────────────────────
+    const users = await User.find(textFilter)
       .select("-password")
-      .populate("profileImg", "imageUrl") // Add this population
+      .populate("profileImg", "imageUrl")
       .limit(5);
 
     res.status(200).json(users);
   } catch (error) {
-    console.error("Error in searchUsers controller:", error.message);
+    console.error("Error in searchUsers:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -1120,6 +1191,92 @@ export const getMuteStatus = async (req, res) => {
       muteType: mute?.muteType || null,
     });
   } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// ── GET pending follow requests for the logged-in user ────────────────────────
+export const getFollowRequests = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id)
+      .select("followRequests")
+      .populate({
+        path: "followRequests",
+        select:
+          "username fullName profileImg isCha isVerified isGoldVerified badges preferredBadge nameColor equipped",
+        populate: { path: "profileImg", select: "imageUrl" },
+      });
+
+    res.status(200).json(user?.followRequests ?? []);
+  } catch (error) {
+    console.error("Error in getFollowRequests:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// ── ACCEPT a follow request ───────────────────────────────────────────────────
+export const acceptFollowRequest = async (req, res) => {
+  try {
+    const { requesterId } = req.params;
+    const userId = req.user._id;
+
+    const user = await User.findById(userId).select("followRequests");
+    if (!user.followRequests.map(String).includes(requesterId)) {
+      return res.status(404).json({ error: "Follow request not found." });
+    }
+
+    await Promise.all([
+      User.findByIdAndUpdate(userId,     { $pull:    { followRequests: requesterId } }),
+      User.findByIdAndUpdate(userId,     { $addToSet: { followers:     requesterId } }),
+      User.findByIdAndUpdate(requesterId,{ $addToSet: { following:     userId } }),
+    ]);
+
+    // Conversation handling
+    const existingConv = await Conversation.findOne({
+      participants: { $all: [userId, requesterId] },
+    });
+    if (existingConv) {
+      await Conversation.updateOne(
+        { _id: existingConv._id },
+        { $pull: { hiddenFor: requesterId } },
+        { timestamps: false },
+      );
+    } else {
+      await new Conversation({
+        participants: [userId, requesterId],
+        hiddenFor: [userId],
+      }).save();
+    }
+
+    // Notify the requester that their request was accepted
+    await createAndSendNotification({
+      type: "followRequestAccepted",
+      from: userId,
+      to:   requesterId,
+    });
+
+    // Update request count badge for current user
+    await emitFollowRequestCount(userId.toString());
+
+    res.status(200).json({ message: "Follow request accepted." });
+  } catch (error) {
+    console.error("Error in acceptFollowRequest:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// ── DECLINE a follow request ──────────────────────────────────────────────────
+export const declineFollowRequest = async (req, res) => {
+  try {
+    const { requesterId } = req.params;
+    const userId = req.user._id;
+
+    await User.findByIdAndUpdate(userId, { $pull: { followRequests: requesterId } });
+    await emitFollowRequestCount(userId.toString());
+
+    res.status(200).json({ message: "Follow request declined." });
+  } catch (error) {
+    console.error("Error in declineFollowRequest:", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };

@@ -1,5 +1,6 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query"
 import {
+  getFollowRequestsApi,
   getMuteStatusApi,
   getSuggestedUsersApi,
   getSuggestedUsersPageApi,
@@ -146,4 +147,13 @@ export const useGetSuggestedUsersInfinite = () => {
   const users = data?.pages.flatMap((p) => p.users) ?? []
 
   return { users, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError, error }
+}
+
+export const useGetFollowRequests = () => {
+  const { data: followRequests = [], isLoading } = useQuery({
+    queryKey: userKeys.followRequests(),
+    queryFn: getFollowRequestsApi,
+    staleTime: 60_000,
+  })
+  return { followRequests, isLoading }
 }

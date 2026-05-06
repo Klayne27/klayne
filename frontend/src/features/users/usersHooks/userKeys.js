@@ -11,4 +11,5 @@ export const userKeys = {
   followList: (type, userId) => [...userKeys.lists(), type, userId],
   suggestedList: () => [...userKeys.lists(), "suggestedUsers"],
   stats: (username) => [...userKeys.all, "stats", username],
+  followRequests: () => [...userKeys.all, "followRequests"]
 }

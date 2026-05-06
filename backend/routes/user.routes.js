@@ -2,12 +2,15 @@ import express from "express";
 import { protectRoute } from "../middleware/protectRoute.js";
 import { isAdmin } from "../middleware/isAdmin.js";
 import {
+  acceptFollowRequest,
   adminDeleteUserAccount,
   blockUnblockUser,
+  declineFollowRequest,
   deleteUserAccount,
   followUnfollowUser,
   getFollowers,
   getFollowingUsers,
+  getFollowRequests,
   getMuteStatus,
   getSuggestedUsers,
   getSuggestedUsersPage,
@@ -45,6 +48,9 @@ router.get("/stats/:username", getUserStats);
 router.post("/mute/:userId", protectRoute, muteUser);
 router.delete("/mute/:userId", protectRoute, unmuteUser);
 router.get("/mute/:userId", protectRoute, getMuteStatus);
+router.get("/follow-requests",               protectRoute, getFollowRequests);
+router.post("/:requesterId/accept-request",  protectRoute, acceptFollowRequest);
+router.post("/:requesterId/decline-request", protectRoute, declineFollowRequest);
 
 // --- SETTINGS & PRIVACY ---
 router.get("/vacation-mode", getVacationModeStatus);

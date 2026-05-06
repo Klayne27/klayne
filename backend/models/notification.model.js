@@ -17,6 +17,8 @@ const notificationSchema = new mongoose.Schema(
       required: true,
       enum: [
         "follow",
+        "followRequest", // ← NEW
+        "followRequestAccepted", // ← NEW
         "like",
         "repost",
         "mention",
@@ -25,8 +27,8 @@ const notificationSchema = new mongoose.Schema(
         "replyRepost",
         "replyReply",
         "replyMention",
-        "boardComment", // someone commented on your board post
-        "boardReply", // someone replied to your board comment
+        "boardComment",
+        "boardReply",
       ],
     },
     read: {
@@ -36,18 +38,18 @@ const notificationSchema = new mongoose.Schema(
     postId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Post",
-      required: function () {
-        return [
-          "repost",
-          "like",
-          "mention",
-          "reply",
-          "replyLike",
-          "replyRepost",
-          "replyReply",
-          "replyMention",
-        ].includes(this.type);
-      },
+      // required: function () {
+      //   return [
+      //     "repost",
+      //     "like",
+      //     "mention",
+      //     "reply",
+      //     "replyLike",
+      //     "replyRepost",
+      //     "replyReply",
+      //     "replyMention",
+      //   ].includes(this.type);
+      // },
     },
     boardPostId: {
       type: mongoose.Schema.Types.ObjectId,

@@ -42,6 +42,9 @@ export const SocketContextProvider = ({ children }) => {
   const [newBoardPostCount, setNewBoardPostCount] = useState(0)
   const [showNewBoardPostsButton, setShowNewBoardPostsButton] = useState(false)
 
+  const [followRequestCount, setFollowRequestCount] = useState(0)
+
+
   const queryClient = useQueryClient()
 
   const location = useLocation()
@@ -80,6 +83,10 @@ export const SocketContextProvider = ({ children }) => {
 
       newSocket.on("getOnlineUsers", (users) => {
         setOnlineUsers(users)
+      })
+
+      newSocket.on("followRequestCount", ({ count }) => {
+        setFollowRequestCount(count)
       })
 
       newSocket.on("newBoardPostCount", ({ newBoardPostCount }) => {
@@ -252,6 +259,9 @@ export const SocketContextProvider = ({ children }) => {
         setNewBoardPostCount,
         showNewBoardPostsButton,
         setShowNewBoardPostsButton,
+
+        followRequestCount,
+        setFollowRequestCount,
 
         setActiveConversationId,
         newPostCount,

@@ -74,7 +74,10 @@ const Sidebar = ({
     socket,
     newBoardPostCount,
     showNewBoardPostsButton,
+    followRequestCount,
   } = useSocket()
+
+  const notificationsCount = followRequestCount + unreadNotificationsCount
 
   const { theme } = useTheme()
 
@@ -149,7 +152,8 @@ const Sidebar = ({
     unreadNotificationsCount +
     unreadPublicChatCount +
     newPostCount +
-    newVentPostCount
+    newVentPostCount + 
+    followRequestCount
 
   useEffect(() => {
     const hasAnyNewNotification =
@@ -553,12 +557,12 @@ const Sidebar = ({
                 ) : (
                   <GoBell className="size-7" />
                 )}
-                {unreadNotificationsCount > 0 && (
+                {notificationsCount > 0 && (
                   <div
                     className={`absolute right-2 top-2 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold ${shouldTextBeWhite(theme)}`}
                     style={{ transform: "translate(40%, -40%)" }}
                   >
-                    {formatCount(unreadNotificationsCount)}
+                    {formatCount(notificationsCount)}
                   </div>
                 )}
               </div>

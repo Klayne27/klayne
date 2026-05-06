@@ -133,7 +133,7 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
   const handleFollowClick = (e) => {
     e.stopPropagation()
     if (!authUser || isFollowingOrUnfollowing) return
-    follow(originalPostOwner._id)
+    follow({userIdToFollow: originalPostOwner._id})
     setShowMenu(false)
   }
 

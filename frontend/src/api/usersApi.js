@@ -80,7 +80,7 @@ export const followApi = async (userId) => {
 }
 
 export const searchUsersApi = async (query) => {
-  const res = await fetch(`${BASE_URL}/search?q=${encodeURIComponent(query)}`)
+  const res = await fetch(`${BASE_URL}/search?q=${encodeURIComponent(query)}&mentionMode=true`)
   const data = await res.json()
 
   if (!res.ok) {
@@ -260,3 +260,25 @@ export const getSuggestedUsersPageApi = async ({ pageParam = 1 }) => {
 
   return data
 }
+// api/userApi.js — add these three:
+
+export const getFollowRequestsApi = async () => {
+  const res  = await fetch(`${BASE_URL}/follow-requests`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to fetch follow requests");
+  return data;
+};
+
+export const acceptFollowRequestApi = async (requesterId) => {
+  const res  = await fetch(`${BASE_URL}/${requesterId}/accept-request`, { method: "POST" });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to accept request");
+  return data;
+};
+
+export const declineFollowRequestApi = async (requesterId) => {
+  const res  = await fetch(`${BASE_URL}/${requesterId}/decline-request`, { method: "POST" });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to decline request");
+  return data;
+};
