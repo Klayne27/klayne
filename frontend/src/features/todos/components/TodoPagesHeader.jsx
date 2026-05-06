@@ -11,28 +11,28 @@ import { IoIosStats } from "react-icons/io"
 import { shouldTextBeWhite } from "../../../utils/shouldTextBeWhite"
 import { useTheme } from "../../../context/ThemeContext"
 
-const xpForLevel = (level) => {
-  if (level <= 1) {
-    return 500
-  }
-  return Math.floor(300 + level * 200 + Math.pow(level - 1, 1.3) * 100)
-}
+// const xpForLevel = (level) => {
+//   if (level <= 1) {
+//     return 500
+//   }
+//   return Math.floor(300 + level * 200 + Math.pow(level - 1, 1.3) * 100)
+// }
 
 function TodoPagesHeader({ pageTitle }) {
   const navigate = useNavigate()
   const { authUser: currentUser } = useAuthUser()
 
-  const { showXpGain, xpGainedAmount } = useXpStore()
+  // const { showXpGain, xpGainedAmount } = useXpStore()
 
   const { pathname } = useLocation()
   const { theme } = useTheme()
 
   const [showDropdown, setShowDropdown] = useState(false)
 
-  const { pomodoroXP, pomodoroLevel } = currentUser
+  // const { pomodoroXP, pomodoroLevel } = currentUser
 
-  const xpNeededForNextLevel = xpForLevel(pomodoroLevel + 1)
-  const xpProgress = (pomodoroXP / xpNeededForNextLevel) * 100
+  // const xpNeededForNextLevel = xpForLevel(pomodoroLevel + 1)
+  // const xpProgress = (pomodoroXP / xpNeededForNextLevel) * 100
 
   const handleCompletedPageClick = (e) => {
     e.stopPropagation()
@@ -139,7 +139,7 @@ function TodoPagesHeader({ pageTitle }) {
           )}
         </div>
       </div>
-      {!pathname.startsWith("/todos/") && (
+      {/* {!pathname.startsWith("/todos/") && (
         <div className="flex w-full items-center gap-2 pb-6 pl-2 pr-4">
           <span className="inline-flex items-center rounded-md bg-secondary px-2 py-[1px]">
             <p className="flex items-center gap-1 text-xs font-semibold">
@@ -165,7 +165,7 @@ function TodoPagesHeader({ pageTitle }) {
             )}
           </div>
         </div>
-      )}
+      )} */}
     </div>
   )
 }

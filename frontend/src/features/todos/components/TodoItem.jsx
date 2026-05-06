@@ -86,8 +86,29 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
   }
 
   const isVisuallyCompleted = visuallyCompleted[todo._id] || todo.completed
-  const formattedDueDate = todo.dueDate ? new Date(todo.dueDate).toLocaleDateString() : null
+  // const formattedDueDate = todo.dueDate ? new Date(todo.dueDate).toLocaleDateString() : null
   const isTodoOwner = todo.user === currentUser._id
+  
+  const dueDateObj = todo.dueDate ? new Date(todo.dueDate) : null
+
+  const formattedDate = dueDateObj
+    ? dueDateObj.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+    : null
+
+  // Only show time if hours or minutes are not zero (meaning a specific time was set)
+  const hasTime = dueDateObj && (dueDateObj.getHours() !== 0 || dueDateObj.getMinutes() !== 0)
+
+  const formattedTime = hasTime
+    ? dueDateObj.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+    : null
+    
+
+    // Only show time if it's NOT exactly midnight
+    const shouldShowTime =
+      dueDateObj &&
+      (dueDateObj.getHours() !== 0 ||
+        dueDateObj.getMinutes() !== 0 ||
+        dueDateObj.getSeconds() !== 0)
 
   return (
     <div className="relative">
@@ -108,12 +129,15 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
           <div className="flex flex-col gap-[2px]">
             <span className="text-base leading-[16px]">{todo.title}</span>
             <span className="min-w-0 break-words text-xs text-slate-500">{todo.description}</span>
-            {formattedDueDate && (
-              <span className="flex items-center gap-1 text-xs text-slate-500">
-                <span className="text-[12px]">
-                  <FaCalendar />{" "}
-                </span>{" "}
-                {formattedDueDate}
+            {formattedDate && (
+              <span className="flex items-center gap-1 text-xs">
+                <span className="text-[12px] text-slate-500">
+                  <FaCalendar />
+                </span>
+                <span className="text-slate-500">{formattedDate}</span>
+                {shouldShowTime && (
+                  <span className="ml-1 font-medium text-primary">at {formattedTime}</span>
+                )}
               </span>
             )}
           </div>
