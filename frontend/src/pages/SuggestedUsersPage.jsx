@@ -63,6 +63,8 @@ const SuggestedUsersPage = ({ mobile = false }) => {
     }
   }
 
+      console.log(users[users.length -1])
+
   return (
     <div className="min-h-screen w-full border-accent md:border-x">
       {/* Header – hidden when rendered inside ConnectPage (mobile) */}
@@ -142,6 +144,7 @@ const SuggestedUsersPage = ({ mobile = false }) => {
 }
 
 const SuggestedUserRow = ({ user, currentUser, isFollowing, openUnfollowModal, navigate }) => (
+
   <div
     className="flex w-full cursor-pointer items-start gap-3 px-4 py-4 transition hover:bg-secondary/30"
     onClick={(e) => {
@@ -169,8 +172,8 @@ const SuggestedUserRow = ({ user, currentUser, isFollowing, openUnfollowModal, n
     <div className="flex-shrink-0 pt-0.5">
       <FollowButton
         user={user}
-        currentUserId={currentUser?._id}
         isFollowing={isFollowing}
+        hasRequestedFollow={user?.hasRequestedFollow}
         openUnfollowModal={openUnfollowModal}
       />
     </div>

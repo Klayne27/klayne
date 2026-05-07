@@ -11,17 +11,35 @@ export const useGlobalNotificationSocketEvent = () => {
   useEffect(() => {
     if (socket) {
       const handleNewNotification = (newNotification) => {
+        // 1. Update Notification List Cache
         queryClient.setQueryData(notificationKeys.list(), (oldNotifications) => {
           const currentNotifications = oldNotifications || []
           const isDuplicate = currentNotifications.some(
             (notif) => notif._id === newNotification._id,
           )
-
           if (!isDuplicate) {
             return [newNotification, ...currentNotifications]
           }
           return currentNotifications
         })
+
+        // 2. Real-time Profile Unlock Logic
+        if (newNotification.type === "followRequestAccepted") {
+          const acceptedUserUsername = newNotification.from?.username
+
+          if (acceptedUserUsername) {
+            // Invalidate the profile of the person who just accepted you
+            // This forces useGetUserProfile to refetch and see the "private" content
+            queryClient.invalidateQueries({
+              queryKey: userKeys.profile(acceptedUserUsername),
+            })
+          }
+
+          // Invalidate your own auth data so your "following" array updates
+          // This changes your UI buttons from "Requested" to "Following"
+          queryClient.invalidateQueries({ queryKey: userKeys.auth() })
+        }
+
         setHasUnreadNotifications(true)
       }
 

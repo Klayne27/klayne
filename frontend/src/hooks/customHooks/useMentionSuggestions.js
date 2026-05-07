@@ -2,14 +2,17 @@ import { useState, useCallback } from "react"
 import { useDebounce } from "./useDebounce"
 import { useSearchUsers } from "../../features/users/usersHooks/useUserMutations"
 
-export const useMentionSuggestions = ({ textInput, setTextInput, inputRef }) => {
+export const useMentionSuggestions = ({ textInput, setTextInput, inputRef, authUser }) => {
   const [mentionSearchTerm, setMentionSearchTerm] = useState("")
   const [showMentionSuggestions, setShowMentionSuggestions] = useState(false)
   const [focusedMentionIndex, setFocusedMentionIndex] = useState(0) // NEW
 
   const debouncedMentionSearchTerm = useDebounce(mentionSearchTerm, 300)
-  const { suggestedUsers, isLoadingSuggestedUsers } = useSearchUsers(debouncedMentionSearchTerm)
+const shouldSearch = authUser?.isPrivate ? authUser?.followers?.length > 0 : true
 
+const { suggestedUsers, isLoadingSuggestedUsers } = useSearchUsers(
+  shouldSearch ? debouncedMentionSearchTerm : "",
+)
   const handleMentionTextChange = useCallback((e) => {
     const newText = e.target.value
     const lastAtIndex = newText.lastIndexOf("@")

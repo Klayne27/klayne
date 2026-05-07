@@ -61,7 +61,7 @@ const { followRequestCount } = useSocket()
 
     let targetLink = ""
 
-    if (notification.type === "follow") {
+    if (notification.type === "follow" || notification.type === "followRequestAccepted") {
       targetLink = `/profile/${notification.from?.username}`
     } else if (notification.postId && notification.postId._id) {
       targetLink = `/${notification.postId.user?.username}/post/${notification.postId._id}`

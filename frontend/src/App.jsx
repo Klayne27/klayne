@@ -117,16 +117,29 @@ function App() {
         </Routes>
       </Suspense>
 
-      <Toaster position="bottom-center" />
+      <Toaster
+        position="bottom-center"
+        containerStyle={{
+          zIndex: 99999, // Ensure this is higher than your modal's z-index
+        }}
+        toastOptions={{
+          // This applies to all toasts
+          style: {
+            zIndex: 99999,
+          },
+        }}
+      />
       {/* <ImageModal src={selectedImage} onClose={closeImageModal} />
       <ProfileImageModal src={selectedProfileImage} onClose={closeProfileImageModal} /> */}
-      {isOpen && <ImageLightbox
-        images={images}
-        currentIndex={currentIndex}
-        onClose={closeLightbox}
-        onPrev={prevImage}
-        onNext={nextImage}
-      />}
+      {isOpen && (
+        <ImageLightbox
+          images={images}
+          currentIndex={currentIndex}
+          onClose={closeLightbox}
+          onPrev={prevImage}
+          onNext={nextImage}
+        />
+      )}
     </>
   )
 }

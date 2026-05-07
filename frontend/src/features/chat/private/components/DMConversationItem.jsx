@@ -244,7 +244,7 @@ function DMConversationItem({ conv }) {
               <img src="/gold-verified2.png" className="size-[17px]" alt="Gold Verified" />
             )}
             {otherUser.isCha && <img src="/cha.png" className="size-[15px] rounded-md" />}
-            <span className="flex-shrink-1 min-w-0 truncate text-sm text-gray-400">
+            <span className="ml-1 flex-shrink-1 min-w-0 truncate text-sm text-gray-400">
               @{otherUser.username}
             </span>
             <span className="mx-1 text-xs text-gray-400">·</span>

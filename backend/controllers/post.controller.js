@@ -168,7 +168,7 @@ export const createReply = async (req, res) => {
     let { img, video } = req.body;
     const userId = req.user._id;
 
-    const parent = await Post.findById(parentId).populate("user");
+    const parent = await Post.findById(parentId).populate("user", "-password -email");
     if (!parent) return res.status(404).json({ error: "Post not found." });
 
     const parentAuthor = parent.user;
@@ -226,7 +226,7 @@ export const createReply = async (req, res) => {
       mediaType = "video";
     }
 
-const mentionedUsersIds = await extractAndValidateMentions(text, userId);
+const mentionedUsersIds = await extractAndValidateMentions(text);
 
     // ── Extract hashtags ───────────────────────────────────────────────────
     const tags = extractHashtags(text);
@@ -1051,7 +1051,7 @@ export const getLikedPosts = async (req, res) => {
     if (user.isLikedFeedPrivate && !isCurrentUser) {
       return res.status(200).json({
         message: "This user's liked posts are private.",
-        posts: [], // Return an empty array
+        posts: [],
         hasNextPage: false,
         totalLikedPosts: 0,
       });
@@ -1071,10 +1071,15 @@ export const getLikedPosts = async (req, res) => {
       ]),
     ];
 
+    // ── Private exclusion ─────────────────────────────────────────────────
+    const privateExcludedIds = await getPrivateExcludedIds(currentUserId);
+    // Combined: blocked/blocking + private-not-followed
+    const excludedAuthorIds = [...blockedAndBlockingObjectIds, ...privateExcludedIds];
+    // ─────────────────────────────────────────────────────────────────────
+
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
-
     const now = new Date();
 
     const baseMatchConditions = {
@@ -1128,7 +1133,6 @@ export const getLikedPosts = async (req, res) => {
 
     const pipeline = [
       { $match: baseMatchConditions },
-
       {
         $lookup: {
           from: "users",
@@ -1175,7 +1179,7 @@ export const getLikedPosts = async (req, res) => {
                 pipeline: [
                   {
                     $lookup: {
-                      from: "images", // Lookup for the reposted user's profile image
+                      from: "images",
                       localField: "profileImg",
                       foreignField: "_id",
                       as: "profileImg",
@@ -1201,7 +1205,6 @@ export const getLikedPosts = async (req, res) => {
         },
       },
       { $unwind: { path: "$repostedFrom", preserveNullAndEmptyArrays: true } },
-
       {
         $project: {
           user: 1,
@@ -1225,17 +1228,18 @@ export const getLikedPosts = async (req, res) => {
       {
         $match: {
           $and: [
-            { "user._id": { $nin: blockedAndBlockingObjectIds } },
+            // ── Author must not be blocked or private-not-followed ──────────
+            { "user._id": { $nin: excludedAuthorIds } },
             {
               $or: [
                 { repostedFrom: null },
                 {
-                  "repostedFrom.user._id": {
-                    $nin: blockedAndBlockingObjectIds,
-                  },
+                  // ── Repost original author same exclusion ───────────────
+                  "repostedFrom.user._id": { $nin: excludedAuthorIds },
                 },
               ],
             },
+            // ──────────────────────────────────────────────────────────────
             { "repostedFrom.repostedFrom": { $eq: null } },
             { $or: [{ repostedFrom: null }, { "repostedFrom.user": { $ne: null } }] },
             {
@@ -1269,7 +1273,6 @@ export const getLikedPosts = async (req, res) => {
       { $skip: skip },
       { $limit: limit },
     ]);
-
     const hasNextPage = page * limit < totalLikedPosts;
 
     res.status(200).json({ posts: likedPosts, hasNextPage, totalLikedPosts });
@@ -1278,7 +1281,6 @@ export const getLikedPosts = async (req, res) => {
     console.log("Error in getLikedPosts controller: ", error);
   }
 };
-
 export const getFollowingPosts = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -1603,6 +1605,12 @@ export const getUserReplies = async (req, res) => {
       ]),
     ];
 
+    // ── Private exclusion ─────────────────────────────────────────────────
+    const privateExcludedIds = await getPrivateExcludedIds(currentUserId);
+    // For replies: hide replies directed at private users the viewer can't see
+    const excludedParentAuthorIds = [...blockedIds, ...privateExcludedIds];
+    // ─────────────────────────────────────────────────────────────────────
+
     const userProjection = {
       _id: 1,
       username: 1,
@@ -1673,6 +1681,7 @@ export const getUserReplies = async (req, res) => {
                 localField: "user",
                 foreignField: "_id",
                 as: "user",
+                // Only need _id to run the exclusion filter; include name for display
                 pipeline: [{ $project: { _id: 1, username: 1, fullName: 1 } }],
               },
             },
@@ -1684,7 +1693,19 @@ export const getUserReplies = async (req, res) => {
       { $unwind: { path: "$parentPost", preserveNullAndEmptyArrays: true } },
       {
         $match: {
-          "user._id": { $nin: blockedIds },
+          $and: [
+            { "user._id": { $nin: blockedIds } },
+            {
+              // ── Hide replies whose parent post is from a private-not-followed author ──
+              $or: [
+                { parentPost: null },
+                {
+                  "parentPost.user._id": { $nin: excludedParentAuthorIds },
+                },
+              ],
+              // ────────────────────────────────────────────────────────────────────────
+            },
+          ],
         },
       },
       {
@@ -1709,7 +1730,7 @@ export const getUserReplies = async (req, res) => {
           pollOptions: 1,
           pollTotalVotes: 1,
           user: 1,
-          parentPost: 1, // includes the parent's text + author for context
+          parentPost: 1,
         },
       },
     ]);
@@ -1912,26 +1933,21 @@ export const getBookmarkedPosts = async (req, res) => {
     const parsedPage = parseInt(page);
     const parsedLimit = parseInt(limit);
 
+    // ── Private exclusion ─────────────────────────────────────────────────
+    const privateExcludedIds = await getPrivateExcludedIds(userId);
+    const privateExcludedSet = new Set(privateExcludedIds.map((id) => id.toString()));
+    // ─────────────────────────────────────────────────────────────────────
+
     let filter = { bookmarkedBy: userId };
-
-    if (query) {
-      filter.text = { $regex: query, $options: "i" };
-    }
-
-    const totalPostsCount = await Post.countDocuments(filter);
+    if (query) filter.text = { $regex: query, $options: "i" };
 
     const bookmarkedPosts = await Post.find(filter)
       .sort({ publishedAt: -1, createdAt: -1 })
-      .skip((parsedPage - 1) * parsedLimit)
-      .limit(parsedLimit)
       .populate({
         path: "user",
         select:
           "username fullName profileImg badges isAdmin isCha isVerified isGoldVerified preferredBadge nameColor equipped",
-        populate: {
-          path: "profileImg",
-          select: "imageUrl",
-        },
+        populate: { path: "profileImg", select: "imageUrl" },
       })
       .populate({
         path: "repostedFrom",
@@ -1939,10 +1955,7 @@ export const getBookmarkedPosts = async (req, res) => {
           path: "user",
           select:
             "username fullName profileImg badges isAdmin isCha isVerified isGoldVerified preferredBadge nameColor equipped",
-          populate: {
-            path: "profileImg",
-            select: "imageUrl",
-          },
+          populate: { path: "profileImg", select: "imageUrl" },
         },
         select:
           "text img video mediaType likes repliesCount repostsCount createdAt user repostedBy",
@@ -1958,13 +1971,28 @@ export const getBookmarkedPosts = async (req, res) => {
       .populate("image", "imageUrl")
       .lean();
 
+    // ── Filter: hide reposts whose original author is private + not followed ──
+    const filteredPosts = bookmarkedPosts.filter((post) => {
+      if (post) {
+        const repostAuthorId = post?.user?._id?.toString();
+        if (repostAuthorId && privateExcludedSet.has(repostAuthorId)) return false;
+      }
+      return true;
+    });
+    // ──────────────────────────────────────────────────────────────────────
+
+    const totalPostsCount = filteredPosts.length;
+    const paginated = filteredPosts.slice(
+      (parsedPage - 1) * parsedLimit,
+      parsedPage * parsedLimit,
+    );
     const hasNextPage = totalPostsCount > parsedPage * parsedLimit;
 
     res.status(200).json({
-      posts: bookmarkedPosts,
+      posts: paginated,
       currentPage: parsedPage,
       totalPages: Math.ceil(totalPostsCount / parsedLimit),
-      hasNextPage: hasNextPage,
+      hasNextPage,
       totalPosts: totalPostsCount,
     });
   } catch (error) {
@@ -2073,7 +2101,7 @@ export const getScheduledPosts = async (req, res) => {
       scheduledAt: { $gt: new Date() },
     })
       .sort({ scheduledAt: 1 })
-      .populate("user", "-password");
+      .populate("user", "-password -email");
 
     res.status(200).json(scheduledPosts);
   } catch (error) {
@@ -2140,7 +2168,7 @@ export const createPost = async (req, res) => {
       mediaType = "video";
     }
 
-const mentionedUsersIds = await extractAndValidateMentions(text, userId);
+const mentionedUsersIds = await extractAndValidateMentions(text);
 
     // ── Extract hashtags early so they can be stored on the post ──────────
     const tags = extractHashtags(text);
@@ -2265,9 +2293,6 @@ const mentionedUsersIds = await extractAndValidateMentions(text, userId);
   }
 };
 
-// ─── editPost ──────────────────────────────────────────────────────────────
-// FIX: diff old vs new hashtags, update post.hashtags, and sync counts so
-// the Hashtag collection stays accurate across edits.
 export const editPost = async (req, res) => {
   try {
     const { postId } = req.params;
@@ -2323,7 +2348,7 @@ export const editPost = async (req, res) => {
     post.text = text;
     post.updatedAt = new Date();
     post.hashtags = newTags;
-    post.mentionedUsers = await extractAndValidateMentions(text, userId);
+    post.mentionedUsers = await extractAndValidateMentions(text);
 
 
     await post.save();
@@ -2721,7 +2746,7 @@ export const checkIfUserReposted = async (req, res) => {
     const { originalPostId } = req.params;
     const userId = req.user._id;
 
-    const originalPost = await Post.findById(originalPostId).select("user");
+    const originalPost = await Post.findById(originalPostId).select("user", "-password -email");
     if (!originalPost) return res.status(404).json({ error: "Original post not found." });
 
     if (await isBlockedOrBlockedBy(userId, originalPost.user)) {
@@ -2894,7 +2919,7 @@ export const updateScheduledPost = async (req, res) => {
       return res.status(400).json({ error: "Scheduled post must have text content." });
     }
 
-const mentionedUsersIds = await extractAndValidateMentions(text, userId);
+const mentionedUsersIds = await extractAndValidateMentions(text);
 
     post.text = text;
     post.img = null;

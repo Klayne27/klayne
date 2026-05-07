@@ -69,6 +69,17 @@ export const updateUserProfileApi = async (formData) => {
   return data
 }
 
+export const updatePrivacySettingsApi = async (settings) => {
+  const res = await fetch(`${BASE_URL}/privacy`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(settings),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Failed to update privacy settings")
+  return data
+}
+
 export const followApi = async (userId) => {
   const res = await fetch(`${BASE_URL}/follow/${userId}`, {
     method: "POST",
@@ -80,7 +91,7 @@ export const followApi = async (userId) => {
 }
 
 export const searchUsersApi = async (query) => {
-  const res = await fetch(`${BASE_URL}/search?q=${encodeURIComponent(query)}&mentionMode=true`)
+  const res = await fetch(`${BASE_URL}/search?q=${encodeURIComponent(query)}`)
   const data = await res.json()
 
   if (!res.ok) {

@@ -206,7 +206,7 @@ export const getFollowedUsersForMessaging = async (req, res) => {
     }
 
     const followedUsers = await User.find(query)
-      .select("-password -email -blockedUsers -followers -following")
+      .select("-password -email -blockedUsers -followers -following -likedPosts")
       .populate("profileImg", "imageUrl")
       .limit(10);
 
@@ -235,7 +235,7 @@ export const searchConversationsAndUsers = async (req, res) => {
 
     const [users, groupChats] = await Promise.all([
       User.find(userQuery)
-        .select("-password -email -blockedUsers -followers -following")
+        .select("-password -email -blockedUsers -followers -following -likedPosts")
         .populate("profileImg", "imageUrl")
         .limit(10),
 
@@ -282,7 +282,7 @@ export const getOrCreateConversation = async (req, res) => {
 
       const populated = await conversation.populate({
         path: "participants",
-        select: "-password -email -blockedUsers -blockedBy -following -followers",
+        select: "-password -email -blockedUsers -blockedBy -following -followers -likedPosts",
         populate: { path: "profileImg", select: "imageUrl" },
       });
 
@@ -331,7 +331,8 @@ export const getOrCreateConversation = async (req, res) => {
 
     conversation = await conversation.populate({
       path: "participants",
-      select: "-password -email -blockedUsers -blockedBy -following -followers",
+      select:
+        "-password -email -blockedUsers -blockedBy -following -followers -likedPosts",
       populate: { path: "profileImg", select: "imageUrl" },
     });
 

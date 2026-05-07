@@ -44,34 +44,24 @@ export const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
   return currentUserBlockedTarget || targetUserBlockedCurrentUser;
 };
 
-export const extractAndValidateMentions = async (text, mentionerUserId = null) => {
+export const extractAndValidateMentions = async (text) => {
   const mentionRegex = /@([a-zA-Z0-9](?:[a-zA-Z0-9._-]{0,28}[a-zA-Z0-9])?)/g;
   let match;
-  const mentionedUsernames = new Set();
+  const mentionedUsernames = new Set(); // Use a Set to avoid duplicate usernames
 
   while ((match = mentionRegex.exec(text)) !== null) {
-    mentionedUsernames.add(match[1].toLowerCase());
+    mentionedUsernames.add(match[1].toLowerCase()); // Store in lowercase for case-insensitive lookup
   }
 
-  if (mentionedUsernames.size === 0) return [];
+  const mentionedUsersIds = [];
+  if (mentionedUsernames.size > 0) {
+    const users = await User.find({
+      username: { $in: Array.from(mentionedUsernames) },
+    }).select("_id username"); // Select only ID and username
 
-  const query = {
-    username: { $in: Array.from(mentionedUsernames) },
-  };
-
-  // ── NEW: if a mentioner is provided, only resolve mentions for users who
-  //    follow them (they've opted in to seeing that person's content) or the
-  //    mentioner themselves. Uses the `following` index on the target user:
-  //    { following: mentionerUserId } = "this user follows the mentioner".
-  if (mentionerUserId) {
-    query.$or = [
-      { following: new mongoose.Types.ObjectId(mentionerUserId.toString()) },
-      { _id: new mongoose.Types.ObjectId(mentionerUserId.toString()) },
-    ];
+    users.forEach((user) => mentionedUsersIds.push(user._id));
   }
-
-  const users = await User.find(query).select("_id username");
-  return users.map((u) => u._id);
+  return mentionedUsersIds;
 };
 
 import mongoose from "mongoose";

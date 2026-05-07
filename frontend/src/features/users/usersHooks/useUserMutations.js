@@ -14,6 +14,7 @@ import {
   unmuteUserApi,
   updateNameColorApi,
   updatePreferredBadgeApi,
+  updatePrivacySettingsApi,
   updateStatusPreferenceApi,
   updateUserProfileApi,
 } from "../../../api/usersApi"
@@ -55,6 +56,43 @@ export const useUpdateUserProfile = () => {
   })
 
   return { updateProfile, isUpdatingProfile, isSuccess, newUsername, error, isError }
+}
+
+export const useUpdatePrivacySettings = () => {
+  const queryClient = useQueryClient()
+
+  const { mutate: updatePrivacy, isPending: isUpdatingPrivacy } = useMutation({
+    mutationFn: updatePrivacySettingsApi,
+
+    // Optimistic update — the toggle flips instantly in the UI
+    onMutate: async (newSettings) => {
+      await queryClient.cancelQueries({ queryKey: userKeys.auth() })
+
+      const previousAuth = queryClient.getQueryData(userKeys.auth())
+
+      // Merge the new settings into the cached auth user immediately
+      queryClient.setQueryData(userKeys.auth(), (old) => (old ? { ...old, ...newSettings } : old))
+
+      // Return snapshot so we can revert on error
+      return { previousAuth }
+    },
+
+    onError: (error, _, context) => {
+      // Roll back to the previous state if the API call failed
+      if (context?.previousAuth) {
+        queryClient.setQueryData(userKeys.auth(), context.previousAuth)
+      }
+      showAppToast(error.message || "Failed to update privacy settings", "error")
+    },
+
+    onSuccess: (data) => {
+      // Sync with the server's response (covers any normalization the server did)
+      queryClient.setQueryData(userKeys.auth(), (old) => (old ? { ...old, ...data } : data))
+      showAppToast("Privacy settings saved", "success")
+    },
+  })
+
+  return { updatePrivacy, isUpdatingPrivacy }
 }
 
 export const useFollow = () => {

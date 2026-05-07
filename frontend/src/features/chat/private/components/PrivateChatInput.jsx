@@ -18,6 +18,7 @@ import { shouldTextBeWhite } from "../../../../utils/shouldTextBeWhite"
 import { useTheme } from "../../../../context/ThemeContext"
 import { useMentionSuggestions } from "../../../../hooks/customHooks/useMentionSuggestions"
 import MentionSuggestionsDropdown from "../../../../components/common/MentionSuggestionsDropdown"
+import { useAuthUser } from "../../../auth/authHooks/useAuthUser"
 
 function PrivateChatInput({
   actualConversationId,
@@ -29,6 +30,7 @@ function PrivateChatInput({
   const { setReplyingToMessage, replyingToMessage, editingMessage } = usePrivateChatStore()
   const privateChatFileInputRef = useRef(null)
   const emojiButtonRef = useRef(null)
+  const { authUser } = useAuthUser()
 
   const { editPrivateMessage } = useEditMessage(actualConversationId)
   const { sendPrivateMessage } = useSendMessage(onSenderMessageSent)
@@ -124,6 +126,7 @@ function PrivateChatInput({
     textInput,
     setTextInput,
     inputRef: privateChatInputRef,
+    authUser,
   })
 
   const combinedTextChange = useCallback(

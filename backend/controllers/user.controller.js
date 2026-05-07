@@ -23,7 +23,7 @@ export const getUserProfile = async (req, res) => {
 
   try {
     const user = await User.findOne({ username })
-      .select("-password")
+      .select("-password -email")
       .populate({
         path: "pinnedPosts",
         populate: {
@@ -95,21 +95,32 @@ export const getUserProfile = async (req, res) => {
 export const getFollowingUsers = async (req, res) => {
   try {
     const { userId } = req.params;
+    const currentUserId = req.user?._id;
+
     const user = await User.findById(userId).populate({
       path: "following",
       select:
-        "username fullName isCha isVerified isGoldVerified  badges preferredBadge nameColor",
+        "username fullName isCha isVerified isGoldVerified badges preferredBadge nameColor followRequests isPrivate",
       populate: {
         path: "profileImg",
         select: "imageUrl",
       },
     });
 
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
+    if (!user) return res.status(404).json({ error: "User not found" });
 
-    res.status(200).json(user.following);
+    // Map to add hasRequestedFollow boolean
+    const followingWithStatus = user.following.map((u) => {
+      const userObj = u.toObject ? u.toObject() : u;
+      const hasRequestedFollow = currentUserId
+        ? userObj.followRequests?.some((id) => id.toString() === currentUserId.toString())
+        : false;
+
+      delete userObj.followRequests; // Remove array from payload
+      return { ...userObj, hasRequestedFollow };
+    });
+
+    res.status(200).json(followingWithStatus);
   } catch (error) {
     console.log("Error in getFollowingUsers: ", error.message);
     res.status(500).json({ error: "Internal Server Error" });
@@ -119,21 +130,31 @@ export const getFollowingUsers = async (req, res) => {
 export const getFollowers = async (req, res) => {
   try {
     const { userId } = req.params;
+    const currentUserId = req.user?._id;
+
     const user = await User.findById(userId).populate({
       path: "followers",
       select:
-        "username fullName isCha isVerified isGoldVerified  badges preferredBadge nameColor equipped",
+        "username fullName isCha isVerified isGoldVerified badges preferredBadge nameColor equipped followRequests isPrivate",
       populate: {
         path: "profileImg",
         select: "imageUrl",
       },
     });
 
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
+    if (!user) return res.status(404).json({ error: "User not found" });
 
-    res.status(200).json(user.followers);
+    const followersWithStatus = user.followers.map((u) => {
+      const userObj = u.toObject ? u.toObject() : u;
+      const hasRequestedFollow = currentUserId
+        ? userObj.followRequests?.some((id) => id.toString() === currentUserId.toString())
+        : false;
+
+      delete userObj.followRequests;
+      return { ...userObj, hasRequestedFollow };
+    });
+
+    res.status(200).json(followersWithStatus);
   } catch (error) {
     console.log("Error in getFollowers: ", error.message);
     res.status(500).json({ error: "Internal Server Error" });
@@ -251,27 +272,24 @@ export const followUnfollowUser = async (req, res) => {
 export const getSuggestedUsers = async (req, res) => {
   try {
     const userId = req.user?._id;
-
-    if (!userId) {
-      return res.status(200).json([]);
-    }
+    if (!userId) return res.status(200).json([]);
 
     const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
-const { total: totalMutedIds } = await getMutedUsers(userId);
-const totalMutedObjectIds = totalMutedIds.map((id) => new mongoose.Types.ObjectId(id));
-
-
+    const { total: totalMutedIds } = await getMutedUsers(userId);
+    const totalMutedObjectIds = totalMutedIds.map(
+      (id) => new mongoose.Types.ObjectId(id),
+    );
     const blockedAndBlockingUsers = [...new Set([...blockedByMe, ...blockedMe])];
 
     const currentUserDoc = await User.findById(userId).select("following").lean();
     const usersFollowedByMe = currentUserDoc?.following?.map((id) => id.toString()) || [];
 
-const excludeUserIds = [
-  new mongoose.Types.ObjectId(userId),
-  ...usersFollowedByMe.map((id) => new mongoose.Types.ObjectId(id)),
-  ...blockedAndBlockingUsers.map((id) => new mongoose.Types.ObjectId(id)),
-  ...totalMutedObjectIds, // ← ADD
-];
+    const excludeUserIds = [
+      new mongoose.Types.ObjectId(userId),
+      ...usersFollowedByMe.map((id) => new mongoose.Types.ObjectId(id)),
+      ...blockedAndBlockingUsers.map((id) => new mongoose.Types.ObjectId(id)),
+      ...totalMutedObjectIds,
+    ];
 
     const suggestedUsers = await User.aggregate([
       {
@@ -284,15 +302,13 @@ const excludeUserIds = [
       { $limit: 3 },
       {
         $lookup: {
-          from: "images", // Name of your image collection
+          from: "images",
           localField: "profileImg",
           foreignField: "_id",
           as: "profileImg",
         },
       },
-      {
-        $unwind: { path: "$profileImg", preserveNullAndEmptyArrays: true },
-      },
+      { $unwind: { path: "$profileImg", preserveNullAndEmptyArrays: true } },
       {
         $project: {
           username: 1,
@@ -306,11 +322,23 @@ const excludeUserIds = [
           preferredBadge: 1,
           nameColor: 1,
           equipped: 1,
+          isPrivate: 1, // ADDED
+          followRequests: 1, // ADDED
         },
       },
     ]);
 
-    res.status(200).json(suggestedUsers);
+    // Process the results to add hasRequestedFollow
+    const finalSuggestions = suggestedUsers.map((user) => {
+      const hasRequestedFollow = user.followRequests?.some(
+        (id) => id.toString() === userId.toString(),
+      );
+
+      delete user.followRequests;
+      return { ...user, hasRequestedFollow: !!hasRequestedFollow };
+    });
+
+    res.status(200).json(finalSuggestions);
   } catch (error) {
     console.error("Error in getSuggestedUsers: ", error.message);
     res.status(500).json({ error: "Internal Server Error" });
@@ -327,7 +355,6 @@ export const getSuggestedUsersPage = async (req, res) => {
     if (!userId)
       return res.status(200).json({ users: [], hasNextPage: false, nextPage: null });
 
-    // ── Re-use the same exclusion logic as getSuggestedUsers ─────────────
     const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
     const { total: totalMutedIds } = await getMutedUsers(userId);
 
@@ -342,7 +369,6 @@ export const getSuggestedUsersPage = async (req, res) => {
       ...totalMutedIds.map((id) => new mongoose.Types.ObjectId(id)),
     ];
 
-    // Fetch limit+1 so we can determine whether another page exists
     const users = await User.find({
       _id: { $nin: excludeIds },
       blockedBy: { $nin: [new mongoose.Types.ObjectId(userId)] },
@@ -352,12 +378,28 @@ export const getSuggestedUsersPage = async (req, res) => {
       .limit(limit + 1)
       .populate({ path: "profileImg", select: "imageUrl" })
       .select(
-        "username fullName bio profileImg isCha isVerified isGoldVerified badges preferredBadge nameColor equipped followersCount",
+        // Added "followRequests" to the selection
+        "username fullName bio profileImg isCha isVerified isGoldVerified badges preferredBadge nameColor equipped followersCount isPrivate followRequests",
       )
       .lean();
 
     const hasNextPage = users.length > limit;
-    const results = hasNextPage ? users.slice(0, limit) : users;
+    const rawResults = hasNextPage ? users.slice(0, limit) : users;
+
+    // Map through results to determine if a follow request is pending
+    const results = rawResults.map((user) => {
+      const hasRequestedFollow = user.followRequests?.some(
+        (id) => id.toString() === userId.toString(),
+      );
+
+      // We remove the full array from the object to keep the JSON response small
+      delete user.followRequests;
+
+      return {
+        ...user,
+        hasRequestedFollow: !!hasRequestedFollow,
+      };
+    });
 
     res.status(200).json({
       users: results,
@@ -383,7 +425,7 @@ export const updateUser = async (req, res) => {
     levelOfEducation, // Added
     majorOrField, // Added
     isPrivate,
-    isLikedFeedPrivate
+    isLikedFeedPrivate,
   } = req.body;
   let { username } = req.body;
   const { profileImg, coverImg } = req.body;
@@ -498,8 +540,7 @@ export const updateUser = async (req, res) => {
     if (bio !== undefined) user.bio = bio;
     if (link !== undefined) user.link = link;
     if (isPrivate !== undefined) user.isPrivate = isPrivate;
-    if (isLikedFeedPrivate !== undefined) user.isLikedFeedPrivate = isLikedFeedPrivate
-
+    if (isLikedFeedPrivate !== undefined) user.isLikedFeedPrivate = isLikedFeedPrivate;
 
     if (relationshipStatus !== undefined) {
       user.relationshipStatus = relationshipStatus;
@@ -518,6 +559,37 @@ export const updateUser = async (req, res) => {
     return res.status(200).json(updatedUser);
   } catch (error) {
     console.error("Error in updateUser: ", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+// PATCH /api/users/privacy
+export const updatePrivacySettings = async (req, res) => {
+  try {
+    const { isPrivate, isLikedFeedPrivate } = req.body;
+    const userId = req.user._id;
+
+    const updateFields = {};
+    if (isPrivate !== undefined) updateFields.isPrivate = Boolean(isPrivate);
+    if (isLikedFeedPrivate !== undefined)
+      updateFields.isLikedFeedPrivate = Boolean(isLikedFeedPrivate);
+
+    if (Object.keys(updateFields).length === 0) {
+      return res.status(400).json({ error: "No valid fields provided." });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: updateFields },
+      { new: true },
+    )
+      .populate("profileImg", "imageUrl")
+      .populate("coverImg", "imageUrl")
+      .select("-password");
+
+    return res.status(200).json(updatedUser);
+  } catch (error) {
+    console.error("Error in updatePrivacySettings:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -636,49 +708,42 @@ export const deleteUserAccount = async (req, res) => {
 
 export const searchUsers = async (req, res) => {
   try {
-    const { q, mentionMode } = req.query;
-    const currentUserId = req.user?._id;
+    const { q } = req.query;
+    const currentUserId = req.user._id; // Assuming auth middleware provides this
 
-    if (!q) return res.status(200).json([]);
+    if (!q) {
+      return res.status(200).json([]);
+    }
 
-    const textFilter = {
+    // 1. Fetch current user to check privacy status
+    const currentUser = await User.findById(currentUserId);
+    if (!currentUser) return res.status(404).json({ error: "User not found" });
+
+    // 2. Build the query
+    const query = {
       $or: [
         { username: { $regex: `^${q}`, $options: "i" } },
         { fullName: { $regex: `^${q}`, $options: "i" } },
       ],
+      _id: { $ne: currentUserId }, // Always exclude self from mentions
     };
 
-    if (mentionMode === "true" && currentUserId) {
-      // ── Mention mode: only surface users who follow the current user ──────
-      // `{ following: currentUserId }` matches users whose following array
-      // contains currentUserId, i.e. "users who follow me".
-      const users = await User.find({
-        $and: [
-          textFilter,
-          {
-            $or: [
-              { following: new mongoose.Types.ObjectId(currentUserId.toString()) },
-              { _id: currentUserId }, // always allow mentioning yourself
-            ],
-          },
-        ],
-      })
-        .select("-password")
-        .populate("profileImg", "imageUrl")
-        .limit(5);
-
-      return res.status(200).json(users);
+    // 3. Apply privacy filter: Limit to followers if user is private
+    if (currentUser.isPrivate) {
+      query._id = {
+        $in: currentUser.followers,
+        $ne: currentUserId,
+      };
     }
 
-    // ── Standard search (unchanged) ────────────────────────────────────────
-    const users = await User.find(textFilter)
-      .select("-password")
+    const users = await User.find(query)
+      .select("-password -email")
       .populate("profileImg", "imageUrl")
       .limit(5);
 
     res.status(200).json(users);
   } catch (error) {
-    console.error("Error in searchUsers:", error.message);
+    console.error("Error in searchUsers controller:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -963,7 +1028,7 @@ export const updateStatusPreference = async (req, res) => {
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       { statusPreference: status },
-      { new: true, select: "-password" }, // new:true returns the updated doc, select excludes the password
+      { new: true, select: "-password -email" }, // new:true returns the updated doc, select excludes the password
     );
 
     if (!updatedUser) {
@@ -1073,7 +1138,7 @@ export const updateNameColor = async (req, res) => {
     const user = await User.findByIdAndUpdate(
       userId,
       { nameColor: nameColor ?? null },
-      { new: true, select: "-password" },
+      { new: true, select: "-password -email" },
     );
 
     if (!user) return res.status(404).json({ error: "User not found." });
@@ -1226,9 +1291,9 @@ export const acceptFollowRequest = async (req, res) => {
     }
 
     await Promise.all([
-      User.findByIdAndUpdate(userId,     { $pull:    { followRequests: requesterId } }),
-      User.findByIdAndUpdate(userId,     { $addToSet: { followers:     requesterId } }),
-      User.findByIdAndUpdate(requesterId,{ $addToSet: { following:     userId } }),
+      User.findByIdAndUpdate(userId, { $pull: { followRequests: requesterId } }),
+      User.findByIdAndUpdate(userId, { $addToSet: { followers: requesterId } }),
+      User.findByIdAndUpdate(requesterId, { $addToSet: { following: userId } }),
     ]);
 
     // Conversation handling
@@ -1252,7 +1317,7 @@ export const acceptFollowRequest = async (req, res) => {
     await createAndSendNotification({
       type: "followRequestAccepted",
       from: userId,
-      to:   requesterId,
+      to: requesterId,
     });
 
     // Update request count badge for current user

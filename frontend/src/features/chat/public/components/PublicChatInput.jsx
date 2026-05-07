@@ -20,6 +20,7 @@ import { useMentionSuggestions } from "../../../../hooks/customHooks/useMentionS
 import MentionSuggestionsDropdown from "../../../../components/common/MentionSuggestionsDropdown"
 import { shouldTextBeWhite } from "../../../../utils/shouldTextBeWhite"
 import { useTheme } from "../../../../context/ThemeContext"
+import { useAuthUser } from "../../../auth/authHooks/useAuthUser"
 
 const PublicChatInput = ({ publicChatInputRef, socket, onSenderMessageSent, typingUsers }) => {
   const { replyingToMessage, setReplyingToMessage, editingMessage, isRecording, audioBlob } =
@@ -29,6 +30,7 @@ const PublicChatInput = ({ publicChatInputRef, socket, onSenderMessageSent, typi
   const isMessageDeleted = replyingToMessage?.isDeletedByAdmin || replyingToMessage?.isDeletedByUser
   const publicChatFileInputRef = useRef(null)
   const { theme } = useTheme()
+  const {authUser} = useAuthUser()
 
   const { sendPublicMessage } = useSendPublicMessage({ onSenderMessageSent })
   const { editPublicMessage } = useEditPublicMessage()
@@ -127,6 +129,7 @@ const PublicChatInput = ({ publicChatInputRef, socket, onSenderMessageSent, typi
     textInput,
     setTextInput,
     inputRef: publicChatInputRef,
+    authUser,
   })
 
   const combinedTextChange = useCallback(

@@ -24,6 +24,7 @@ import {
   unmuteUser,
   updateNameColor,
   updatePreferredBadge,
+  updatePrivacySettings,
   updateStatusPreference,
   updateUser,
 } from "../controllers/user.controller.js";
@@ -36,6 +37,7 @@ router.use(protectRoute);
 router.get("/profile/:username", getUserProfile);
 router.get("/search", searchUsers);
 router.post("/update", updateUser);
+router.patch("/privacy", protectRoute, updatePrivacySettings);
 
 // --- SOCIAL & RELATIONSHIPS ---
 router.get("/suggested", getSuggestedUsers);

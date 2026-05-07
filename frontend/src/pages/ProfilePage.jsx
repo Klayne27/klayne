@@ -92,6 +92,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
   const [userPostsCount, setUserPostsCount] = useState(0)
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false)
   const [isUnmuteConfirmOpen, setIsUnmuteConfirmOpen] = useState(false)
+  const [openEditModal, setOpenEditModal] = useState(false)
 
   const coverImgRef = useRef(null)
   const profileImgRef = useRef(null)
@@ -215,7 +216,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
 
   const handleConfirmUnfollow = () => {
     if (userToUnfollow) {
-      follow({userIdToFollow: userToUnfollow._id})
+      follow({ userIdToFollow: userToUnfollow._id })
       closeUnfollowModal()
     }
   }
@@ -409,7 +410,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                 ref={profileImgRef}
                 onChange={(e) => handleImgChange(e, "profileImg")}
               />
-              <div className="absolute -bottom-16 left-4 border-4 rounded-full border-base-100">
+              <div className="absolute -bottom-16 left-4 rounded-full border-4 border-base-100">
                 <div
                   className="group/avatar relative cursor-pointer rounded-full"
                   onClick={() => {
@@ -418,7 +419,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                     openLightbox({ imageUrl: url })
                   }}
                 >
-                  
                   <UserAvatar
                     user={{
                       ...userProfile,
@@ -493,7 +493,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               {authUser.username === username && (
                 <button
                   className="rounded-full border border-secondary px-4 py-1.5 transition duration-200 hover:bg-secondary"
-                  onClick={() => document.getElementById("edit_profile_modal").showModal()}
+                  onClick={() => setOpenEditModal(true)}
                 >
                   Edit profile
                 </button>
@@ -966,7 +966,13 @@ const ProfilePage = ({ feedType, setFeedType }) => {
           onClose={closeEditPostModal}
         />
       )}
-      {isMyProfile && <EditProfileModal authUser={authUser} />}
+      {isMyProfile && (
+        <EditProfileModal
+          authUser={authUser}
+          isOpen={openEditModal}
+          onClose={() => setOpenEditModal(false)}
+        />
+      )}
     </>
   )
 }

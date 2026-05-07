@@ -62,6 +62,8 @@ const PostPage = () => {
     refetch: refetchReplies,
   } = useGetReplies(pid)
 
+  console.log(replies);
+
   const { createReply, isCreatingReply } = useCreateReply(pid)
 
   const {
@@ -78,6 +80,7 @@ const PostPage = () => {
     textInput: replyInput,
     setTextInput: setReplyInput,
     inputRef: replyInputRef,
+    authUser
   })
 
   const {

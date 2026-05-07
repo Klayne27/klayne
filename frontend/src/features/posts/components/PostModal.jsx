@@ -17,7 +17,6 @@ import ScheduledPostsModal from "./ScheduledPostsModal"
 import EditScheduledPostModal from "./EditSchedulePostModal"
 import { PollInputs } from "./PollInput"
 import { useCreatePosts, useCreateVentPost, useUpdatePost } from "../postsHooks/usePostsMutations"
-import { useMentionSuggestions } from "../../../hooks/customHooks/useMentionSuggestions"
 
 const PostModal = ({
   onClose,

@@ -123,6 +123,7 @@ const CreatePost = ({ feedType }) => {
     textInput: postInput,
     setTextInput: setPostInput,
     inputRef: postInputRef,
+    authUser
   })
 
   // Determine character limit based on user status

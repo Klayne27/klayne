@@ -8,7 +8,7 @@ export const publishScheduledPosts = async (io, onlineUsersMap) => {
     const postsToPublish = await Post.find({
       isScheduled: true,
       scheduledAt: { $lte: now },
-    }).populate("user", "-password");
+    }).populate("user", "-password -email");
 
     if (postsToPublish.length === 0) {
       return;

@@ -1096,7 +1096,7 @@ const Sidebar = ({
         danger={true}
         confirmButtonText={isDeletingAccount ? "Deleting..." : "Yes, Delete Account"}
         isLoading={isDeletingAccount}
-      ></ConfirmationModal>
+       />
     </>
   )
 }
