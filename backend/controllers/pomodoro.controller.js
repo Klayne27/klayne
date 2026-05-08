@@ -5,6 +5,8 @@ import { io, getReceiverSocketIds } from "../lib/socket.js";
 import { checkAndAwardBadges, handleXPAndLeveling } from "../lib/utils/helpers.js";
 import { checkUnlocks } from "../lib/utils/checkUnlocks.js";
 
+const PAUSED_SESSION_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
+
 export async function processStudySession({ userId, duration, taskId }) {
   await StudySession.create({
     user: userId,
@@ -133,6 +135,16 @@ export async function processStudySession({ userId, duration, taskId }) {
 const serializeActiveSession = (session, now = new Date()) => {
   if (!session) return null;
 
+  if (session.isPaused) {
+    return {
+      ...session.toObject(),
+      remainingSeconds: Math.max(
+        0,
+        Number(session.pausedRemainingSeconds ?? session.remainingSeconds) || 0,
+      ),
+    };
+  }
+
   const scheduledEndTimeMs = session.scheduledEndTime.getTime();
   const remainingSeconds = Math.max(
     0,
@@ -179,7 +191,60 @@ export const startSession = async (req, res) => {
     const existing = await ActiveSession.findOne({ user: userId });
     if (existing) {
       const now = new Date();
-      if (now < existing.scheduledEndTime) {
+
+      if (existing.isPaused) {
+        const existingPlannedDuration = Number(existing.plannedDuration);
+        const existingPlannedDurationSeconds = existingPlannedDuration * 60;
+        const storedRemainingSeconds = Number(existing.pausedRemainingSeconds);
+        const fallbackRemainingSeconds =
+          Number.isFinite(numericDurationSeconds) && numericDurationSeconds > 0
+            ? numericDurationSeconds
+            : existingPlannedDurationSeconds;
+        const remainingSeconds = Math.min(
+          existingPlannedDurationSeconds,
+          Math.max(
+            0,
+            Number.isFinite(storedRemainingSeconds)
+              ? storedRemainingSeconds
+              : fallbackRemainingSeconds,
+          ),
+        );
+
+        if (
+          !Number.isFinite(existingPlannedDuration) ||
+          existingPlannedDuration <= 0 ||
+          remainingSeconds <= 0
+        ) {
+          await ActiveSession.deleteOne({ user: userId });
+        } else {
+          const elapsedBeforePauseSeconds = Math.max(
+            0,
+            existingPlannedDurationSeconds - remainingSeconds,
+          );
+          existing.startTime = new Date(
+            now.getTime() - elapsedBeforePauseSeconds * 1000,
+          );
+          existing.scheduledEndTime = new Date(
+            now.getTime() + remainingSeconds * 1000,
+          );
+          existing.isPaused = false;
+          existing.pausedRemainingSeconds = null;
+          existing.pausedAt = null;
+          existing.lastHeartbeat = now;
+          if (!existing.taskId && taskId) existing.taskId = taskId;
+
+          await existing.save();
+
+          const serializedSession = serializeActiveSession(existing, now);
+          emitToUser(userId, "pomodoroSessionStarted", {
+            activeSession: serializedSession,
+          });
+
+          return res.status(200).json(serializedSession);
+        }
+      }
+
+      if (!existing.isPaused && now < existing.scheduledEndTime) {
         return res.status(409).json({
           error: "An active session is already running.",
           activeSession: serializeActiveSession(existing, now),
@@ -257,6 +322,13 @@ export const endSession = async (req, res) => {
     }
 
     const now = new Date();
+    if (activeSession.isPaused) {
+      return res.status(400).json({
+        error: "Session is paused.",
+        activeSession: serializeActiveSession(activeSession, now),
+      });
+    }
+
     const elapsedMs = now - activeSession.startTime;
     const elapsedMinutes = elapsedMs / 1000 / 60;
     const TOLERANCE_SECONDS = 15;
@@ -303,6 +375,66 @@ export const endSession = async (req, res) => {
   }
 };
 
+export const pauseSession = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const session = await ActiveSession.findOne({ user: userId });
+
+    if (!session) {
+      return res.status(404).json({ error: "No active session found." });
+    }
+
+    const now = new Date();
+    const plannedDurationSeconds = Number(session.plannedDuration) * 60;
+    const requestedRemainingSeconds = Number(req.body?.remainingSeconds);
+    const serverRemainingSeconds = session.isPaused
+      ? Number(session.pausedRemainingSeconds)
+      : (session.scheduledEndTime.getTime() - now.getTime()) / 1000;
+    const rawRemainingSeconds =
+      Number.isFinite(serverRemainingSeconds) && serverRemainingSeconds > 0
+        ? serverRemainingSeconds
+        : requestedRemainingSeconds;
+    const remainingSeconds = Math.min(
+      plannedDurationSeconds,
+      Math.max(
+        0,
+        Number.isFinite(rawRemainingSeconds) ? rawRemainingSeconds : 0,
+      ),
+    );
+
+    if (!Number.isFinite(plannedDurationSeconds) || plannedDurationSeconds <= 0) {
+      await ActiveSession.deleteOne({ user: userId });
+      return res.status(404).json({ error: "No active session found." });
+    }
+
+    if (remainingSeconds <= 0) {
+      return res.status(400).json({
+        error: "Session is already complete.",
+        activeSession: serializeActiveSession(session, now),
+      });
+    }
+
+    session.isPaused = true;
+    session.pausedRemainingSeconds = remainingSeconds;
+    session.pausedAt = now;
+    session.lastHeartbeat = now;
+    // Keep paused sessions alive long enough to resume from another device.
+    session.scheduledEndTime = new Date(now.getTime() + PAUSED_SESSION_RETENTION_MS);
+
+    await session.save();
+
+    const serializedSession = serializeActiveSession(session, now);
+    emitToUser(userId, "pomodoroSessionPaused", {
+      activeSession: serializedSession,
+    });
+
+    res.status(200).json(serializedSession);
+  } catch (error) {
+    console.error("Error in pauseSession:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 export const cancelSession = async (req, res) => {
   try {
     const result = await ActiveSession.deleteOne({ user: req.user._id });
@@ -325,6 +457,18 @@ export const sessionHeartbeat = async (req, res) => {
       { new: true },
     );
     if (!session) return res.status(404).json({ error: "No active session." });
+
+    if (session.isPaused) {
+      const remainingSeconds = Math.max(
+        0,
+        Number(session.pausedRemainingSeconds) || 0,
+      );
+      return res.status(200).json({
+        remainingMs: remainingSeconds * 1000,
+        remainingSeconds,
+        isPaused: true,
+      });
+    }
 
     const remainingMs = Math.max(0, session.scheduledEndTime - new Date());
     res

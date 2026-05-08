@@ -85,6 +85,29 @@ export const usePomodoroTimerStore = create(
       removeStorage(STORAGE_KEYS.DURATION_AT_START)
     },
 
+    persistPausedSession: (
+      timer,
+      isBreak,
+      sessionCount,
+      selectedTaskId,
+      sessionDurationMinutes,
+    ) => {
+      writeStorage(STORAGE_KEYS.ACTIVE, "false")
+      writeStorage(STORAGE_KEYS.PAUSED_TIME, timer)
+      writeStorage(STORAGE_KEYS.BREAK, isBreak)
+      writeStorage(STORAGE_KEYS.SESSION_COUNT, sessionCount)
+      writeStorage(STORAGE_KEYS.GOAL_REACHED, "false")
+      removeStorage(STORAGE_KEYS.START_TIMESTAMP)
+      removeStorage(STORAGE_KEYS.DURATION_AT_START)
+
+      if (!isBreak && sessionDurationMinutes != null) {
+        writeStorage(STORAGE_KEYS.COMMITTED_DURATION, Math.round(sessionDurationMinutes))
+      }
+
+      if (selectedTaskId) writeStorage(STORAGE_KEYS.SELECTED_TASK, selectedTaskId)
+      else removeStorage(STORAGE_KEYS.SELECTED_TASK)
+    },
+
     persistReset: () => {
       Object.values(STORAGE_KEYS).forEach((key) => removeStorage(key))
     },

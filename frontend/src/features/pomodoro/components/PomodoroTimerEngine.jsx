@@ -11,6 +11,10 @@ import { useSocket } from "../../../context/SocketContext"
 const getRemainingSeconds = (session) => {
   if (!session) return 0
 
+  if (session.isPaused) {
+    return Math.max(0, Number(session.pausedRemainingSeconds ?? session.remainingSeconds) || 0)
+  }
+
   if (session.scheduledEndTime) {
     const scheduledEndMs = new Date(session.scheduledEndTime).getTime()
     if (!Number.isNaN(scheduledEndMs)) {
@@ -60,6 +64,7 @@ export const PomodoroTimerEngine = () => {
   const setEngineActions = usePomodoroTimerStore((s) => s.setEngineActions)
   const persistStart = usePomodoroTimerStore((s) => s.persistStart)
   const persistPause = usePomodoroTimerStore((s) => s.persistPause)
+  const persistPausedSession = usePomodoroTimerStore((s) => s.persistPausedSession)
   const persistNextPhase = usePomodoroTimerStore((s) => s.persistNextPhase)
   const persistGoalReached = usePomodoroTimerStore((s) => s.persistGoalReached)
 
@@ -148,40 +153,56 @@ export const PomodoroTimerEngine = () => {
       const startTimeMs = new Date(activeSession.startTime).getTime()
       const durationSeconds = plannedDuration * 60
       const remaining = getRemainingSeconds(activeSession)
+      const nextIsPaused = Boolean(activeSession.isPaused)
 
       if (!allowExpired && remaining <= 0) return false
-      if (!plannedDuration || !durationSeconds || Number.isNaN(startTimeMs)) return false
+      if (!plannedDuration || !durationSeconds || (!nextIsPaused && Number.isNaN(startTimeMs))) {
+        return false
+      }
 
       const nextIsBreak = Boolean(activeSession.isBreak)
       const nextSessionCount = Number(activeSession.sessionCount) || 0
       const taskId = activeSession.taskId || null
 
-      startTimestampRef.current = startTimeMs
-      durationAtStartRef.current = durationSeconds
+      startTimestampRef.current = nextIsPaused ? 0 : startTimeMs
+      durationAtStartRef.current = nextIsPaused ? remaining : durationSeconds
       committedSessionDurationRef.current = nextIsBreak ? null : Math.round(plannedDuration)
       sessionHandledRef.current = false
       isEndingSessionRef.current = false
       clearSessionEndTimeout()
+      if (nextIsPaused) stopTicker()
 
       setIsBreak(nextIsBreak)
       setSessionCount(nextSessionCount)
       setIsGoalReached(false)
       setSelectedTaskId(taskId)
       setTimer(remaining)
-      persistStart(
-        startTimeMs,
-        durationSeconds,
-        nextIsBreak,
-        nextSessionCount,
-        taskId,
-        nextIsBreak ? null : plannedDuration,
-      )
-      setIsActive(true)
+      if (nextIsPaused) {
+        persistPausedSession(
+          remaining,
+          nextIsBreak,
+          nextSessionCount,
+          taskId,
+          nextIsBreak ? null : plannedDuration,
+        )
+        setIsActive(false)
+      } else {
+        persistStart(
+          startTimeMs,
+          durationSeconds,
+          nextIsBreak,
+          nextSessionCount,
+          taskId,
+          nextIsBreak ? null : plannedDuration,
+        )
+        setIsActive(true)
+      }
 
       return true
     },
     [
       clearSessionEndTimeout,
+      persistPausedSession,
       persistStart,
       setIsActive,
       setIsBreak,
@@ -189,6 +210,7 @@ export const PomodoroTimerEngine = () => {
       setSelectedTaskId,
       setSessionCount,
       setTimer,
+      stopTicker,
     ],
   )
 
@@ -582,12 +604,18 @@ export const PomodoroTimerEngine = () => {
       syncFromServerSession(activeSession)
     }
 
+    const onSessionPaused = ({ activeSession } = {}) => {
+      syncFromServerSession(activeSession)
+    }
+
     socket.on("pomodoroSessionStarted", onSessionStarted)
+    socket.on("pomodoroSessionPaused", onSessionPaused)
     socket.on("pomodoroSessionCompleted", advanceAfterExternalEnd)
     socket.on("pomodoroBreakEnded", advanceAfterExternalEnd)
 
     return () => {
       socket.off("pomodoroSessionStarted", onSessionStarted)
+      socket.off("pomodoroSessionPaused", onSessionPaused)
       socket.off("pomodoroSessionCompleted", advanceAfterExternalEnd)
       socket.off("pomodoroBreakEnded", advanceAfterExternalEnd)
     }

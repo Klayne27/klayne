@@ -112,6 +112,25 @@ export const cancelSessionApi = async () => {
   return data
 }
 
+export const pauseSessionApi = async ({ remainingSeconds } = {}) => {
+  const res = await fetch(`${BASE_URL}/session/pause`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ remainingSeconds }),
+  })
+  const data = await readJson(res)
+
+  if (res.status === 404) {
+    return { message: "No active session to pause.", alreadyGone: true }
+  }
+
+  if (!res.ok) {
+    throw apiError("Failed to pause session", res, data)
+  }
+
+  return data
+}
+
 export const sessionHeartbeatApi = async () => {
   const res = await fetch(`${BASE_URL}/session/heartbeat`, { method: "POST" })
   const data = await readJson(res)

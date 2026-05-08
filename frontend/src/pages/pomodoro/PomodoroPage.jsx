@@ -65,7 +65,7 @@ const PomodoroPage = () => {
   const { authUser } = useAuthUser()
   const { settings, isSettingsLoading } = useGetPomodoroSettings()
   const { startSession } = useStartSession()
-  const { cancelServerSession } = usePauseSession()
+  const { pauseServerSession, cancelServerSession } = usePauseSession()
   const isMobile = useIsMobile()
   const { xpGainedAmount, showXpGain } = useXpStore()
 
@@ -152,8 +152,8 @@ const PomodoroPage = () => {
 
     setIsActive(false)
     persistPause(timer)
-    cancelServerSession()
-  }, [cancelServerSession, isActive, persistPause, setIsActive, timer])
+    pauseServerSession({ remainingSeconds: timer })
+  }, [isActive, pauseServerSession, persistPause, setIsActive, timer])
 
   const handleReset = useCallback(() => {
     if (!settings) return

@@ -29,7 +29,7 @@ const FloatingPomodoroTimer = () => {
 
   const { settings, isSettingsLoading } = useGetPomodoroSettings()
   const { startSession } = useStartSession()
-  const { cancelServerSession } = usePauseSession()
+  const { pauseServerSession } = usePauseSession()
 
   if (isSettingsLoading) return <FloatingPomodoroSkeleton />
   if (!settings || (timer === 0 && !isActive && !isGoalReached)) return null
@@ -48,7 +48,7 @@ const FloatingPomodoroTimer = () => {
     if (isActive) {
       setIsActive(false)
       persistPause(timer)
-      cancelServerSession()
+      pauseServerSession({ remainingSeconds: timer })
       return
     }
 

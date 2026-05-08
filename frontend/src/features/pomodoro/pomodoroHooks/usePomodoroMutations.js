@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   cancelSessionApi,
   endStudySessionApi,
+  pauseSessionApi,
   startSessionApi,
   updatePomodoroSettingsApi,
 } from "../../../api/pomodoroApi"
@@ -14,6 +15,13 @@ import { pomodoroKeys } from "./pomodoroKeys"
 
 const getRemainingSeconds = (activeSession) => {
   if (!activeSession) return 0
+
+  if (activeSession.isPaused) {
+    return Math.max(
+      0,
+      Number(activeSession.pausedRemainingSeconds ?? activeSession.remainingSeconds) || 0,
+    )
+  }
 
   if (activeSession.scheduledEndTime) {
     const scheduledEndMs = new Date(activeSession.scheduledEndTime).getTime()
@@ -35,9 +43,9 @@ const syncStoreToActiveSession = (activeSession, queryClient) => {
   const durationSeconds = Number(activeSession.plannedDuration) * 60
   const taskId = activeSession.taskId || null
 
-  if (!Number.isNaN(startTimeMs) && durationSeconds > 0 && engineActions) {
-    engineActions.startTimestampRef.current = startTimeMs
-    engineActions.durationAtStartRef.current = durationSeconds
+  if (durationSeconds > 0 && engineActions) {
+    engineActions.startTimestampRef.current = activeSession.isPaused ? 0 : startTimeMs
+    engineActions.durationAtStartRef.current = activeSession.isPaused ? remaining : durationSeconds
     if (!activeSession.isBreak && engineActions.committedSessionDurationRef) {
       engineActions.committedSessionDurationRef.current = Math.round(
         Number(activeSession.plannedDuration),
@@ -50,15 +58,27 @@ const syncStoreToActiveSession = (activeSession, queryClient) => {
   store.setIsGoalReached(false)
   store.setTimer(remaining)
   if (taskId) store.setSelectedTaskId(taskId)
-  store.persistStart(
-    startTimeMs,
-    durationSeconds,
-    Boolean(activeSession.isBreak),
-    Number(activeSession.sessionCount) || 0,
-    taskId,
-    activeSession.isBreak ? null : Number(activeSession.plannedDuration),
-  )
-  store.setIsActive(true)
+
+  if (activeSession.isPaused) {
+    store.persistPausedSession(
+      remaining,
+      Boolean(activeSession.isBreak),
+      Number(activeSession.sessionCount) || 0,
+      taskId,
+      activeSession.isBreak ? null : Number(activeSession.plannedDuration),
+    )
+    store.setIsActive(false)
+  } else if (!Number.isNaN(startTimeMs)) {
+    store.persistStart(
+      startTimeMs,
+      durationSeconds,
+      Boolean(activeSession.isBreak),
+      Number(activeSession.sessionCount) || 0,
+      taskId,
+      activeSession.isBreak ? null : Number(activeSession.plannedDuration),
+    )
+    store.setIsActive(true)
+  }
 
   queryClient.setQueryData(pomodoroKeys.active(), activeSession)
 }
@@ -203,6 +223,19 @@ export const useStartSession = () => {
 export const usePauseSession = () => {
   const queryClient = useQueryClient()
 
+  const { mutate: pauseServerSession } = useMutation({
+    mutationFn: pauseSessionApi,
+    onSuccess: (data) => {
+      if (data?.alreadyGone) {
+        queryClient.removeQueries({ queryKey: pomodoroKeys.active() })
+        return
+      }
+
+      queryClient.setQueryData(pomodoroKeys.active(), data)
+    },
+    onError: () => {},
+  })
+
   const { mutate: cancelServerSession } = useMutation({
     mutationFn: cancelSessionApi,
     onSettled: () => {
@@ -210,7 +243,7 @@ export const usePauseSession = () => {
     },
   })
 
-  return { cancelServerSession }
+  return { pauseServerSession, cancelServerSession }
 }
 
 export const useUpdatePomodoroSettings = () => {

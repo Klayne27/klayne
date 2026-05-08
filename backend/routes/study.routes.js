@@ -12,6 +12,7 @@ import {
   cancelSession,
   endSession,
   getActiveSession,
+  pauseSession,
   sessionHeartbeat,
   startSession,
 } from "../controllers/pomodoro.controller.js";
@@ -29,6 +30,7 @@ router.get("/history", getStudyHistory);
 router.post("/session/start", startSession);
 router.get("/session/active", getActiveSession);
 router.post("/session/end", endSession); // replaces old endStudySession
+router.post("/session/pause", pauseSession);
 router.delete("/session/active", cancelSession);
 router.post("/session/heartbeat", sessionHeartbeat);
 

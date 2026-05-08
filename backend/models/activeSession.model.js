@@ -12,6 +12,9 @@ const activeSessionSchema = new mongoose.Schema(
     startTime: { type: Date, required: true },
     plannedDuration: { type: Number, required: true }, // minutes
     scheduledEndTime: { type: Date, required: true },
+    isPaused: { type: Boolean, default: false },
+    pausedRemainingSeconds: { type: Number, default: null },
+    pausedAt: { type: Date, default: null },
     isBreak: { type: Boolean, default: false },
     sessionCount: { type: Number, default: 0 },
     taskId: { type: mongoose.Schema.Types.ObjectId, default: null },
