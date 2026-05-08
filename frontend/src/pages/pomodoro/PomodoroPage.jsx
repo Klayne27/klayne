@@ -1,57 +1,74 @@
-import { useState, useCallback, useMemo, useRef } from "react"
+import { useCallback, useMemo, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
-
-import PomodoroSettingsModal from "../../features/pomodoro/components/PomodoroSettingsModal"
-import LoadingSpinner from "../../components/common/LoadingSpinner"
-import { showAppToast } from "../../utils/showAppToast"
-import PomodoroHeader from "../../features/pomodoro/components/PomodoroHeader"
-import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
-import MilestoneModal from "../../components/common/MilestoneModal"
-import PomodoroInfoModal from "../../features/pomodoro/components/PomodoroInfoModal"
-import ConfirmationModal from "../../components/common/ConfirmationModal"
-import useXpStore from "../../store/useXpStore"
-import FloatingNav from "../../features/pomodoro/components/FloatingNav"
-import PomodoroTimerDisplay from "../../features/pomodoro/components/PomodoroTimerDisplay"
-import PomodoroTimerControls from "../../features/pomodoro/components/PomodoroTimerControls"
-import { getPriorityColor } from "../../utils/todoUtils"
-import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { IoClose } from "react-icons/io5"
+
+import ConfirmationModal from "../../components/common/ConfirmationModal"
+import LoadingSpinner from "../../components/common/LoadingSpinner"
+import MilestoneModal from "../../components/common/MilestoneModal"
+import CreateTodoListModal from "../../features/todos/components/CreateTodoListModal"
+import FloatingNav from "../../features/pomodoro/components/FloatingNav"
+import PomodoroHeader from "../../features/pomodoro/components/PomodoroHeader"
+import PomodoroInfoModal from "../../features/pomodoro/components/PomodoroInfoModal"
+import PomodoroSettingsModal from "../../features/pomodoro/components/PomodoroSettingsModal"
+import PomodoroTimerControls from "../../features/pomodoro/components/PomodoroTimerControls"
+import PomodoroTimerDisplay from "../../features/pomodoro/components/PomodoroTimerDisplay"
+import QuickTaskPanel from "../../features/pomodoro/components/QuickTaskPanel"
+import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { useGetPomodoroSettings } from "../../features/pomodoro/pomodoroHooks/usePomodoroQueries"
+import { usePauseSession, useStartSession } from "../../features/pomodoro/pomodoroHooks/usePomodoroMutations"
 import { useCompleteTodo } from "../../features/todos/todoHooks/useTodoMutations"
 import { useGetUserTodoLists } from "../../features/todos/todoListHooks/useTodoListQueries"
-import { usePomodoroTimerStore, STORAGE_KEYS } from "../../store/usePomodoroTimerStore"
-import QuickTaskPanel from "../../features/pomodoro/components/QuickTaskPanel"
+import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
+import { usePomodoroTimerStore } from "../../store/usePomodoroTimerStore"
 import { useTodoStore } from "../../store/useTodoStore"
-import CreateTodoListModal from "../../features/todos/components/CreateTodoListModal"
-import { FaCheckCircle } from "react-icons/fa"
+import useXpStore from "../../store/useXpStore"
+import { showAppToast } from "../../utils/showAppToast"
+import { getPriorityColor } from "../../utils/todoUtils"
 
-// Single source of truth for timer state styling
 const getTimerState = (isGoalReached, isBreak, sessionCount, settings) => {
-  if (isGoalReached)
+  if (isGoalReached) {
     return { label: "Finished!", color: "text-slate-400", glow: "rgba(100,116,139,0.15)" }
- if (!isBreak)
-   return {
-     label: "Focus Time",
-     color: "text-primary",
-     glow: "oklch(var(--p) / 0.15)",
-   }
-  const isLong =
+  }
+
+  if (!isBreak) {
+    return {
+      label: "Focus Time",
+      color: "text-primary",
+      glow: "oklch(var(--p) / 0.15)",
+    }
+  }
+
+  const isLongBreak =
     sessionCount > 0 &&
     settings?.sessionsBeforeLongBreak > 0 &&
     sessionCount % settings.sessionsBeforeLongBreak === 0
-  return isLong
+
+  return isLongBreak
     ? { label: "Long Break", color: "text-indigo-400", glow: "rgba(99,102,241,0.18)" }
     : { label: "Short Break", color: "text-teal-400", glow: "rgba(45,212,191,0.18)" }
+}
+
+const getCurrentPhaseDurationMinutes = (settings, isBreak, sessionCount) => {
+  if (!settings) return 0
+  if (!isBreak) return settings.sessionDuration
+
+  const isLongBreak =
+    sessionCount > 0 &&
+    settings.sessionsBeforeLongBreak > 0 &&
+    sessionCount % settings.sessionsBeforeLongBreak === 0
+
+  return isLongBreak ? settings.longBreakDuration : settings.shortBreakDuration
 }
 
 const PomodoroPage = () => {
   const navigate = useNavigate()
   const { authUser } = useAuthUser()
   const { settings, isSettingsLoading } = useGetPomodoroSettings()
+  const { startSession } = useStartSession()
+  const { cancelServerSession } = usePauseSession()
   const isMobile = useIsMobile()
   const { xpGainedAmount, showXpGain } = useXpStore()
 
-  // ── Global timer state ────────────────────────────────────────────────────
   const timer = usePomodoroTimerStore((s) => s.timer)
   const isActive = usePomodoroTimerStore((s) => s.isActive)
   const isBreak = usePomodoroTimerStore((s) => s.isBreak)
@@ -66,17 +83,15 @@ const PomodoroPage = () => {
   const setSessionCount = usePomodoroTimerStore((s) => s.setSessionCount)
   const setIsGoalReached = usePomodoroTimerStore((s) => s.setIsGoalReached)
   const setSelectedTaskId = usePomodoroTimerStore((s) => s.setSelectedTaskId)
-  const persistStart = usePomodoroTimerStore((s) => s.persistStart)
   const persistPause = usePomodoroTimerStore((s) => s.persistPause)
   const persistReset = usePomodoroTimerStore((s) => s.persistReset)
 
   const timerState = getTimerState(isGoalReached, isBreak, sessionCount, settings)
 
-  // ── Local UI state ────────────────────────────────────────────────────────
   const [visuallyCompleted, setVisuallyCompleted] = useState({})
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
-  const [milestoneLevel, setMilestoneLevel] = useState(null)
+  const [milestoneLevel] = useState(null)
   const [showInfoModal, setShowInfoModal] = useState(false)
   const [showResetTimerModal, setShowResetTimerModal] = useState(false)
   const [showResetCurrentSessionModal, setShowResetCurrentSessionModal] = useState(false)
@@ -86,21 +101,22 @@ const PomodoroPage = () => {
 
   const { myTodoLists } = useGetUserTodoLists()
   const allTodos = useMemo(
-    () => myTodoLists?.pages?.flatMap((page) => page.data.flatMap((l) => l.todos)) ?? [],
+    () => myTodoLists?.pages?.flatMap((page) => page.data.flatMap((list) => list.todos)) ?? [],
     [myTodoLists],
   )
 
-  const selectedTask = allTodos.find((t) => t._id === selectedTaskId)
+  const selectedTask = allTodos.find((todo) => todo._id === selectedTaskId)
   const isVisuallyCompleted = visuallyCompleted[selectedTask?._id] || selectedTask?.completed
   const { completeTodo } = useCompleteTodo()
 
-  // ── Handlers ──────────────────────────────────────────────────────────────
   const handleStart = useCallback(() => {
     if (isActive || !settings || timer <= 0 || isGoalReached) return
+
     if (!alarmAudioRef.current) {
       alarmAudioRef.current = new Audio("/alarm.mp3")
       alarmAudioRef.current.volume = 0.3
     }
+
     alarmAudioRef.current
       .play()
       .then(() => {
@@ -108,47 +124,41 @@ const PomodoroPage = () => {
         alarmAudioRef.current.currentTime = 0
       })
       .catch(() => {})
+
     if (typeof Notification !== "undefined" && Notification.permission === "default") {
       Notification.requestPermission()
     }
-    const now = Date.now()
-    if (engineActions) {
-      engineActions.startTimestampRef.current = now
-      engineActions.durationAtStartRef.current = timer
-      if (!isBreak && engineActions.committedSessionDurationRef) {
-        engineActions.committedSessionDurationRef.current = settings.sessionDuration
-      }
-    }
-    persistStart(
-      now,
-      timer,
+
+    startSession({
+      timerSeconds: timer,
+      plannedDurationMinutes: getCurrentPhaseDurationMinutes(settings, isBreak, sessionCount),
       isBreak,
       sessionCount,
-      selectedTaskId,
-      !isBreak ? settings.sessionDuration : null,
-    )
-    setIsActive(true)
+      taskId: selectedTaskId || null,
+    })
   }, [
     isActive,
-    settings,
-    timer,
-    isGoalReached,
     isBreak,
-    sessionCount,
+    isGoalReached,
     selectedTaskId,
-    engineActions,
-    persistStart,
-    setIsActive,
+    sessionCount,
+    settings,
+    startSession,
+    timer,
   ])
 
   const handlePause = useCallback(() => {
     if (!isActive) return
+
     setIsActive(false)
     persistPause(timer)
-  }, [isActive, timer, setIsActive, persistPause])
+    cancelServerSession()
+  }, [cancelServerSession, isActive, persistPause, setIsActive, timer])
 
   const handleReset = useCallback(() => {
     if (!settings) return
+
+    cancelServerSession()
     setIsActive(false)
     setTimer(settings.sessionDuration * 60)
     setIsBreak(false)
@@ -156,58 +166,66 @@ const PomodoroPage = () => {
     setIsGoalReached(false)
     setShowResetTimerModal(false)
     persistReset()
-  }, [settings, setIsActive, setTimer, setIsBreak, setSessionCount, setIsGoalReached, persistReset])
+  }, [
+    cancelServerSession,
+    persistReset,
+    setIsActive,
+    setIsBreak,
+    setIsGoalReached,
+    setSessionCount,
+    setTimer,
+    settings,
+  ])
 
   const handleResetCurrent = useCallback(() => {
     if (!settings) return
+
+    cancelServerSession()
     setIsActive(false)
-    const isLong =
-      isBreak &&
-      sessionCount > 0 &&
-      settings.sessionsBeforeLongBreak > 0 &&
-      sessionCount % settings.sessionsBeforeLongBreak === 0
-    const dur = isBreak
-      ? (isLong ? settings.longBreakDuration : settings.shortBreakDuration) * 60
-      : settings.sessionDuration * 60
-    setTimer(dur)
-    localStorage.setItem(STORAGE_KEYS.PAUSED_TIME, dur)
-    localStorage.setItem(STORAGE_KEYS.ACTIVE, "false")
-    localStorage.removeItem(STORAGE_KEYS.START_TIMESTAMP)
-    localStorage.removeItem(STORAGE_KEYS.DURATION_AT_START)
-    localStorage.removeItem(STORAGE_KEYS.COMMITTED_DURATION)
+
+    const duration = getCurrentPhaseDurationMinutes(settings, isBreak, sessionCount) * 60
+    setTimer(duration)
+    persistPause(duration)
     showAppToast("Current timer reset!", "success")
     setShowResetCurrentSessionModal(false)
-  }, [settings, isBreak, sessionCount, setIsActive, setTimer])
+  }, [cancelServerSession, isBreak, persistPause, sessionCount, setIsActive, setTimer, settings])
 
-  const handleSkipBreak = useCallback(() => {
-    if (!isBreak) return
-    setIsActive(false)
-    engineActions?.startNextTimer(true, sessionCount, false)
-    showAppToast("Break skipped!", "info")
-  }, [isBreak, sessionCount, setIsActive, engineActions])
+  const handleSessionEndManual = useCallback(() => {
+    if (!engineActions) return
 
-const handleSessionEndManual = useCallback(() => {
-  if (!engineActions) return
-  // forceEnd closes over the engine's actual refs, guaranteeing the reset works
-  if (engineActions.forceEnd) {
-    engineActions.forceEnd()
-  } else {
+    if (engineActions.forceEnd) {
+      engineActions.forceEnd()
+      return
+    }
+
     if (engineActions.isEndingSessionRef) engineActions.isEndingSessionRef.current = false
     engineActions.handleSessionEnd?.()
-  }
-}, [engineActions])
+  }, [engineActions])
+
+  const handleSkipBreak = useCallback(() => {
+    handleSessionEndManual()
+  }, [handleSessionEndManual])
 
   const handleComplete = useCallback(
-    (todoId, e) => {
-      e.stopPropagation()
+    (todoId, event) => {
+      event.stopPropagation()
       if (!selectedTask || selectedTask.user !== authUser._id || isVisuallyCompleted) return
-      showAppToast("Todo completed! ✨", "success")
+
+      showAppToast("Todo completed!", "success")
       setVisuallyCompleted((prev) => ({ ...prev, [todoId]: true }))
       completeTodo(todoId)
-      const idx = allTodos.findIndex((t) => t._id === todoId)
-      setSelectedTaskId(allTodos[idx + 1]?._id ?? null)
+
+      const currentIndex = allTodos.findIndex((todo) => todo._id === todoId)
+      setSelectedTaskId(allTodos[currentIndex + 1]?._id ?? null)
     },
-    [selectedTask, authUser, isVisuallyCompleted, allTodos, completeTodo, setSelectedTaskId],
+    [
+      allTodos,
+      authUser,
+      completeTodo,
+      isVisuallyCompleted,
+      selectedTask,
+      setSelectedTaskId,
+    ],
   )
 
   const handleOpenSettingsPage = () => {
@@ -239,21 +257,18 @@ const handleSessionEndManual = useCallback(() => {
 
         <FloatingNav />
 
-        {/* ── Timer section: Card removed for a "floating" feel ── */}
         <section className="flex min-h-[75dvh] w-full shrink-0 flex-col items-center justify-center gap-8 py-10 transition-all duration-1000">
-          {/* State label - more minimalist */}
           <div className="flex items-center gap-2">
             <div
               className={`size-2 rounded-full ${isActive && !isGoalReached ? "animate-ping" : ""} bg-current ${timerState.color}`}
             />
             <h1
-              className={`text-sm font-black uppercase tracking-[0.4em] transition-colors duration-700 ${timerState.color} opacity-80`}
+              className={`text-sm font-black uppercase tracking-[0.4em] opacity-80 transition-colors duration-700 ${timerState.color}`}
             >
               {timerState.label}
             </h1>
           </div>
 
-          {/* Floating Display - The card is gone, shadow is now a glow behind the SVG */}
           <div className="relative flex flex-col items-center">
             <PomodoroTimerDisplay
               isBreak={isBreak}
@@ -279,19 +294,13 @@ const handleSessionEndManual = useCallback(() => {
             onResetTimerClick={() => setShowResetTimerModal(true)}
           />
 
-          {/* Active task banner: Cleaner glass design */}
           <div className="w-full max-w-sm px-6">
             {selectedTask ? (
               <div className="group flex items-center gap-4 rounded-3xl border border-accent/50 bg-white/[0.03] p-2 pr-4 shadow-xl ring-1 ring-white/5 backdrop-blur-md">
                 <button
-                  onClick={(e) => handleComplete(selectedTask._id, e)}
+                  onClick={(event) => handleComplete(selectedTask._id, event)}
                   className={`flex size-6 shrink-0 items-center justify-center rounded-2xl border-2 shadow-inner transition-all hover:scale-105 ${getPriorityColor(selectedTask.priority)}`}
-                >
-                  {/* <FaCheckCircle
-                    size={14}
-                    className="opacity-0 transition-opacity group-hover:opacity-100"
-                  /> */}
-                </button>
+                />
                 <div className="min-w-0 flex-1">
                   <p className="text-[8px] font-black uppercase tracking-widest text-slate-500">
                     Focusing
@@ -317,7 +326,6 @@ const handleSessionEndManual = useCallback(() => {
           </div>
         </section>
 
-        {/* Task List Section */}
         <div className="mt-4 flex w-full items-center gap-4 px-8 py-4">
           <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-slate-800 to-transparent" />
           <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-600">
@@ -332,7 +340,6 @@ const handleSessionEndManual = useCallback(() => {
         />
       </main>
 
-      {/* Modals */}
       {settings && isSettingsOpen && (
         <PomodoroSettingsModal
           isOpen={isSettingsOpen}

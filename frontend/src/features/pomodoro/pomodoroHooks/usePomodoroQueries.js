@@ -1,7 +1,18 @@
 import { useQuery } from "@tanstack/react-query"
-import { getAllSessionsApi, getPomodoroSettingsApi, getStudyActivityFeedApi } from "../../../api/pomodoroApi"
+import {
+  getActiveSessionApi,
+  getAllSessionsApi,
+  getPomodoroSettingsApi,
+  getStudyActivityFeedApi,
+} from "../../../api/pomodoroApi"
+import {
+  getMonthlyLeaderboardApi,
+  getPreviousMonthWinnersApi,
+  getPreviousWeekWinnersApi,
+  getTotalLeaderboardApi,
+  getWeeklyLeaderboardApi,
+} from "../../../api/leaderboardApi"
 import { pomodoroKeys } from "./pomodoroKeys"
-import { getMonthlyLeaderboardApi, getPreviousMonthWinnersApi, getPreviousWeekWinnersApi, getTotalLeaderboardApi, getWeeklyLeaderboardApi } from "../../../api/leaderboardApi"
 
 export const useGetAllSessions = () => {
   const { data: allSessions, isLoading: allSessionsLoading } = useQuery({
@@ -25,7 +36,7 @@ export const useGetTotalLeaderboard = (page, options) => {
   const { data, isLoading, error } = useQuery({
     queryKey: pomodoroKeys.leaderboardTotalPage(page),
     queryFn: () => getTotalLeaderboardApi(page),
-    ...options
+    ...options,
   })
 
   return {
@@ -61,7 +72,6 @@ export const useGetPreviousMonthWinners = () => {
     queryKey: pomodoroKeys.leaderboardMonthlyWinners(),
     queryFn: getPreviousMonthWinnersApi,
   })
-
 
   return { previousMonthWinners, isLoadingPreviousMonthWinners }
 }
@@ -103,5 +113,30 @@ export const useGetStudyActivityFeed = (page) => {
     activityFeed: data?.activityFeed,
     totalPages: data?.totalPages,
     isLoading,
+  }
+}
+
+export const useGetActiveSession = (enabled = true) => {
+  const {
+    data: serverSession,
+    isSuccess,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: pomodoroKeys.active(),
+    queryFn: getActiveSessionApi,
+    enabled,
+    staleTime: 0,
+    gcTime: 0,
+    retry: 1,
+    refetchOnWindowFocus: false,
+    refetchInterval: false,
+  })
+
+  return {
+    serverSession: isSuccess ? serverSession : null,
+    isSyncAttempted: enabled && (isSuccess || isError),
+    isSyncError: isError,
+    syncError: error,
   }
 }

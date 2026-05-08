@@ -13,43 +13,47 @@ const STORAGE_KEYS = {
   COMMITTED_DURATION: "pomodoro_committed_duration",
 }
 
+const readStorage = (key) => {
+  if (typeof localStorage === "undefined") return null
+  return localStorage.getItem(key)
+}
+
+const writeStorage = (key, value) => {
+  if (typeof localStorage === "undefined") return
+  localStorage.setItem(key, String(value))
+}
+
+const removeStorage = (key) => {
+  if (typeof localStorage === "undefined") return
+  localStorage.removeItem(key)
+}
+
 export const usePomodoroTimerStore = create(
-  immer((set, get) => ({
-    // ── Timer display state ────────────────────────────────────────────────
+  immer((set) => ({
     timer: 0,
     isActive: false,
     isBreak: false,
     sessionCount: 0,
     isGoalReached: false,
-    selectedTaskId: localStorage.getItem(STORAGE_KEYS.SELECTED_TASK) || "",
+    isInitialized: false,
+    selectedTaskId: readStorage(STORAGE_KEYS.SELECTED_TASK) || "",
+    engineActions: null,
 
-    // Add to your store's state/actions:
-    engineActions: {
-      startNextTimer: null,
-      handleSessionEnd: null,
-      startTimestampRef: null,
-      durationAtStartRef: null,
-    },
-
-    // ── UI flags ───────────────────────────────────────────────────────────
-    isInitialized: false, // true after first hydration from localStorage
-
-    // ── Setters ────────────────────────────────────────────────────────────
-    setEngineActions: (actions) => set({ engineActions: actions }),
     setTimer: (value) => set({ timer: value }),
     setIsActive: (value) => set({ isActive: value }),
     setIsBreak: (value) => set({ isBreak: value }),
     setSessionCount: (value) => set({ sessionCount: value }),
     setIsGoalReached: (value) => set({ isGoalReached: value }),
     setIsInitialized: (value) => set({ isInitialized: value }),
+    setEngineActions: (actions) => set({ engineActions: actions }),
+
     setSelectedTaskId: (id) => {
-      set({ selectedTaskId: id })
-      if (id) localStorage.setItem(STORAGE_KEYS.SELECTED_TASK, id)
-      else localStorage.removeItem(STORAGE_KEYS.SELECTED_TASK)
+      const nextId = id || ""
+      set({ selectedTaskId: nextId })
+      if (nextId) writeStorage(STORAGE_KEYS.SELECTED_TASK, nextId)
+      else removeStorage(STORAGE_KEYS.SELECTED_TASK)
     },
 
-    // ── Persist active state to localStorage ──────────────────────────────
-    // Change persistStart signature — add sessionDurationMinutes as last param
     persistStart: (
       startTime,
       duration,
@@ -58,45 +62,57 @@ export const usePomodoroTimerStore = create(
       selectedTaskId,
       sessionDurationMinutes,
     ) => {
-      localStorage.setItem(STORAGE_KEYS.ACTIVE, "true")
-      localStorage.setItem(STORAGE_KEYS.START_TIMESTAMP, startTime)
-      localStorage.setItem(STORAGE_KEYS.DURATION_AT_START, duration)
-      localStorage.setItem(STORAGE_KEYS.BREAK, isBreak)
-      localStorage.setItem(STORAGE_KEYS.SESSION_COUNT, sessionCount)
-      localStorage.removeItem(STORAGE_KEYS.PAUSED_TIME)
-      localStorage.setItem(STORAGE_KEYS.GOAL_REACHED, "false")
-      // Fix: use the passed-in settings value, NOT timer/60 (which is remaining time)
+      writeStorage(STORAGE_KEYS.ACTIVE, "true")
+      writeStorage(STORAGE_KEYS.START_TIMESTAMP, startTime)
+      writeStorage(STORAGE_KEYS.DURATION_AT_START, duration)
+      writeStorage(STORAGE_KEYS.BREAK, isBreak)
+      writeStorage(STORAGE_KEYS.SESSION_COUNT, sessionCount)
+      writeStorage(STORAGE_KEYS.GOAL_REACHED, "false")
+      removeStorage(STORAGE_KEYS.PAUSED_TIME)
+
       if (!isBreak && sessionDurationMinutes != null) {
-        localStorage.setItem(STORAGE_KEYS.COMMITTED_DURATION, Math.round(sessionDurationMinutes))
+        writeStorage(STORAGE_KEYS.COMMITTED_DURATION, Math.round(sessionDurationMinutes))
       }
-      if (selectedTaskId) localStorage.setItem(STORAGE_KEYS.SELECTED_TASK, selectedTaskId)
+
+      if (selectedTaskId) writeStorage(STORAGE_KEYS.SELECTED_TASK, selectedTaskId)
+      else removeStorage(STORAGE_KEYS.SELECTED_TASK)
     },
 
     persistPause: (timer) => {
-      localStorage.setItem(STORAGE_KEYS.PAUSED_TIME, timer)
-      localStorage.setItem(STORAGE_KEYS.ACTIVE, "false")
-      localStorage.removeItem(STORAGE_KEYS.START_TIMESTAMP)
-      localStorage.removeItem(STORAGE_KEYS.DURATION_AT_START)
+      writeStorage(STORAGE_KEYS.ACTIVE, "false")
+      writeStorage(STORAGE_KEYS.PAUSED_TIME, timer)
+      removeStorage(STORAGE_KEYS.START_TIMESTAMP)
+      removeStorage(STORAGE_KEYS.DURATION_AT_START)
     },
 
     persistReset: () => {
-      Object.values(STORAGE_KEYS).forEach((key) => localStorage.removeItem(key))
+      Object.values(STORAGE_KEYS).forEach((key) => removeStorage(key))
+    },
+
+    persistGoalReached: (sessionCount) => {
+      writeStorage(STORAGE_KEYS.ACTIVE, "false")
+      writeStorage(STORAGE_KEYS.GOAL_REACHED, "true")
+      writeStorage(STORAGE_KEYS.SESSION_COUNT, sessionCount)
+      removeStorage(STORAGE_KEYS.START_TIMESTAMP)
+      removeStorage(STORAGE_KEYS.DURATION_AT_START)
+      removeStorage(STORAGE_KEYS.PAUSED_TIME)
     },
 
     persistNextPhase: (isBreak, sessionCount, duration, autoplay, startTime) => {
-      localStorage.setItem(STORAGE_KEYS.BREAK, isBreak)
-      localStorage.setItem(STORAGE_KEYS.SESSION_COUNT, sessionCount)
-      localStorage.setItem(STORAGE_KEYS.GOAL_REACHED, "false")
+      writeStorage(STORAGE_KEYS.BREAK, isBreak)
+      writeStorage(STORAGE_KEYS.SESSION_COUNT, sessionCount)
+      writeStorage(STORAGE_KEYS.GOAL_REACHED, "false")
+
       if (autoplay && startTime) {
-        localStorage.setItem(STORAGE_KEYS.ACTIVE, "true")
-        localStorage.setItem(STORAGE_KEYS.START_TIMESTAMP, startTime)
-        localStorage.setItem(STORAGE_KEYS.DURATION_AT_START, duration)
-        localStorage.removeItem(STORAGE_KEYS.PAUSED_TIME)
+        writeStorage(STORAGE_KEYS.ACTIVE, "true")
+        writeStorage(STORAGE_KEYS.START_TIMESTAMP, startTime)
+        writeStorage(STORAGE_KEYS.DURATION_AT_START, duration)
+        removeStorage(STORAGE_KEYS.PAUSED_TIME)
       } else {
-        localStorage.setItem(STORAGE_KEYS.PAUSED_TIME, duration)
-        localStorage.setItem(STORAGE_KEYS.ACTIVE, "false")
-        localStorage.removeItem(STORAGE_KEYS.START_TIMESTAMP)
-        localStorage.removeItem(STORAGE_KEYS.DURATION_AT_START)
+        writeStorage(STORAGE_KEYS.ACTIVE, "false")
+        writeStorage(STORAGE_KEYS.PAUSED_TIME, duration)
+        removeStorage(STORAGE_KEYS.START_TIMESTAMP)
+        removeStorage(STORAGE_KEYS.DURATION_AT_START)
       }
     },
   })),

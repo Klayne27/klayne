@@ -2,6 +2,8 @@ export const pomodoroKeys = {
   all: ["pomodoro"],
   leaderboard: ["leaderboard"],
 
+  active: () => ["pomodoro", "active-session"],
+
   settings: () => [...pomodoroKeys.all, "settings"],
   studyActivity: () => [...pomodoroKeys.all, "studyActivity"],
   studyActivityPage: (page) => [...pomodoroKeys.studyActivity(), "page", page],

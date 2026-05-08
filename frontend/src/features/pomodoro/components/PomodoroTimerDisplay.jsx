@@ -1,4 +1,3 @@
-import { useIsMobile } from "../../../hooks/customHooks/useIsMobile"
 import { showAppToast } from "../../../utils/showAppToast"
 import { FaBell, FaBellSlash, FaForward } from "react-icons/fa6"
 import { RxReset } from "react-icons/rx"
@@ -8,13 +7,10 @@ import { useGetPomodoroSettings } from "../pomodoroHooks/usePomodoroQueries"
 function PomodoroTimerDisplay({
   isBreak,
   timer,
-  setIsActive,
-  startNextTimer,
   sessionCount,
   setShowResetCurrentSessionModal,
   isGoalReached,
   onSessionEnd,
-  onSkipBreak,
   timerState,
 }) {
   const { updateSettings } = useUpdatePomodoroSettings()
@@ -50,15 +46,8 @@ function PomodoroTimerDisplay({
   })
 
   const handleSkipAction = () => {
-    if (isBreak) {
-      setIsActive(false)
-      startNextTimer(true, sessionCount, false)
-      showAppToast("Break skipped!", "info")
-    } else {
-      // Emergency Skip
-      onSessionEnd()
-      showAppToast("Session skipped", "warning")
-    }
+    onSessionEnd()
+    showAppToast(isBreak ? "Break skipped!" : "Session skipped", isBreak ? "info" : "warning")
   }
 
   const isUrgent = minutes === 0 && seconds < 10 && !isGoalReached

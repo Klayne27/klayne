@@ -94,13 +94,13 @@ const PomodoroInfoModal = ({ onClose }) => {
             </p>
             <ul className="mt-2 list-disc pl-5">
               <li>
-                <strong>20 XP per minute</strong> for sessions up to 60 minutes.
+                <strong>10 XP per minute</strong> for sessions up to 60 minutes.
               </li>
               <li>
-                <strong>30 XP per minute</strong> for sessions longer than 60 minutes.
+                <strong>15 XP per minute</strong> for sessions longer than 60 minutes.
               </li>
               <li>
-                <strong>40 XP per minute</strong> for sessions 120 minutes or longer.
+                <strong>20 XP per minute</strong> for sessions 120 minutes or longer.
               </li>
             </ul>
             <p className="mt-2">

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { showAppToast } from "../../../utils/showAppToast"
 import { useUpdatePomodoroSettings } from "../pomodoroHooks/usePomodoroMutations"
-import { usePomodoroTimerStore, STORAGE_KEYS } from "../../../store/usePomodoroTimerStore"
+import { usePomodoroTimerStore } from "../../../store/usePomodoroTimerStore"
 import ConfirmationModal from "../../../components/common/ConfirmationModal"
 
 const PomodoroSettingsModal = ({ isOpen, onClose, initialSettings }) => {

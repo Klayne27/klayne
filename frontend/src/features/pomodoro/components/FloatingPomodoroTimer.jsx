@@ -1,8 +1,21 @@
 import { FaPause, FaPlay } from "react-icons/fa"
 import { Link } from "react-router-dom"
-import { useGetPomodoroSettings } from "../pomodoroHooks/usePomodoroQueries"
-import { usePomodoroTimerStore } from "../../../store/usePomodoroTimerStore"
 import FloatingPomodoroSkeleton from "../../../components/skeletons/FloatingPomodoroSkeleton"
+import { usePomodoroTimerStore } from "../../../store/usePomodoroTimerStore"
+import { usePauseSession, useStartSession } from "../pomodoroHooks/usePomodoroMutations"
+import { useGetPomodoroSettings } from "../pomodoroHooks/usePomodoroQueries"
+
+const getPhaseDurationMinutes = (settings, isBreak, sessionCount) => {
+  if (!settings) return 0
+  if (!isBreak) return settings.sessionDuration
+
+  const isLongBreak =
+    sessionCount > 0 &&
+    settings.sessionsBeforeLongBreak > 0 &&
+    sessionCount % settings.sessionsBeforeLongBreak === 0
+
+  return isLongBreak ? settings.longBreakDuration : settings.shortBreakDuration
+}
 
 const FloatingPomodoroTimer = () => {
   const timer = usePomodoroTimerStore((s) => s.timer)
@@ -10,52 +23,43 @@ const FloatingPomodoroTimer = () => {
   const isBreak = usePomodoroTimerStore((s) => s.isBreak)
   const sessionCount = usePomodoroTimerStore((s) => s.sessionCount)
   const isGoalReached = usePomodoroTimerStore((s) => s.isGoalReached)
-
+  const selectedTaskId = usePomodoroTimerStore((s) => s.selectedTaskId)
   const setIsActive = usePomodoroTimerStore((s) => s.setIsActive)
   const persistPause = usePomodoroTimerStore((s) => s.persistPause)
 
   const { settings, isSettingsLoading } = useGetPomodoroSettings()
-  const engineActions = usePomodoroTimerStore((s) => s.engineActions)
+  const { startSession } = useStartSession()
+  const { cancelServerSession } = usePauseSession()
+
+  if (isSettingsLoading) return <FloatingPomodoroSkeleton />
+  if (!settings || (timer === 0 && !isActive && !isGoalReached)) return null
 
   const minutes = Math.floor(timer / 60)
   const seconds = Math.floor(timer % 60)
-
-  const totalDuration = settings
-    ? (() => {
-        if (!isBreak) return settings.sessionDuration * 60
-        const isLong =
-          sessionCount > 0 &&
-          settings.sessionsBeforeLongBreak > 0 &&
-          sessionCount % settings.sessionsBeforeLongBreak === 0
-        return (isLong ? settings.longBreakDuration : settings.shortBreakDuration) * 60
-      })()
-    : 1500
-
-  const progress = totalDuration ? Math.max(timer / totalDuration, 0) : 0
+  const totalDuration = getPhaseDurationMinutes(settings, isBreak, sessionCount) * 60
+  const progress = totalDuration ? Math.min(1, Math.max(timer / totalDuration, 0)) : 0
   const radius = 18
   const circumference = 2 * Math.PI * radius
 
-  const handleToggle = (e) => {
-    e.preventDefault()
+  const handleToggle = (event) => {
+    event.preventDefault()
+    if (timer <= 0 || isGoalReached) return
+
     if (isActive) {
       setIsActive(false)
       persistPause(timer)
-    } else {
-      if (timer <= 0 || isGoalReached) return
-      const now = Date.now()
-      engineActions.startTimestampRef && (engineActions.startTimestampRef.current = now)
-      engineActions.durationAtStartRef && (engineActions.durationAtStartRef.current = timer)
-      localStorage.setItem("pomodoro_is_active", "true")
-      localStorage.setItem("pomodoro_start_timestamp", now)
-      localStorage.setItem("pomodoro_duration_at_start", timer)
-      localStorage.removeItem("pomodoro_paused_time")
-      setIsActive(true)
+      cancelServerSession()
+      return
     }
+
+    startSession({
+      timerSeconds: timer,
+      plannedDurationMinutes: getPhaseDurationMinutes(settings, isBreak, sessionCount),
+      isBreak,
+      sessionCount,
+      taskId: selectedTaskId || null,
+    })
   }
-
-  if (!settings || (timer === 0 && !isActive && !isGoalReached)) return null
-
-  if (isSettingsLoading) return <FloatingPomodoroSkeleton />
 
   return (
     <div className="mt-2 rounded-2xl border border-accent bg-base-100 p-4">
@@ -67,7 +71,6 @@ const FloatingPomodoroTimer = () => {
       </div>
 
       <div className="flex items-center gap-4">
-        {/* Mini circular progress */}
         <div className="relative h-12 w-12 flex-shrink-0">
           <svg className="h-full w-full -rotate-90" viewBox="0 0 48 48">
             <circle
@@ -101,11 +104,11 @@ const FloatingPomodoroTimer = () => {
 
         <div className="flex-1">
           <p className={`text-sm font-bold ${isBreak ? "text-teal-400" : "text-primary"}`}>
-            {isGoalReached ? "Goal Reached! 🎉" : isBreak ? "Break Time" : "Focus Time"}
+            {isGoalReached ? "Goal Reached!" : isBreak ? "Break Time" : "Focus Time"}
           </p>
           <p className="text-xs text-slate-500">
             Session {sessionCount}
-            {settings?.sessionGoalCount ? ` / ${settings.sessionGoalCount}` : ""}
+            {settings.sessionGoalCount ? ` / ${settings.sessionGoalCount}` : ""}
           </p>
         </div>
 
