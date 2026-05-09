@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { useUpdateNameColor } from "../../features/users/usersHooks/useUserMutations"
+import UserFullName from "./UserFullname"
 
 const PRESET_COLORS = [
   "#ef4444", // red
@@ -40,21 +41,25 @@ const NameColorPicker = () => {
     [updateNameColor],
   )
 
-//   const handleReset = useCallback(() => {
-//     setLocalColor("#ffffff")
-//     updateNameColor(null)
-//   }, [updateNameColor])
+  //   const handleReset = useCallback(() => {
+  //     setLocalColor("#ffffff")
+  //     updateNameColor(null)
+  //   }, [updateNameColor])
 
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span
+          {/* <span
             className="text-sm font-bold"
             style={authUser.nameColor ? { color: authUser.nameColor } : undefined}
           >
             {authUser?.fullName}
-          </span>
+          </span> */}
+          <UserFullName
+            user={authUser}
+            style={authUser.nameColor ? { color: authUser.nameColor } : undefined}
+          />
           <span className="text-xs text-base-content/50">preview</span>
         </div>
       </div>

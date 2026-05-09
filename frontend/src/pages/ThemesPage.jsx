@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom"
 import { FaArrowLeft } from "react-icons/fa6"
 import { shouldTextBeWhite } from "../utils/shouldTextBeWhite"
 import NameColorPicker from "../components/common/NameColorPicker"
+import UserFullName from "../components/common/UserFullname"
 
 const PREVIEW_MESSAGES = [
   { id: 1, content: "Hey! How's it going?", isSent: false },
@@ -89,14 +90,12 @@ const ThemesPage = () => {
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary font-medium text-primary-content">
                       {authUser.fullName.split("")[0]}
                     </div>
-                    <div>
-                      <h3
-                        className="text-sm font-medium"
-                        style={authUser.nameColor ? { color: authUser.nameColor } : undefined}
-                      >
-                        {authUser.fullName}
-                      </h3>
-                    </div>
+
+                    <UserFullName
+                      user={authUser}
+                      style={authUser.nameColor ? { color: authUser.nameColor } : undefined}
+                    />
+                    
                   </div>
                 </div>
 

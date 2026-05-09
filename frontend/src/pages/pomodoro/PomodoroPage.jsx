@@ -24,6 +24,7 @@ import { useTodoStore } from "../../store/useTodoStore"
 import useXpStore from "../../store/useXpStore"
 import { showAppToast } from "../../utils/showAppToast"
 import { getPriorityColor } from "../../utils/todoUtils"
+import { formatSuggestedDate } from "../../hooks/customHooks/useDateRecognition"
 
 const getTimerState = (isGoalReached, isBreak, sessionCount, settings) => {
   if (isGoalReached) {
@@ -301,14 +302,45 @@ const PomodoroPage = () => {
                   onClick={(event) => handleComplete(selectedTask._id, event)}
                   className={`flex size-6 shrink-0 items-center justify-center rounded-2xl border-2 shadow-inner transition-all hover:scale-105 ${getPriorityColor(selectedTask.priority)}`}
                 />
+
                 <div className="min-w-0 flex-1">
-                  <p className="text-[8px] font-black uppercase tracking-widest text-slate-500">
-                    Focusing
-                  </p>
-                  <p className="break-words text-sm font-bold tracking-tight">
-                    {selectedTask.title}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-[8px] font-black uppercase tracking-widest text-slate-500">
+                      Focusing
+                    </p>
+                    {/* Pulsing indicator to show it's the active task */}
+                    <span className="h-1 w-1 animate-pulse rounded-full bg-primary" />
+                  </div>
+
+                  <p className="truncate text-sm font-bold tracking-tight">{selectedTask.title}</p>
+
+                  {/* --- Enhanced Date & Time Display --- */}
+                  {selectedTask.dueDate && (
+                    <div className="mt-0.5 flex items-center gap-1.5 text-[10px] font-medium text-slate-500">
+                      <span className="opacity-70">Due:</span>
+                      <span className="text-slate-400">
+                        {new Date(selectedTask.dueDate).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </span>
+
+                      {/* Show time only if it's not set to 00:00 */}
+                      {(() => {
+                        const d = new Date(selectedTask.dueDate)
+                        // If minutes or hours exist, we show the time
+                        const taskHasTime = d.getHours() !== 0 || d.getMinutes() !== 0
+
+                        return (
+                          <span className="text-">
+                            {formatSuggestedDate(d, taskHasTime)}
+                          </span>
+                        )
+                      })()}
+                    </div>
+                  )}
                 </div>
+
                 <button
                   onClick={() => setSelectedTaskId(null)}
                   className="shrink-0 p-2 text-slate-600 transition-colors hover:text-red-400"

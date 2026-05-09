@@ -513,16 +513,37 @@ export const useAcceptFollowRequest = () => {
 
   const { mutate: acceptRequest, isPending: isAccepting } = useMutation({
     mutationFn: acceptFollowRequestApi,
-    onSuccess: (_, requesterId) => {
-      // Remove from list optimistically
+    onMutate: async (requesterId) => {
+      // 1. Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: userKeys.followRequests() })
+
+      // 2. Snapshot the previous value
+      const previousRequests = queryClient.getQueryData(userKeys.followRequests())
+
+      // 3. Optimistically update to the new value
       queryClient.setQueryData(userKeys.followRequests(), (prev = []) =>
         prev.filter((u) => u._id !== requesterId),
       )
+
+      // 4. Return context object with the snapshotted value for rollback
+      return { previousRequests }
+    },
+    onSuccess: () => {
+      // Re-fetch auth to update follower counts/status
       queryClient.invalidateQueries({ queryKey: userKeys.auth() })
-      
       showAppToast("Follow request accepted.", "success")
     },
-    onError: (err) => showAppToast(err.message, "error"),
+    onError: (err, requesterId, context) => {
+      // 5. Rollback on error
+      if (context?.previousRequests) {
+        queryClient.setQueryData(userKeys.followRequests(), context.previousRequests)
+      }
+      showAppToast(err.message, "error")
+    },
+    onSettled: () => {
+      // Always refetch after error or success to keep server in sync
+      queryClient.invalidateQueries({ queryKey: userKeys.followRequests() })
+    },
   })
 
   return { acceptRequest, isAccepting }
@@ -533,12 +554,25 @@ export const useDeclineFollowRequest = () => {
 
   const { mutate: declineRequest, isPending: isDeclining } = useMutation({
     mutationFn: declineFollowRequestApi,
-    onSuccess: (_, requesterId) => {
+    onMutate: async (requesterId) => {
+      await queryClient.cancelQueries({ queryKey: userKeys.followRequests() })
+      const previousRequests = queryClient.getQueryData(userKeys.followRequests())
+
       queryClient.setQueryData(userKeys.followRequests(), (prev = []) =>
         prev.filter((u) => u._id !== requesterId),
       )
+
+      return { previousRequests }
     },
-    onError: (err) => showAppToast(err.message, "error"),
+    onError: (err, requesterId, context) => {
+      if (context?.previousRequests) {
+        queryClient.setQueryData(userKeys.followRequests(), context.previousRequests)
+      }
+      showAppToast(err.message, "error")
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: userKeys.followRequests() })
+    },
   })
 
   return { declineRequest, isDeclining }
