@@ -25,14 +25,14 @@ const ImageModal = ({ src, onClose }) => {
           <IoClose />
         </button>
       </div>
-      <a
+      {/* <a
         href={src}
         target="_blank"
         rel="noopener noreferrer"
         className="mt-4 cursor-pointer text-gray-400 hover:underline"
       >
         View original
-      </a>
+      </a> */}
     </div>
   )
 }

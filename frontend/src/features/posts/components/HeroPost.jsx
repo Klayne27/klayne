@@ -32,6 +32,7 @@ import {
 import { CgUnblock } from "react-icons/cg"
 import UserAvatar from "../../../components/common/UserAvatar.jsx"
 import UserFullName from "../../../components/common/UserFullname.jsx"
+import { useLightboxStore } from "../../../store/useLightboxStore.js"
 
 const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
   const navigate = useNavigate()
@@ -45,6 +46,8 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false)
   const [isCopied, setIsCopied] = useState(false)
   const [showDeletePostModal, setShowDeletePostModal] = useState(false)
+
+  const openLightbox = useLightboxStore((s) => s.openLightbox)
 
   const { toggleMenu, showMenu, setShowMenu, menuRef } = useDropdownMenu()
   const {
@@ -133,7 +136,7 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
   const handleFollowClick = (e) => {
     e.stopPropagation()
     if (!authUser || isFollowingOrUnfollowing) return
-    follow({userIdToFollow: originalPostOwner._id})
+    follow({ userIdToFollow: originalPostOwner._id })
     setShowMenu(false)
   }
 
@@ -154,6 +157,13 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
     setShowMenu(false)
     setShowDeletePostModal(false)
   }
+
+    const handleMediaClick = (mediaUrl, mediaType, e) => {
+      e.stopPropagation()
+      // if (openImageModal && mediaType === "image") {
+      //   openImageModal(mediaUrl)
+      // }
+    }
 
   if (!sourcePost || !originalPostOwner) return null
 
@@ -437,23 +447,24 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
           sourcePost?.image?.imageUrl &&
           sourcePost.image?._id && (
             <div className="inline-flex max-w-full justify-center">
-              <Link to={`/images/${sourcePost.image._id}`}>
-                <img
-                  src={getOptimizedImageUrl(sourcePost.image.imageUrl, "post")}
-                  className="block h-auto max-h-96 w-full rounded-2xl border border-accent object-contain"
-                  alt="post image"
-                  loading="lazy"
-                />
-              </Link>
+              <img
+                src={getOptimizedImageUrl(sourcePost.image.imageUrl, "post")}
+                onClick={() => openLightbox({ imageUrl: sourcePost.image.imageUrl })}
+                className="block h-auto max-h-80 rounded-2xl border border-accent object-contain"
+                alt="post image"
+                loading="lazy"
+              />
             </div>
           )}
-
         {sourcePost.mediaType === "video" && sourcePost.video && (
           <video
             controls
+            loading="lazy"
             src={sourcePost.video}
-            className="block h-auto max-h-96 w-full rounded-2xl border border-accent object-contain"
+            className="block h-auto max-h-80 w-full max-w-full rounded-2xl border border-accent object-contain"
+            alt="post video"
             preload="metadata"
+            onClick={(e) => handleMediaClick(sourcePost.video, "video", e)}
           >
             Your browser does not support the video tag.
           </video>
