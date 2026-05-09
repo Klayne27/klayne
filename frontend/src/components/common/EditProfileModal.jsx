@@ -298,7 +298,7 @@ const EditProfileModal = ({ authUser, isOpen, onClose }) => {
             <div className="divide-y divide-accent">
               <PrivacyToggleRow
                 label="Private Account"
-                description="Only approved followers can see your posts."
+                description="Only approved followers can see your posts. Rants excluded."
                 checked={!!authUser?.isPrivate}
                 onChange={handlePrivacyToggle}
                 disabled={isUpdatingPrivacy}
