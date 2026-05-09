@@ -10,6 +10,7 @@ import {
   useUpdateUserProfile,
 } from "../../features/users/usersHooks/useUserMutations"
 import useLockBodyScroll from "../../hooks/customHooks/useLockBodyScroll"
+import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 
 const PrivacyToggleRow = ({ label, description, icon: Icon, checked, onChange, disabled }) => (
   <div className="flex items-center justify-between py-3">
@@ -38,7 +39,15 @@ const PrivacyToggleRow = ({ label, description, icon: Icon, checked, onChange, d
   </div>
 )
 
-const EditProfileModal = ({ authUser, isOpen, onClose, profileImg, setProfileImg, coverImg, setCoverImg }) => {
+const EditProfileModal = ({
+  authUser: authUserProp,
+  isOpen,
+  onClose,
+  profileImg,
+  setProfileImg,
+  coverImg,
+  setCoverImg,
+}) => {
   const [formData, setFormData] = useState({
     fullName: "",
     username: "",
@@ -52,6 +61,10 @@ const EditProfileModal = ({ authUser, isOpen, onClose, profileImg, setProfileImg
     levelOfEducation: "",
     majorOrField: "",
   })
+
+  const { authUser: liveAuthUser } = useAuthUser()
+  // Merge: liveAuthUser is the source of truth, prop is fallback for SSR/edge cases
+  const authUser = liveAuthUser ?? authUserProp
 
   // const [profileImg, setProfileImg] = useState(null)
   // const [coverImg, setCoverImg] = useState(null)
@@ -151,7 +164,6 @@ const EditProfileModal = ({ authUser, isOpen, onClose, profileImg, setProfileImg
   const handleLikedFeedToggle = () => {
     updatePrivacy({ isLikedFeedPrivate: !authUser?.isLikedFeedPrivate })
   }
-
   const handleUpdate = (e) => {
     e.preventDefault()
     updateProfile({ ...formData, profileImg, coverImg })
