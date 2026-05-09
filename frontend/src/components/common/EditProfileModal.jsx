@@ -309,6 +309,23 @@ const EditProfileModal = ({ authUser, isOpen, onClose, profileImg, setProfileImg
                 />
               </div>
             </div>
+            <div className="relative flex-1">
+              <label className="mb-1 ml-1 block text-xs text-slate-500">Relationship Status</label>
+              <select
+                name="relationshipStatus"
+                className="select-md w-full cursor-pointer rounded-[4px] border border-secondary bg-base-100 p-2 text-sm focus:border-primary focus:outline-none"
+                value={formData.relationshipStatus}
+                onChange={handleInputChange}
+              >
+                <option value="">Prefer not to say</option>
+                <option value="Single">Single</option>
+                <option value="In a relationship">In a relationship</option>
+                <option value="It's complicated">It's complicated</option>
+                <option value="Casually Dating">Casually dating</option>
+                <option value="Engaged">Engaged</option>
+                <option value="Married">Married</option>
+              </select>
+            </div>
 
             <button type="submit" className="btn btn-primary btn-sm mt-2 rounded-full text-white">
               {isUpdatingProfile ? <LoadingSpinner size="sm" /> : "Save Changes"}
