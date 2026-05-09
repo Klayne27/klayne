@@ -38,7 +38,7 @@ const PrivacyToggleRow = ({ label, description, icon: Icon, checked, onChange, d
   </div>
 )
 
-const EditProfileModal = ({ authUser, isOpen, onClose }) => {
+const EditProfileModal = ({ authUser, isOpen, onClose, profileImg, setProfileImg, coverImg, setCoverImg }) => {
   const [formData, setFormData] = useState({
     fullName: "",
     username: "",
@@ -53,8 +53,8 @@ const EditProfileModal = ({ authUser, isOpen, onClose }) => {
     majorOrField: "",
   })
 
-  const [profileImg, setProfileImg] = useState(null)
-  const [coverImg, setCoverImg] = useState(null)
+  // const [profileImg, setProfileImg] = useState(null)
+  // const [coverImg, setCoverImg] = useState(null)
   const coverImgRef = useRef(null)
   const profileImgRef = useRef(null)
   const navigate = useNavigate()
@@ -86,6 +86,33 @@ const EditProfileModal = ({ authUser, isOpen, onClose }) => {
       })
     }
   }, [authUser])
+
+  useEffect(() => {
+    if (isOpen && authUser) {
+      // 1. Initialize/Reset form data when modal opens
+      setFormData({
+        fullName: authUser.fullName || "",
+        username: authUser.username || "",
+        email: authUser.email || "",
+        bio: authUser.bio || "",
+        link: authUser.link || "",
+        relationshipStatus: authUser.relationshipStatus || "",
+        levelOfEducation: authUser.levelOfEducation || "",
+        majorOrField: authUser.majorOrField || "",
+        newPassword: "",
+        currentPassword: "",
+        confirmNewPassword: "",
+      })
+    }
+
+    // 2. Cleanup function: Runs when the modal closes
+    return () => {
+      if (!isOpen) {
+        setProfileImg(null)
+        setCoverImg(null)
+      }
+    }
+  }, [isOpen, authUser, setProfileImg, setCoverImg])
 
   useEffect(() => {
     if (isSuccess && newUsername) {

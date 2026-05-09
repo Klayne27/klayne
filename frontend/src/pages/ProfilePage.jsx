@@ -221,13 +221,13 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     }
   }
 
-  const handleImgChange = (e, state) => {
+  const handleImgChange = (e, imgType) => {
     const file = e.target.files[0]
     if (file) {
       const reader = new FileReader()
       reader.onload = () => {
-        state === "coverImg" && setCoverImg(reader.result)
-        state === "profileImg" && setProfileImg(reader.result)
+        if (imgType === "profileImg") setProfileImg(reader.result)
+        else if (imgType === "coverImg") setCoverImg(reader.result)
       }
       reader.readAsDataURL(file)
     }
@@ -279,6 +279,12 @@ const ProfilePage = ({ feedType, setFeedType }) => {
   const handleUnmute = () => {
     unmuteUser()
     setIsUnmuteConfirmOpen(false)
+  }
+
+  const handleCloseEditModal = () => {
+    setOpenEditModal(false)
+    setCoverImg(null)
+    setProfileImg(null)
   }
 
   useEffect(() => {
@@ -375,7 +381,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                 {" "}
                 <img
                   src={getOptimizedImageUrl(
-                    userProfile?.coverImg?.imageUrl || "/cover.png",
+                    coverImg || userProfile?.coverImg?.imageUrl || "/cover.png",
                     "cover",
                   )}
                   onClick={() => {
@@ -525,26 +531,37 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               )}
 
               {(coverImg || profileImg) && (
-                <button
-                  className="rounded-full border border-accent bg-accent/30 px-2 py-0.5 transition duration-300 hover:bg-secondary md:px-4 md:py-1.5"
-                  onClick={async () => {
-                    const updatePayload = {}
-                    if (profileImg !== null) {
-                      updatePayload.profileImg = profileImg
-                    }
-                    if (coverImg !== null) {
-                      updatePayload.coverImg = coverImg
-                    }
+                <div className="flex gap-2">
+                  <button
+                    className="rounded-full border border-accent bg-accent/30 px-2 py-0.5 transition duration-300 hover:bg-secondary md:px-4 md:py-1.5"
+                    onClick={async () => {
+                      const updatePayload = {}
+                      if (profileImg !== null) {
+                        updatePayload.profileImg = profileImg
+                      }
+                      if (coverImg !== null) {
+                        updatePayload.coverImg = coverImg
+                      }
 
-                    await updateProfile(updatePayload)
+                      await updateProfile(updatePayload)
 
-                    setProfileImg(null)
-                    setCoverImg(null)
-                  }}
-                  disabled={isUpdatingProfile}
-                >
-                  {isUpdatingProfile ? "Updating..." : "Update"}
-                </button>
+                      setProfileImg(null)
+                      setCoverImg(null)
+                    }}
+                    disabled={isUpdatingProfile}
+                  >
+                    {isUpdatingProfile ? "Updating..." : "Update"}
+                  </button>
+                  <button
+                    className="rounded-full border border-accent bg-base-100 px-2 py-0.5 transition duration-300 hover:bg-red-700/20 hover:text-red-600 hover:border-red-600 md:px-4 md:py-1.5"
+                    onClick={() => {
+                      setCoverImg(null)
+                      setProfileImg(null)
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
               )}
 
               <MuteOptionsModal
@@ -702,7 +719,8 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                   <RiLockFill className="text-slate-400" size={36} />
                   <p className="text-base font-bold">This account is private</p>
                   <p className="max-w-xs text-sm text-slate-500">
-                    {userProfile?.username}'s study space is currently private. Send a follow request to join their circle!"
+                    {userProfile?.username}'s study space is currently private. Send a follow
+                    request to join their circle!"
                   </p>
                 </div>
               ) : (
@@ -970,7 +988,11 @@ const ProfilePage = ({ feedType, setFeedType }) => {
         <EditProfileModal
           authUser={authUser}
           isOpen={openEditModal}
-          onClose={() => setOpenEditModal(false)}
+          onClose={handleCloseEditModal}
+          profileImg={profileImg}
+          setProfileImg={setProfileImg}
+          coverImg={coverImg}
+          setCoverImg={setCoverImg}
         />
       )}
     </>
