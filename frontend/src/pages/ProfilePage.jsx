@@ -702,7 +702,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                   <RiLockFill className="text-slate-400" size={36} />
                   <p className="text-base font-bold">This account is private</p>
                   <p className="max-w-xs text-sm text-slate-500">
-                    Follow this account to see their study activity and posts.
+                    {userProfile?.username}'s study space is currently private. Send a follow request to join their circle!"
                   </p>
                 </div>
               ) : (
