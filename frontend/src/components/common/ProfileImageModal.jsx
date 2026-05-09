@@ -24,14 +24,14 @@ const ProfileImageModal = ({ src, onClose }) => {
           </button>
         </div>
       </div>
-      <a
+      {/* <a
         href={src}
         target="_blank"
         rel="noopener noreferrer"
         className="text-gray-400 hover:underline cursor-pointer mt-4"
       >
         View original
-      </a>
+      </a> */}
     </div>
   );
 };
