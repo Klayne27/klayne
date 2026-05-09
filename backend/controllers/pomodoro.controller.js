@@ -517,33 +517,47 @@ export const sessionHeartbeat = async (req, res) => {
     const session = await ActiveSession.findOne({ user: req.user._id });
     if (!session) return res.status(404).json({ error: "No active session." });
 
-    // Extend TTL if the session is approaching its scheduled end (handles very long sessions)
-    const msRemaining = session.scheduledEndTime.getTime() - now.getTime();
-    if (!session.isPaused && msRemaining < 3 * 60 * 1000) {
-      session.scheduledEndTime = new Date(
-        now.getTime() + (session.plannedDuration * 60 + 5 * 60) * 1000,
-      );
-    }
+    // FIX: removed the scheduledEndTime extension block entirely.
+    //
+    // The original code extended scheduledEndTime by (plannedDuration + 5) minutes
+    // from *now* whenever < 3 minutes remained. This had two bugs:
+    //
+    //   1. The extended scheduledEndTime was then emitted to the live dashboard
+    //      via updatePrivacySettings, showing viewers ~9 min when 1 min was left.
+    //
+    //   2. The heartbeat response itself returned remainingMs from the extended
+    //      scheduledEndTime, causing the client timer to flash a wrong value
+    //      for one tick before the worker corrected it.
+    //
+    // The TTL concern (MongoDB deleting the record before endSession fires) is
+    // already handled by expireAfterSeconds: 300 on the TTL index — the record
+    // survives 5 minutes past scheduledEndTime, which is more than enough.
+    // No extension needed.
+
     session.lastHeartbeat = now;
     await session.save();
 
     if (session.isPaused) {
       const remainingSeconds = Math.max(0, Number(session.pausedRemainingSeconds) || 0);
-      return res
-        .status(200)
-        .json({ remainingMs: remainingSeconds * 1000, remainingSeconds, isPaused: true });
+      return res.status(200).json({
+        remainingMs: remainingSeconds * 1000,
+        remainingSeconds,
+        isPaused: true,
+      });
     }
 
+    // Return remaining based on the original, unmodified scheduledEndTime
     const remainingMs = Math.max(0, session.scheduledEndTime.getTime() - now.getTime());
-    return res
-      .status(200)
-      .json({ remainingMs, remainingSeconds: Math.ceil(remainingMs / 1000) });
+    return res.status(200).json({
+      remainingMs,
+      remainingSeconds: Math.ceil(remainingMs / 1000),
+    });
   } catch (error) {
     console.error("Error in sessionHeartbeat:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
+ 
 // ── GET /api/study/sessions/live ─────────────────────────────────────────────
 export const getLiveSessions = async (req, res) => {
   try {
@@ -554,10 +568,15 @@ export const getLiveSessions = async (req, res) => {
       scheduledEndTime: { $gt: now },
     }).populate({
       path: "user",
-      select: "username fullName profileImg isPomodoroPrivate nameColor equipped",
+      // FIX: explicitly select ONLY the fields needed for the live card.
+      // Previously the full schema was leaking because socket emissions were
+      // sending the raw populated doc. This explicit projection prevents that
+      // at the DB level — nothing extra can slip through even via socket.
+      select:
+        "username fullName profileImg isPomodoroPrivate nameColor equipped pomodoroLevel pomodoroXP totalStudyDuration totalSessionsCompleted",
       populate: { path: "profileImg", select: "imageUrl" },
     });
- 
+
     const publicSessions = sessions
       .filter((s) => s.user && !s.user.isPomodoroPrivate)
       .map((s) => ({
@@ -570,8 +589,12 @@ export const getLiveSessions = async (req, res) => {
         expectedEndTime: s.scheduledEndTime.getTime(),
         startTime: s.startTime.getTime(),
         sessionCount: s.sessionCount,
+        // Stats — shown on the live card
+        pomodoroLevel: s.user.pomodoroLevel ?? 0,
+        totalStudyDuration: s.user.totalStudyDuration ?? 0,
+        totalSessionsCompleted: s.user.totalSessionsCompleted ?? 0,
       }));
- 
+
     return res.status(200).json(publicSessions);
   } catch (error) {
     console.error("Error in getLiveSessions:", error);

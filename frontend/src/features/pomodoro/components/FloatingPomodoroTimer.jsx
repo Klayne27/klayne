@@ -8,12 +8,10 @@ import { useGetPomodoroSettings } from "../pomodoroHooks/usePomodoroQueries"
 const getPhaseDurationMinutes = (settings, isBreak, sessionCount) => {
   if (!settings) return 0
   if (!isBreak) return settings.sessionDuration
-
   const isLongBreak =
     sessionCount > 0 &&
     settings.sessionsBeforeLongBreak > 0 &&
     sessionCount % settings.sessionsBeforeLongBreak === 0
-
   return isLongBreak ? settings.longBreakDuration : settings.shortBreakDuration
 }
 
@@ -38,20 +36,24 @@ const FloatingPomodoroTimer = () => {
   const seconds = Math.floor(timer % 60)
   const totalDuration = getPhaseDurationMinutes(settings, isBreak, sessionCount) * 60
   const progress = totalDuration ? Math.min(1, Math.max(timer / totalDuration, 0)) : 0
-  const radius = 18
+
+  // Same radius/viewBox as the main PomodoroTimerDisplay circle
+  const radius = 38
   const circumference = 2 * Math.PI * radius
+  const glow = isBreak ? "rgba(45,212,191,0.5)" : "oklch(var(--p) / 0.5)"
+  const glowFilter = isBreak
+    ? "drop-shadow(0 0 4px rgba(45,212,191,0.5))"
+    : "drop-shadow(0 0 4px oklch(var(--p) / 0.5))"
 
   const handleToggle = (event) => {
     event.preventDefault()
     if (timer <= 0 || isGoalReached) return
-
     if (isActive) {
       setIsActive(false)
       persistPause(timer)
       pauseServerSession({ remainingSeconds: timer })
       return
     }
-
     startSession({
       timerSeconds: timer,
       plannedDurationMinutes: getPhaseDurationMinutes(settings, isBreak, sessionCount),
@@ -71,32 +73,47 @@ const FloatingPomodoroTimer = () => {
       </div>
 
       <div className="flex items-center gap-4">
-        <div className="relative h-12 w-12 flex-shrink-0">
-          <svg className="h-full w-full -rotate-90" viewBox="0 0 48 48">
+        {/* ── Timer circle ── */}
+        <div className="relative h-12 w-12 shrink-0">
+          {/* Glow blob behind SVG */}
+          <div
+            className="absolute inset-1 rounded-full opacity-20 blur-[10px]"
+            style={{ backgroundColor: isBreak ? "rgb(45,212,191)" : "oklch(var(--p))" }}
+          />
+          <svg
+            className="h-full w-full -rotate-90 overflow-visible"
+            style={{ filter: `drop-shadow(0 0 6px ${glow})` }}
+            viewBox="0 0 100 100"
+          >
+            {/* Track ring */}
             <circle
-              cx="24"
-              cy="24"
+              cx="50"
+              cy="50"
               r={radius}
               fill="none"
-              strokeWidth="4"
-              className="stroke-slate-700"
+              strokeWidth="6"
+              className="stroke-secondary"
             />
+            {/* Progress arc */}
             <circle
-              cx="24"
-              cy="24"
+              cx="50"
+              cy="50"
               r={radius}
               fill="none"
-              strokeWidth="4"
+              strokeWidth="8"
               strokeLinecap="round"
-              className={`transition-all duration-500 ${isBreak ? "stroke-teal-400" : "stroke-primary"}`}
+              className={isBreak ? "stroke-teal-400" : "stroke-primary"}
               style={{
                 strokeDasharray: circumference,
                 strokeDashoffset: circumference * (1 - progress),
+                transition: "stroke-dashoffset 1s linear, stroke 0.7s ease",
+                filter: glowFilter,
               }}
             />
           </svg>
+          {/* Centered countdown */}
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="font-mono text-[10px] font-bold">
+            <span className="font-mono text-[10px] font-black tabular-nums tracking-tighter">
               {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
             </span>
           </div>
@@ -104,7 +121,7 @@ const FloatingPomodoroTimer = () => {
 
         <div className="flex-1">
           <p className={`text-sm font-bold ${isBreak ? "text-teal-400" : "text-primary"}`}>
-            {isGoalReached ? "Goal Reached!" : isBreak ? "Break Time" : "Focus Time"}
+            {isGoalReached ? "Goal Reached! 🎉" : isBreak ? "Break Time" : "Focus Time"}
           </p>
           <p className="text-xs text-slate-500">
             Session {sessionCount}

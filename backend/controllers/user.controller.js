@@ -592,26 +592,48 @@ export const updatePrivacySettings = async (req, res) => {
 
     // ── Live dashboard sync when Pomodoro privacy is toggled ──────────────
     if (isPomodoroPrivate !== undefined) {
-      const activeSession = await ActiveSession.findOne({ user: userId, isBreak: false });
+      const activeSession = await ActiveSession.findOne({
+        user: userId,
+        isBreak: false,
+        isPaused: { $ne: true },
+      });
 
-      if (activeSession && activeSession.scheduledEndTime > new Date()) {
+      const now = new Date();
+
+      // FIX: guard against stale/extended scheduledEndTime by computing
+      // remaining from now. If the heartbeat previously extended scheduledEndTime,
+      // we don't want that inflated value going to viewers.
+      const isActuallyActive =
+        activeSession && activeSession.scheduledEndTime > now && !activeSession.isPaused;
+
+      if (isActuallyActive) {
         if (isPomodoroPrivate) {
-          // User just went private — remove from public dashboard immediately
           io.to("live_pomodoro").emit("live_session_stopped", {
             userId: userId.toString(),
           });
         } else {
-          // User went public — add to dashboard with current session data
+          // FIX: recompute expectedEndTime and startTime from what the session
+          // actually has — don't rely on any extended scheduledEndTime value.
+          // expectedEndTime is the original scheduledEndTime as stored; since we
+          // removed the heartbeat extension, this is now always accurate.
           io.to("live_pomodoro").emit("live_session_started", {
             userId: userId.toString(),
             username: updatedUser.username,
             fullName: updatedUser.fullName,
-            profileImg: updatedUser.profileImg,
+            profileImg: updatedUser.profileImg
+              ? {
+                  _id: updatedUser.profileImg._id,
+                  imageUrl: updatedUser.profileImg.imageUrl,
+                }
+              : null,
             nameColor: updatedUser.nameColor,
-            equipped: updatedUser.equipped,
+            equipped: updatedUser.equipped ?? null,
             expectedEndTime: activeSession.scheduledEndTime.getTime(),
             startTime: activeSession.startTime.getTime(),
             sessionCount: activeSession.sessionCount,
+            pomodoroLevel: updatedUser.pomodoroLevel ?? 0,
+            totalStudyDuration: updatedUser.totalStudyDuration ?? 0,
+            totalSessionsCompleted: updatedUser.totalSessionsCompleted ?? 0,
           });
         }
       }

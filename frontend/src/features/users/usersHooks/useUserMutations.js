@@ -67,18 +67,12 @@ export const useUpdatePrivacySettings = () => {
     // Optimistic update — the toggle flips instantly in the UI
     onMutate: async (newSettings) => {
       await queryClient.cancelQueries({ queryKey: userKeys.auth() })
-
       const previousAuth = queryClient.getQueryData(userKeys.auth())
-
-      // Merge the new settings into the cached auth user immediately
       queryClient.setQueryData(userKeys.auth(), (old) => (old ? { ...old, ...newSettings } : old))
-
-      // Return snapshot so we can revert on error
       return { previousAuth }
     },
 
     onError: (error, _, context) => {
-      // Roll back to the previous state if the API call failed
       if (context?.previousAuth) {
         queryClient.setQueryData(userKeys.auth(), context.previousAuth)
       }
@@ -86,9 +80,32 @@ export const useUpdatePrivacySettings = () => {
     },
 
     onSuccess: (data) => {
-      // Sync with the server's response (covers any normalization the server did)
-      queryClient.setQueryData(userKeys.auth(), (old) => (old ? { ...old, ...data } : data))
+      // FIX: the server returns the full updated user document.
+      // Merge only the privacy-relevant fields we know are present and boolean,
+      // rather than spreading the entire response (which can contain populated
+      // nested objects that conflict with the existing cache shape).
+      // This is also safe if the API wrapper accidentally double-nests the response.
+      const serverUser = data?.user ?? data // unwrap { user: {...} } or plain object
+
+      if (serverUser && typeof serverUser === "object") {
+        queryClient.setQueryData(userKeys.auth(), (old) => {
+          if (!old) return old
+          return {
+            ...old,
+            // Only overwrite fields the privacy endpoint actually touches
+            isPrivate: serverUser.isPrivate ?? old.isPrivate,
+            isLikedFeedPrivate: serverUser.isLikedFeedPrivate ?? old.isLikedFeedPrivate,
+            isPomodoroPrivate: serverUser.isPomodoroPrivate ?? old.isPomodoroPrivate,
+          }
+        })
+      }
+
       showAppToast("Privacy settings saved", "success")
+    },
+
+    onSettled: () => {
+      // Always re-fetch auth after settle so the cache is authoritative
+      queryClient.invalidateQueries({ queryKey: userKeys.auth() })
     },
   })
 
