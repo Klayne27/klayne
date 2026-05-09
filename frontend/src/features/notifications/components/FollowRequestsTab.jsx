@@ -67,14 +67,14 @@ const FollowRequestsTab = () => {
           <div className="flex shrink-0 gap-2">
             <button
               onClick={() => acceptRequest(user._id)}
-              disabled={isAccepting || isDeclining}
+              // disabled={isAccepting || isDeclining}
               className="rounded-full bg-primary px-4 py-1.5 text-sm font-semibold transition hover:bg-primary/80 disabled:opacity-50"
             >
               Accept
             </button>
             <button
               onClick={() => declineRequest(user._id)}
-              disabled={isAccepting || isDeclining}
+              // disabled={isAccepting || isDeclining}
               className="rounded-full border border-accent px-4 py-1.5 text-sm font-semibold transition hover:bg-secondary disabled:opacity-50"
             >
               Decline
