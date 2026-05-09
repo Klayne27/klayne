@@ -354,6 +354,13 @@ const EditProfileModal = ({ authUser, isOpen, onClose, profileImg, setProfileImg
                 onChange={handleLikedFeedToggle}
                 disabled={isUpdatingPrivacy}
               />
+              <PrivacyToggleRow
+                label="Private Pomodoro Sessions"
+                description="Hide your live study timer from other users."
+                checked={!!authUser?.isPomodoroPrivate}
+                onChange={() => updatePrivacy({ isPomodoroPrivate: !authUser?.isPomodoroPrivate })}
+                disabled={isUpdatingPrivacy}
+              />
             </div>
           </div>
         </div>

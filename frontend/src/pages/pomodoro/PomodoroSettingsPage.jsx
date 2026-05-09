@@ -2,61 +2,60 @@ import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import LoadingSpinner from "../../components/common/LoadingSpinner"
 import { showAppToast } from "../../utils/showAppToast"
-import { useUpdatePomodoroSettings } from "../../features/pomodoro/pomodoroHooks/usePomodoroMutations"
+import { usePauseSession, useUpdatePomodoroSettings } from "../../features/pomodoro/pomodoroHooks/usePomodoroMutations"
 import { useGetPomodoroSettings } from "../../features/pomodoro/pomodoroHooks/usePomodoroQueries"
 import { usePomodoroTimerStore } from "../../store/usePomodoroTimerStore"
 import ConfirmationModal from "../../components/common/ConfirmationModal"
 
 function PomodoroSettingsPage() {
-  const navigate = useNavigate()
-  const [settings, setSettings] = useState(null)
-  const [showDurationWarning, setShowDurationWarning] = useState(false)
-  const [pendingSettings, setPendingSettings] = useState(null)
+const navigate = useNavigate()
+const [settings, setSettings] = useState(null)
+const [showDurationWarning, setShowDurationWarning] = useState(false)
+const [pendingSettings, setPendingSettings] = useState(null)
 
-  const { settings: initialSettings, isSettingsLoading: isLoading } = useGetPomodoroSettings()
-  const { updateSettings, isUpdatingSettings } = useUpdatePomodoroSettings()
+const { settings: initialSettings, isSettingsLoading: isLoading } = useGetPomodoroSettings()
+const { updateSettings, isUpdatingSettings } = useUpdatePomodoroSettings()
+// Add server cancellation mutation
+const { cancelServerSession } = usePauseSession()
 
-  const isActive = usePomodoroTimerStore((s) => s.isActive)
-  const setIsActive = usePomodoroTimerStore((s) => s.setIsActive)
-  const setTimer = usePomodoroTimerStore((s) => s.setTimer)
-  const setIsBreak = usePomodoroTimerStore((s) => s.setIsBreak)
-  const setSessionCount = usePomodoroTimerStore((s) => s.setSessionCount)
-  const setIsGoalReached = usePomodoroTimerStore((s) => s.setIsGoalReached)
-  const persistReset = usePomodoroTimerStore((s) => s.persistReset)
-  const timer = usePomodoroTimerStore((s) => s.timer)
-  const sessionCount = usePomodoroTimerStore((s) => s.sessionCount)
-  const isBreak = usePomodoroTimerStore((s) => s.isBreak)
+const isActive = usePomodoroTimerStore((s) => s.isActive)
+const setIsActive = usePomodoroTimerStore((s) => s.setIsActive)
+const setTimer = usePomodoroTimerStore((s) => s.setTimer)
+const setIsBreak = usePomodoroTimerStore((s) => s.setIsBreak)
+const setSessionCount = usePomodoroTimerStore((s) => s.setSessionCount)
+const setIsGoalReached = usePomodoroTimerStore((s) => s.setIsGoalReached)
+const persistReset = usePomodoroTimerStore((s) => s.persistReset)
+const timer = usePomodoroTimerStore((s) => s.timer)
+const sessionCount = usePomodoroTimerStore((s) => s.sessionCount)
+const isBreak = usePomodoroTimerStore((s) => s.isBreak)
 
-  useEffect(() => {
-    if (initialSettings) setSettings(initialSettings)
-  }, [initialSettings])
+useEffect(() => {
+  if (initialSettings) setSettings(initialSettings)
+}, [initialSettings])
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target
-    setSettings((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : Number(value),
-    }))
-  }
+const handleChange = (e) => {
+  const { name, value, type, checked } = e.target
+  setSettings((prev) => ({
+    ...prev,
+    [name]: type === "checkbox" ? checked : Number(value),
+  }))
+}
 
-  const hasSessionStarted =
-    isActive || (timer > 0 && timer !== (initialSettings?.sessionDuration ?? 0) * 60)
+const hasSessionStarted =
+  isActive || (timer > 0 && timer !== (initialSettings?.sessionDuration ?? 0) * 60)
 
 const commitSettings = (s) => {
   updateSettings(s)
 
   if (!hasSessionStarted && s.sessionDuration !== initialSettings?.sessionDuration) {
-    // Idle — not in any session or break yet
     setTimer(s.sessionDuration * 60)
   } else if (isBreak) {
-    // Currently in a break phase — recalculate which break type it is and update live
     const isLongBreak =
       sessionCount > 0 &&
       s.sessionsBeforeLongBreak > 0 &&
       sessionCount % s.sessionsBeforeLongBreak === 0
 
     const newBreakDuration = isLongBreak ? s.longBreakDuration * 60 : s.shortBreakDuration * 60
-
     setTimer(newBreakDuration)
   }
 
@@ -64,53 +63,55 @@ const commitSettings = (s) => {
   showAppToast("Settings updated!", "success")
 }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
+const handleSubmit = (e) => {
+  e.preventDefault()
 
-    if (hasSessionStarted && settings.sessionDuration !== initialSettings.sessionDuration) {
-      setPendingSettings(settings)
-      setShowDurationWarning(true)
-      return
-    }
-
-    commitSettings(settings)
+  if (hasSessionStarted && settings.sessionDuration !== initialSettings.sessionDuration) {
+    setPendingSettings(settings)
+    setShowDurationWarning(true)
+    return
   }
 
-  // const commitSettings = (s) => {
-  //   updateSettings(s)
-  //   navigate(-1)
-  //   showAppToast("Settings updated!", "success")
-  // }
+  commitSettings(settings)
+}
 
-  const handleConfirmReset = () => {
-    updateSettings(pendingSettings)
+const handleConfirmReset = () => {
+  if (!pendingSettings) return
 
-    setIsActive(false)
-    setTimer(pendingSettings.sessionDuration * 60)
-    setIsBreak(false)
-    setSessionCount(0)
-    setIsGoalReached(false)
-    persistReset()
+  // 1. Update backend settings
+  updateSettings(pendingSettings)
 
-    setShowDurationWarning(false)
-    setPendingSettings(null)
-    navigate(-1)
-    showAppToast("Settings updated. Session reset.", "success")
-  }
+  // 2. Cancel active server session
+  cancelServerSession()
 
-  const handleCancelReset = () => {
-    setSettings((prev) => ({ ...prev, sessionDuration: initialSettings.sessionDuration }))
-    setShowDurationWarning(false)
-    setPendingSettings(null)
-  }
+  // 3. Reset local store state
+  setIsActive(false)
+  setTimer(pendingSettings.sessionDuration * 60)
+  setIsBreak(false)
+  setSessionCount(0)
+  setIsGoalReached(false)
+  persistReset()
 
-  if (isLoading || !settings) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    )
-  }
+  // 4. UI Cleanup
+  setShowDurationWarning(false)
+  setPendingSettings(null)
+  navigate(-1)
+  showAppToast("Settings updated. Session reset.", "success")
+}
+
+const handleCancelReset = () => {
+  setSettings((prev) => ({ ...prev, sessionDuration: initialSettings.sessionDuration }))
+  setShowDurationWarning(false)
+  setPendingSettings(null)
+}
+
+if (isLoading || !settings) {
+  return (
+    <div className="flex h-screen items-center justify-center">
+      <LoadingSpinner />
+    </div>
+  )
+}
 
   return (
     <>

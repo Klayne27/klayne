@@ -1,11 +1,12 @@
 import Notification from "../models/notification.model.js";
+import ActiveSession from "../models/activeSession.model.js";
 import { v2 as cloudinary } from "cloudinary";
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import Post from "../models/post.model.js";
 import Conversation from "../models/conversation.model.js";
 import Message from "../models/message.model.js";
-import { createAndSendNotification, emitFollowRequestCount } from "../lib/socket.js";
+import { createAndSendNotification, emitFollowRequestCount, io } from "../lib/socket.js";
 import mongoose from "mongoose";
 import PublicChatMessage from "../models/publicMessage.model.js";
 import { getBlockingUsers, getMutedUsers } from "../lib/utils/helpers.js";
@@ -566,13 +567,15 @@ export const updateUser = async (req, res) => {
 // PATCH /api/users/privacy
 export const updatePrivacySettings = async (req, res) => {
   try {
-    const { isPrivate, isLikedFeedPrivate } = req.body;
+    const { isPrivate, isLikedFeedPrivate, isPomodoroPrivate } = req.body;
     const userId = req.user._id;
 
     const updateFields = {};
     if (isPrivate !== undefined) updateFields.isPrivate = Boolean(isPrivate);
     if (isLikedFeedPrivate !== undefined)
       updateFields.isLikedFeedPrivate = Boolean(isLikedFeedPrivate);
+    if (isPomodoroPrivate !== undefined)
+      updateFields.isPomodoroPrivate = Boolean(isPomodoroPrivate);
 
     if (Object.keys(updateFields).length === 0) {
       return res.status(400).json({ error: "No valid fields provided." });
@@ -586,6 +589,33 @@ export const updatePrivacySettings = async (req, res) => {
       .populate("profileImg", "imageUrl")
       .populate("coverImg", "imageUrl")
       .select("-password");
+
+    // ── Live dashboard sync when Pomodoro privacy is toggled ──────────────
+    if (isPomodoroPrivate !== undefined) {
+      const activeSession = await ActiveSession.findOne({ user: userId, isBreak: false });
+
+      if (activeSession && activeSession.scheduledEndTime > new Date()) {
+        if (isPomodoroPrivate) {
+          // User just went private — remove from public dashboard immediately
+          io.to("live_pomodoro").emit("live_session_stopped", {
+            userId: userId.toString(),
+          });
+        } else {
+          // User went public — add to dashboard with current session data
+          io.to("live_pomodoro").emit("live_session_started", {
+            userId: userId.toString(),
+            username: updatedUser.username,
+            fullName: updatedUser.fullName,
+            profileImg: updatedUser.profileImg,
+            nameColor: updatedUser.nameColor,
+            equipped: updatedUser.equipped,
+            expectedEndTime: activeSession.scheduledEndTime.getTime(),
+            startTime: activeSession.startTime.getTime(),
+            sessionCount: activeSession.sessionCount,
+          });
+        }
+      }
+    }
 
     return res.status(200).json(updatedUser);
   } catch (error) {

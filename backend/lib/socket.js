@@ -37,6 +37,8 @@ const publicChatTypingUsers = new Map();
 export const onlineUsersMap = new Map();
 const socketUserMap = new Map();
 export const offlineStatusUsers = new Map(); // Key: userId, Value: true/false
+const disconnectTimers = new Map();
+
 
 const io = new Server(server, {
   cors: {
@@ -645,7 +647,28 @@ export const createAndSendNotification = async ({
 export const PUBLIC_CHAT_ROOM = "public_chat_room";
 
 io.on("connection", async (socket) => {
-  const userId = socket.handshake.query.userId;
+const userId =
+  socket.handshake.auth?.userId ||
+  socket.handshake.query?.userId || // ← existing clients send via query
+  socket.data?.userId;
+
+  socket.on("join_pomodoro_room", () => {
+    socket.join("live_pomodoro");
+
+    // User reconnected within the grace window — cancel the pending removal
+    if (userId && disconnectTimers.has(userId)) {
+      clearTimeout(disconnectTimers.get(userId));
+      disconnectTimers.delete(userId);
+      console.log(
+        `[LivePomodoro] Grace-period timer cancelled for ${userId} (reconnected)`,
+      );
+    }
+  });
+
+  socket.on("leave_pomodoro_room", () => {
+    // Called by useLiveSessions cleanup when navigating away from the dashboard
+    socket.leave("live_pomodoro");
+  });
 
   if (
     userId &&
@@ -1192,55 +1215,71 @@ io.on("connection", async (socket) => {
     }
   });
 
-  socket.on("disconnect", () => {
-    const disconnectedUserId = socket.userId;
+socket.on("disconnect", () => {
+  const disconnectedUserId = socket.userId;
 
-    const userInfo = socketUserMap.get(socket.id);
-    const username = userInfo?.username || "Unknown User";
-    const userId = userInfo?.userId;
+  const userInfo = socketUserMap.get(socket.id);
+  const username = userInfo?.username || "Unknown User";
+  const uid = userInfo?.userId;
 
-    console.log(`User disconnected: ${username} - ${userId}`);
+  console.log(`User disconnected: ${username} - ${uid}`);
+  socketUserMap.delete(socket.id);
 
-    if (!disconnectedUserId) {
-      return;
-    }
+  if (!disconnectedUserId) return;
 
-    const wasActiveInChat = userActiveChats.has(disconnectedUserId.toString());
-    const activeConversationId = userActiveChats.get(disconnectedUserId.toString());
+  const wasActiveInChat = userActiveChats.has(disconnectedUserId.toString());
+  const activeConversationId = userActiveChats.get(disconnectedUserId.toString());
 
-    activePublicChatUsers.delete(disconnectedUserId);
-    userActiveChats.delete(disconnectedUserId.toString());
+  activePublicChatUsers.delete(disconnectedUserId);
+  userActiveChats.delete(disconnectedUserId.toString());
 
-    if (publicChatTypingUsers.has(disconnectedUserId)) {
-      publicChatTypingUsers.delete(disconnectedUserId);
-      io.to(PUBLIC_CHAT_ROOM).emit("public_typing_update", {
-        typingUsers: Array.from(publicChatTypingUsers.values()),
-      });
-    }
+  if (publicChatTypingUsers.has(disconnectedUserId)) {
+    publicChatTypingUsers.delete(disconnectedUserId);
+    io.to(PUBLIC_CHAT_ROOM).emit("public_typing_update", {
+      typingUsers: Array.from(publicChatTypingUsers.values()),
+    });
+  }
 
-    const userSockets = onlineUsersMap.get(disconnectedUserId);
-    if (userSockets) {
-      userSockets.delete(socket.id);
-      if (userSockets.size === 0) {
-        onlineUsersMap.delete(disconnectedUserId);
+  const userSockets = onlineUsersMap.get(disconnectedUserId);
 
-        typingUsersInConversation.forEach((typingMap, convId) => {
-          if (typingMap.has(disconnectedUserId)) {
-            typingMap.delete(disconnectedUserId);
-            if (typingMap.size === 0) {
-              typingUsersInConversation.delete(convId);
-            }
-          }
-        });
+  const LIVE_POMODORO_GRACE_MS = 20_000;
 
-        if (wasActiveInChat && activeConversationId) {
-          emitUnreadMessageStatus(disconnectedUserId);
+  if (userSockets) {
+    userSockets.delete(socket.id);
+
+    if (userSockets.size === 0) {
+      onlineUsersMap.delete(disconnectedUserId);
+
+      typingUsersInConversation.forEach((typingMap, convId) => {
+        if (typingMap.has(disconnectedUserId)) {
+          typingMap.delete(disconnectedUserId);
+          if (typingMap.size === 0) typingUsersInConversation.delete(convId);
         }
-      }
-    }
+      });
 
-    io.emit("getOnlineUsers", getOnlineUserIds());
-  });
+      if (wasActiveInChat && activeConversationId) {
+        emitUnreadMessageStatus(disconnectedUserId);
+      }
+
+      // ── Grace-period live-dashboard removal ──────────────────────────────
+      // Don't remove immediately — give the user 20s to reconnect (page refresh).
+      // If they call join_pomodoro_room within that window the timer is cancelled.
+  if (!disconnectTimers.has(disconnectedUserId)) {
+    const timerId = setTimeout(() => {
+      disconnectTimers.delete(disconnectedUserId);
+      io.to("live_pomodoro").emit("live_session_stopped", {
+        userId: disconnectedUserId,
+      });
+      console.log(`[LivePomodoro] Grace period expired — removed ${disconnectedUserId}`);
+    }, LIVE_POMODORO_GRACE_MS);
+
+    disconnectTimers.set(disconnectedUserId, timerId);
+  }
+    }
+  }
+
+  io.emit("getOnlineUsers", getOnlineUserIds());
+});
 
   socket.on("heartbeat", () => {
     if (socket.userId) {

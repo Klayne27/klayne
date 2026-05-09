@@ -19,7 +19,7 @@ import { showAppToast } from "../utils/showAppToast"
 import { useAppStore } from "../store/useAppStore"
 import { useTouchHoverEffect } from "../hooks/customHooks/useTouchHoverEffect"
 import { formatCount, formatProfileLink, getFullProfileLink } from "../utils/textUtils"
-import { RiLockFill } from "react-icons/ri"
+import { RiLockFill, RiRadioButtonLine } from "react-icons/ri"
 import PostModal from "../features/posts/components/PostModal.jsx"
 import { getOptimizedImageUrl } from "../utils/cloudinaryUtils.js"
 import { BiHealth } from "react-icons/bi"
@@ -53,6 +53,8 @@ import DropdownMenu from "../components/common/DropdownMenu.jsx"
 import { BsThreeDots, BsVolumeMute, BsVolumeUp } from "react-icons/bs"
 import MuteOptionsModal from "../components/common/MuteOptionsModal.jsx"
 import useDropdownMenu from "../hooks/customHooks/useDropdownMenu.js"
+import { useServerTimeOffset } from "../features/pomodoro/pomodoroHooks/usePomodoroMutations.js"
+import PomodoroCountdown from "../features/pomodoro/components/PomodoroCountdown.jsx"
 
 const formatStudyTime = (totalMinutes) => {
   const hours = Math.floor(totalMinutes / 60)
@@ -80,6 +82,8 @@ const getOverlayClass = (wardrobeConfig, equippedOverlayKey) => {
 
 const ProfilePage = ({ feedType, setFeedType }) => {
   const openProfileImageModal = useAppStore((state) => state.openProfileImageModal)
+
+  const clockOffset = useServerTimeOffset()
 
   const [coverImg, setCoverImg] = useState(null)
   const [profileImg, setProfileImg] = useState(null)
@@ -169,6 +173,18 @@ const ProfilePage = ({ feedType, setFeedType }) => {
 
   const isPrivateAndNotFollowing =
     userProfile?.isPrivate && !amIFollowing && authUser?._id !== userProfile?._id
+
+  const liveSession = userProfile?.activeSession
+  console.log(userProfile);
+  const isSessionLive =
+    liveSession?.isActive &&
+    liveSession?.expectedEndTime &&
+    new Date(liveSession.expectedEndTime) > new Date()
+
+  // Visibility rules:
+  // - Always visible to the profile owner (own-view)
+  // - Visible to others only if isPomodoroPrivate is false
+  const canSeeLiveSession = isSessionLive && (isMyProfile || !userProfile?.isPomodoroPrivate)
 
   const { isTouchDevice, activeButtonId, handleTouchCancel, handleTouchEnd, handleTouchStart } =
     useTouchHoverEffect()
@@ -553,7 +569,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                     {isUpdatingProfile ? "Updating..." : "Update"}
                   </button>
                   <button
-                    className="rounded-full border border-accent bg-base-100 px-2 py-0.5 transition duration-300 hover:bg-red-700/20 hover:text-red-600 hover:border-red-600 md:px-4 md:py-1.5"
+                    className="rounded-full border border-accent bg-base-100 px-2 py-0.5 transition duration-300 hover:border-red-600 hover:bg-red-700/20 hover:text-red-600 md:px-4 md:py-1.5"
                     onClick={() => {
                       setCoverImg(null)
                       setProfileImg(null)
@@ -618,6 +634,22 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                 </div>
                 <span className="break-all text-sm text-slate-500">@{userProfile?.username}</span>
                 <span className="my-1 text-sm">{userProfile?.bio}</span>
+                {/* {canSeeLiveSession && (
+                  <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5">
+                    <RiRadioButtonLine className="animate-pulse text-primary" size={12} />
+                    <span className="text-xs font-bold text-primary">
+                      {liveSession.type === "work" ? "Focus" : "Break"}
+                    </span>
+                    <PomodoroCountdown
+                      expectedEndTime={new Date(liveSession.expectedEndTime).getTime()}
+                      clockOffset={clockOffset}
+                      className="text-xs font-bold text-primary"
+                    />
+                    {isMyProfile && userProfile?.isPomodoroPrivate && (
+                      <span className="text-[10px] text-slate-500">(only you)</span>
+                    )}
+                  </div>
+                )} */}
               </div>
 
               <div className="flex flex-wrap gap-2">

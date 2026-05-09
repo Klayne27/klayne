@@ -1,110 +1,99 @@
 import { useState, useEffect } from "react"
 import { showAppToast } from "../../../utils/showAppToast"
-import { useUpdatePomodoroSettings } from "../pomodoroHooks/usePomodoroMutations"
+import { usePauseSession, useUpdatePomodoroSettings } from "../pomodoroHooks/usePomodoroMutations"
 import { usePomodoroTimerStore } from "../../../store/usePomodoroTimerStore"
 import ConfirmationModal from "../../../components/common/ConfirmationModal"
 
 const PomodoroSettingsModal = ({ isOpen, onClose, initialSettings }) => {
-  const [settings, setSettings] = useState(initialSettings)
-  const [showDurationWarning, setShowDurationWarning] = useState(false)
-  const [pendingSettings, setPendingSettings] = useState(null)
+const [settings, setSettings] = useState(initialSettings)
+const [showDurationWarning, setShowDurationWarning] = useState(false)
+const [pendingSettings, setPendingSettings] = useState(null)
 
-  const { updateSettings, isUpdatingSettings } = useUpdatePomodoroSettings()
+const { updateSettings, isUpdatingSettings } = useUpdatePomodoroSettings()
+// Access the cancel mutation to kill the backend session on reset
+const { cancelServerSession } = usePauseSession()
 
-  // Read live timer state — don't subscribe to the whole store, just what we need
-  const isActive = usePomodoroTimerStore((s) => s.isActive)
-  const setIsActive = usePomodoroTimerStore((s) => s.setIsActive)
-  const setTimer = usePomodoroTimerStore((s) => s.setTimer)
-  const setIsBreak = usePomodoroTimerStore((s) => s.setIsBreak)
-  const setSessionCount = usePomodoroTimerStore((s) => s.setSessionCount)
-  const setIsGoalReached = usePomodoroTimerStore((s) => s.setIsGoalReached)
-  const persistReset = usePomodoroTimerStore((s) => s.persistReset)
-  const timer = usePomodoroTimerStore((s) => s.timer)
-  const sessionCount = usePomodoroTimerStore((s) => s.sessionCount)
-  const isBreak = usePomodoroTimerStore((s) => s.isBreak)
+const isActive = usePomodoroTimerStore((s) => s.isActive)
+const setIsActive = usePomodoroTimerStore((s) => s.setIsActive)
+const setTimer = usePomodoroTimerStore((s) => s.setTimer)
+const setIsBreak = usePomodoroTimerStore((s) => s.setIsBreak)
+const setSessionCount = usePomodoroTimerStore((s) => s.setSessionCount)
+const setIsGoalReached = usePomodoroTimerStore((s) => s.setIsGoalReached)
+const persistReset = usePomodoroTimerStore((s) => s.persistReset)
+const timer = usePomodoroTimerStore((s) => s.timer)
 
-  useEffect(() => {
-    setSettings(initialSettings)
-  }, [initialSettings])
+useEffect(() => {
+  setSettings(initialSettings)
+}, [initialSettings])
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target
-    setSettings((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : Number(value),
-    }))
-  }
+const handleChange = (e) => {
+  const { name, value, type, checked } = e.target
+  setSettings((prev) => ({
+    ...prev,
+    [name]: type === "checkbox" ? checked : Number(value),
+  }))
+}
 
-  const hasSessionStarted =
-    isActive || (timer > 0 && timer !== (initialSettings?.sessionDuration ?? 0) * 60)
-
+// Define if a session is currently "in progress"
+const hasSessionStarted =
+  isActive || (timer > 0 && timer !== (initialSettings?.sessionDuration ?? 0) * 60)
 
 const commitSettings = (s) => {
   updateSettings(s)
 
+  // Only update the timer live if the user is IDLE (hasn't started yet)
   if (!hasSessionStarted && s.sessionDuration !== initialSettings?.sessionDuration) {
-    // Idle — not in any session or break yet
     setTimer(s.sessionDuration * 60)
-  } else if (isBreak) {
-    // Currently in a break phase — recalculate which break type it is and update live
-    const isLongBreak =
-      sessionCount > 0 &&
-      s.sessionsBeforeLongBreak > 0 &&
-      sessionCount % s.sessionsBeforeLongBreak === 0
-
-    const newBreakDuration = isLongBreak ? s.longBreakDuration * 60 : s.shortBreakDuration * 60
-
-    setTimer(newBreakDuration)
   }
+  // If they are in a break, we don't necessarily want to reset the whole app
+  // unless they change the sessionDuration (handled by the warning)
 
   onClose?.()
   showAppToast("Settings updated!", "success")
 }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
+const handleSubmit = (e) => {
+  e.preventDefault()
 
-    // If the timer is running AND the user changed session duration, warn them
-    if (hasSessionStarted && settings.sessionDuration !== initialSettings.sessionDuration) {
-      setPendingSettings(settings)
-      setShowDurationWarning(true)
-      return
-    }
-
-    commitSettings(settings)
+  // IF session is active AND duration changed -> Trigger Reset Confirmation
+  if (hasSessionStarted && settings.sessionDuration !== initialSettings.sessionDuration) {
+    setPendingSettings(settings)
+    setShowDurationWarning(true)
+    return
   }
 
-  // const commitSettings = (s) => {
-  //   updateSettings(s)
-  //   onClose()
-  //   showAppToast("Settings updated!", "success")
-  // }
+  commitSettings(settings)
+}
 
-  const handleConfirmReset = () => {
-    // Apply the new settings then wipe the active session
-    updateSettings(pendingSettings)
+const handleConfirmReset = () => {
+  if (!pendingSettings) return
 
-    setIsActive(false)
-    setTimer(pendingSettings.sessionDuration * 60)
-    setIsBreak(false)
-    setSessionCount(0)
-    setIsGoalReached(false)
-    persistReset()
+  // 1. Update backend settings
+  updateSettings(pendingSettings)
 
-    setShowDurationWarning(false)
-    setPendingSettings(null)
-    onClose()
-    showAppToast("Settings updated. Session reset.", "success")
-  }
+  // 2. Kill the active server session (IMPORTANT)
+  cancelServerSession()
 
-  const handleCancelReset = () => {
-    // Revert the slider back to the original value so nothing was "saved"
-    setSettings((prev) => ({ ...prev, sessionDuration: initialSettings.sessionDuration }))
-    setShowDurationWarning(false)
-    setPendingSettings(null)
-  }
+  // 3. Replicate handleReset logic from PomodoroPage
+  setIsActive(false)
+  setTimer(pendingSettings.sessionDuration * 60)
+  setIsBreak(false)
+  setSessionCount(0)
+  setIsGoalReached(false)
+  persistReset()
 
-  if (!isOpen) return null
+  // 4. Cleanup UI state
+  setShowDurationWarning(false)
+  setPendingSettings(null)
+  onClose()
+  showAppToast("Settings updated. Session reset.", "success")
+}
+
+const handleCancelReset = () => {
+  setSettings((prev) => ({ ...prev, sessionDuration: initialSettings.sessionDuration }))
+  setShowDurationWarning(false)
+  setPendingSettings(null)
+}
 
   return (
     <>

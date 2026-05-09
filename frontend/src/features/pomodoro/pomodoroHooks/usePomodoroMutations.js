@@ -1,8 +1,9 @@
-import { useCallback, useRef } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   cancelSessionApi,
   endStudySessionApi,
+  getServerTimeApi,
   pauseSessionApi,
   startSessionApi,
   updatePomodoroSettingsApi,
@@ -275,4 +276,25 @@ export const useUpdatePomodoroSettings = () => {
   })
 
   return { updateSettings, isUpdatingSettings }
+}
+
+export const useServerTimeOffset = () => {
+  const [offset, setOffset] = useState(0)
+
+  useEffect(() => {
+    const measure = async () => {
+      const before = Date.now()
+      try {
+        const serverTime = await getServerTimeApi()
+        const rtt = Date.now() - before
+        // Account for ~half RTT (approximate one-way latency)
+        setOffset(serverTime - (before + rtt / 2))
+      } catch {
+        // Swallow — offset stays 0, worst case timer is off by a handful of seconds
+      }
+    }
+    measure()
+  }, [])
+
+  return offset
 }

@@ -164,3 +164,19 @@ export const endStudySessionApi = async ({ taskId, duration } = {}) => {
     clearTimeout(timeoutId)
   }
 }
+
+// pomodoroApi.js — add these
+
+export const getLiveSessionsApi = async () => {
+  const res = await fetch("/api/study/sessions/live");
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to fetch live sessions");
+  return data; // SessionCard[]
+};
+
+export const getServerTimeApi = async () => {
+  const res = await fetch("/api/study/server-time");
+  const data = await res.json();
+  if (!res.ok) throw new Error("Failed to fetch server time");
+  return data.serverTime; // Unix ms
+};

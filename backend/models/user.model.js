@@ -332,6 +332,17 @@ const userSchema = new mongoose.Schema(
         duration: { type: Number, default: 0 }, // Total seconds studied that day
       },
     ],
+    isPomodoroPrivate: {
+      type: Boolean,
+      default: false,
+    },
+    activeSession: {
+      isActive: { type: Boolean, default: false },
+      type: { type: String, enum: ["work", "break"], default: null },
+      startTime: { type: Date, default: null },
+      expectedEndTime: { type: Date, default: null },
+      sessionCount: { type: Number, default: 0 },
+    },
   },
   { timestamps: true },
 );
