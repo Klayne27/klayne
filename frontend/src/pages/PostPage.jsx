@@ -62,8 +62,6 @@ const PostPage = () => {
     refetch: refetchReplies,
   } = useGetReplies(pid)
 
-  console.log(replies);
-
   const { createReply, isCreatingReply } = useCreateReply(pid)
 
   const {

@@ -63,8 +63,6 @@ const SuggestedUsersPage = ({ mobile = false }) => {
     }
   }
 
-      console.log(users[users.length -1])
-
   return (
     <div className="min-h-screen w-full border-accent md:border-x">
       {/* Header – hidden when rendered inside ConnectPage (mobile) */}

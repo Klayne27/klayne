@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react"
-import { FaCircle } from "react-icons/fa"
+import { FaCircle, FaReply } from "react-icons/fa"
 import { BsCheck2, BsCheck2All } from "react-icons/bs"
 import { usePrivateChatStore } from "../../../../store/usePrivateChatStore"
 import { useIsMobile } from "../../../../hooks/customHooks/useIsMobile"
@@ -31,6 +31,10 @@ import {
 import { useTheme } from "../../../../context/ThemeContext"
 import { buildNicknameMap } from "../../../../utils/nicknameUtils"
 import { useMemo } from "react"
+import { getOptimizedImageUrl } from "../../../../utils/cloudinaryUtils"
+import { renderClickableText } from "../../../../utils/textUtils"
+import { truncateText } from "../../../../utils/truncateText"
+import ReplyPreview from "../../common/components/ReplyPreview"
 
 const PrivateChatMessageItem = ({
   message,
@@ -153,6 +157,8 @@ const PrivateChatMessageItem = ({
     !!currentUser?.username &&
     new RegExp(`@${currentUser.username}(?:\\s|$|[^a-zA-Z0-9_])`).test(message.text ?? "")
 
+  const isRepliedTo = message.repliedTo?.sender._id === currentUser._id
+
   const handleOpenViewReactionsModal = (e) => {
     e.stopPropagation()
     setShowMoreActionsModal(false)
@@ -199,6 +205,10 @@ const PrivateChatMessageItem = ({
     setShowMoreActionsModal(false)
   }
 
+  const messageDeleted = <span className="text-sm italic text-gray-600">[Message Deleted]</span>
+
+  
+
   // if (isTypingOtherUser) {
   //   return (
   //     <div className="message-item-container ml-10 flex justify-start rounded-lg p-1">
@@ -227,9 +237,9 @@ const PrivateChatMessageItem = ({
         id={`message-${message._id}`}
         className={`relative mb-0 rounded-lg p-[1px] ${
           isMessageHighlighted
-            ? "bg-secondary"
-            : isMentioned
-              ? "border-l-2 border-yellow-400 bg-yellow-400/10"
+            ? "bg-secondary/20"
+            : isMentioned || isRepliedTo
+              ? "border-r-2 border-yellow-400 bg-yellow-400/10"
               : ""
         } ${isSentByCurrentUser ? "justify-end" : "justify-start"} ${message.isFirstInGroup ? "mt-2" : ""}`}
         style={messageContentStyle}
@@ -299,41 +309,73 @@ const PrivateChatMessageItem = ({
               nicknameMap={nicknameMap}
             />
 
-            {/* Edited Status */}
             {isMessageEdited && (
               <span
-                className={`mr-5 text-xs italic text-gray-500 ${isSentByCurrentUser ? "self-end" : "self-start"}`}
+                className={`mr-5 text-xs italic text-gray-500 ${
+                  isSentByCurrentUser ? "self-end" : "self-start"
+                }`}
               >
                 (Edited)
               </span>
             )}
-            <div className="flex">
+
+            {message.repliedTo && (
+              <ReplyPreview
+                message={message}
+                isSentByCurrentUser={isSentByCurrentUser}
+                currentUser={currentUser}
+                isReplyToMessageDeleted={isReplyToMessageDeleted}
+                onJumpToOriginalMessage={handleJumpToOriginalMessage}
+                onLoadImage={onLoadImage}
+                nicknameMap={nicknameMap} // ← add this
+                isGroup={selectedConversation?.isGroup} // ← add this
+              />
+            )}
+
+            {/* -mt-5 slides the bubble up over the ghost's pb-6 pocket → ~30% overlap */}
+            {/* z-10 ensures the main bubble renders on top of the ghost visually */}
+            <div className={`flex ${message.repliedTo ? "relative z-10 -mt-5" : ""}`}>
               <MessageBubble
                 message={message}
                 messageText={message.text}
                 isSentByCurrentUser={isSentByCurrentUser}
                 bubbleClasses={bubbleClasses}
                 onLoadImage={onLoadImage}
-                // onImageClick={handleImageClick}
                 messageContentStyle={messageContentStyle}
                 onJumpToOriginalMessage={handleJumpToOriginalMessage}
                 isReplyToMessageDeleted={isReplyToMessageDeleted}
+                hasReply={!!message.repliedTo}
               />
-              {selectedConversation.isGroup ? (
+              {/* {selectedConversation.isGroup ? (
                 <div></div>
               ) : (
                 isSentByCurrentUser && (
                   <span className="ml-1 flex-shrink-0 self-end text-sm">
                     {message?.seen ? (
-                      <BsCheck2All size={16} className="text-primary" />
+                      <div className="mt-1">
+                        <img
+                          src={
+                            selectedConversation.participants?.find(
+                              (p) => p._id.toString() !== currentUser._id.toString(),
+                            )?.profileImg?.imageUrl || "/avatar-placeholder.png"
+                          }
+                          alt=""
+                          title={`Seen by @${
+                            selectedConversation.participants?.find(
+                              (p) => p._id.toString() !== currentUser._id.toString(),
+                            )?.username ?? ""
+                          }`}
+                          className="h-4 w-4 rounded-full object-cover ring-1 ring-base-100"
+                        />
+                      </div>
                     ) : (
                       <BsCheck2 size={16} className="text-gray-500" />
                     )}
                   </span>
                 )
-              )}
+              )} */}
             </div>
-            {/* Grouped Reactions Display */}
+
             {hasAnyReactions && (
               <MessageReactions
                 groupedReactions={groupedReactions}
@@ -377,6 +419,29 @@ const PrivateChatMessageItem = ({
             )}
           </div>
         )}
+        {!selectedConversation?.isGroup &&
+          isSentByCurrentUser &&
+          (() => {
+            if (seenByUsers.length > 0) {
+              const otherParticipant = selectedConversation.participants?.find(
+                (p) => p._id.toString() !== currentUser._id.toString(),
+              )
+              const imgUrl = otherParticipant?.profileImg?.imageUrl || "/avatar-placeholder.png"
+              return (
+                <div className="flex gap-0.5 justify-self-end">
+                  <div className="mt-1">
+                    <img
+                      src={imgUrl}
+                      alt={otherParticipant?.username ?? ""}
+                      title={`Seen by @${otherParticipant?.username ?? ""}`}
+                      className="h-4 w-4 rounded-full object-cover ring-1 ring-base-100"
+                    />
+                  </div>
+                </div>
+              )
+            }
+            return null
+          })()}
         {
           <SlideUpMenu isOpen={showSlideUpReactionsMenu} onClose={handleCloseSlideUpReactionsMenu}>
             <SlideUpMenuContent

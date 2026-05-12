@@ -175,7 +175,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     userProfile?.isPrivate && !amIFollowing && authUser?._id !== userProfile?._id
 
   const liveSession = userProfile?.activeSession
-  console.log(userProfile);
+  
   const isSessionLive =
     liveSession?.isActive &&
     liveSession?.expectedEndTime &&

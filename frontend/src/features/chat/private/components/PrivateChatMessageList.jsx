@@ -68,34 +68,43 @@ const PriveChatMessageList = forwardRef(function PriveChatMessageList(
     setModalState({ isOpen: false, username: null, position: { top: 0, left: 0 } })
   }
 
-  const seenIndicators = useMemo(() => {
-    if (!selectedConversation?.isGroup) return {}
+const seenIndicators = useMemo(() => {
+  const assignedUsers = new Set()
+  const result = {}
+  const isGroup = selectedConversation?.isGroup
+  const reversed = [...processedMessages].reverse()
 
-    // Walk messages newest-first; once we've assigned a user to a message, skip them
-    const assignedUsers = new Set()
-    const result = {}
+  for (const msg of reversed) {
+    if (msg.isSystemMessage) continue
 
-    const reversed = [...processedMessages].reverse()
-    for (const msg of reversed) {
-      if (!msg.seenBy?.length || msg.isSystemMessage) continue
+    if (isGroup) {
+      // Group: driven by seenBy array
+      if (!msg.seenBy?.length) continue
 
       for (const user of msg.seenBy) {
         const uid = (user._id ?? user).toString()
-        // Skip the sender of this message and already-assigned users
-          //  if ((uid === (msg.sender?._id ?? msg.sender)?.toString())) continue
-
-
         if (assignedUsers.has(uid)) continue
-
         assignedUsers.add(uid)
         if (!result[msg._id]) result[msg._id] = []
         result[msg._id].push(user)
       }
+    } else {
+      // DM: driven by msg.seen boolean — find the newest message sent
+      // by the other user that the current user has seen, i.e. the last
+      // message sent by currentUser that msg.seen === true
+      const senderId = (msg.sender?._id ?? msg.sender)?.toString()
+      const isOwnMessage = senderId === currentUser?._id?.toString()
+      if (!isOwnMessage) continue
+      if (!msg.seen) continue
+      if (assignedUsers.has("dm-seen")) continue // only assign once
+
+      assignedUsers.add("dm-seen")
+      result[msg._id] = ["dm-seen"] // sentinel — just marks this message
     }
+  }
 
-    return result
-  }, [processedMessages, selectedConversation?.isGroup])
-
+  return result
+}, [processedMessages, selectedConversation?.isGroup, currentUser?._id])
   return (
     <div ref={ref} className="relative flex flex-1 flex-col overflow-y-auto p-4 pt-20">
       {!isNewChat &&

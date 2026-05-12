@@ -6,10 +6,6 @@ const messageSchema = new mongoose.Schema(
     sender: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     text: String,
 
-    // ── Read tracking ─────────────────────────────────────────────────────────
-    // `seen` (boolean) is kept for DM backward-compat and quick DM tick checks.
-    // `seenBy` (array) is the authoritative per-user read list used by groups
-    // (and optionally DMs — the DM path populates both for consistency).
     seen: { type: Boolean, default: false },
     seenBy: {
       type: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],

@@ -31,6 +31,11 @@ import {
 } from "../publicChatHooks/usePublicChatMutations"
 import MessageBubble from "../../common/components/MessageBubble"
 import { useTheme } from "../../../../context/ThemeContext"
+import { renderClickableText } from "../../../../utils/textUtils"
+import { truncateText } from "../../../../utils/truncateText"
+import { getOptimizedImageUrl } from "../../../../utils/cloudinaryUtils"
+import { FaReply } from "react-icons/fa"
+import ReplyPreview from "../../common/components/ReplyPreview"
 
 const PublicChatMessageList = React.memo(function PublicChatMessageList({
   message,
@@ -141,6 +146,8 @@ const PublicChatMessageList = React.memo(function PublicChatMessageList({
     !!currentUser?.username &&
     new RegExp(`@${currentUser.username}(?:\\s|$|[^a-zA-Z0-9_])`).test(message.text ?? "")
 
+  const isRepliedTo = message.repliedTo?.sender._id === currentUser._id
+
   // Use the refactored, simplified admin actions hook
   const { handleAdminDeleteMessage, handleBanUser, handleUnbanUser } = usePublicChatAdminHandlers({
     message,
@@ -195,6 +202,8 @@ const PublicChatMessageList = React.memo(function PublicChatMessageList({
     setShowMoreActionsModal(false)
   }
 
+  const messageDeleted = <span className="text-sm italic text-gray-600">[Message Deleted]</span>
+
   return (
     <>
       {message.isNewDay && <DateSeparator date={message.createdAt} />}
@@ -204,9 +213,9 @@ const PublicChatMessageList = React.memo(function PublicChatMessageList({
         id={`message-${message._id}`}
         className={`relative mb-0 rounded-lg p-[1px] ${
           isMessageHighlighted
-            ? "bg-secondary"
-            : isMentioned
-              ? "border-l-2 border-yellow-400 bg-yellow-400/10"
+            ? "bg-secondary/20"
+            : isMentioned || isRepliedTo
+              ? "border-r-2 border-yellow-400 bg-yellow-400/10"
               : ""
         } ${isSentByCurrentUser ? "justify-end" : "justify-start"} ${
           message.isFirstInGroup ? "mt-4" : ""
@@ -287,18 +296,32 @@ const PublicChatMessageList = React.memo(function PublicChatMessageList({
                 (Edited)
               </span>
             )}
-            <MessageBubble
-              message={message}
-              isSentByCurrentUser={isSentByCurrentUser}
-              bubbleClasses={bubbleClasses}
-              onLoadImage={onLoadImage}
-              // onImageClick={handleImageClick}
-              messageContentStyle={messageContentStyle}
-              isReplyToMessageDeleted={isReplyToMessageDeleted}
-              onJumpToOriginalMessage={handleJumpToOriginalMessage}
-              isMessageDeleted={isMessageDeleted}
-              isSenderBanned={isSenderBanned}
-            />
+            {message.repliedTo && (
+              <ReplyPreview
+                message={message}
+                isSentByCurrentUser={isSentByCurrentUser}
+                currentUser={currentUser}
+                isReplyToMessageDeleted={isReplyToMessageDeleted}
+                onJumpToOriginalMessage={handleJumpToOriginalMessage}
+                onLoadImage={onLoadImage}
+              />
+            )}
+
+            <div className={`flex ${message.repliedTo ? "relative z-10 -mt-5" : ""}`}>
+              <MessageBubble
+                message={message}
+                isSentByCurrentUser={isSentByCurrentUser}
+                bubbleClasses={bubbleClasses}
+                onLoadImage={onLoadImage}
+                // onImageClick={handleImageClick}
+                messageContentStyle={messageContentStyle}
+                isReplyToMessageDeleted={isReplyToMessageDeleted}
+                onJumpToOriginalMessage={handleJumpToOriginalMessage}
+                isMessageDeleted={isMessageDeleted}
+                isSenderBanned={isSenderBanned}
+                hasReply={!!message.repliedTo} // ← NEW
+              />
+            </div>
 
             {/* Grouped reactions display */}
             {hasAnyReactions && (
