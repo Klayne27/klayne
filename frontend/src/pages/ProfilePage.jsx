@@ -687,7 +687,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                   {userProfile?.majorOrField && (
                     <div className="flex items-center gap-1.5">
                       <MdSchool className="size-4 text-slate-500" />
-                      <span className="text-sm text-slate-400">
+                      <span className="text-[16px] text-slate-400 flex items-center gap-1.5">
                         Studies{" "}
                         <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-primary">
                           {userProfile.majorOrField}
