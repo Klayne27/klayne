@@ -60,11 +60,15 @@ export const signup = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    const now = new Date();
+
     const newUser = new User({
       fullName,
       username,
       email,
       password: hashedPassword,
+      lastReadPublicChatTimestamp: now,
+      lastReadBoardTimestamp: now,
     });
 
     if (newUser) {
@@ -197,12 +201,16 @@ export const googleAuth = async (req, res) => {
         attemptCount++;
       }
 
+      const googleNow = new Date();
+
       user = new User({
         fullName: name,
         username: username,
         email: email,
         password: null,
         googleId: uid,
+        lastReadPublicChatTimestamp: googleNow,
+        lastReadBoardTimestamp: googleNow,
       });
 
       if (picture) {

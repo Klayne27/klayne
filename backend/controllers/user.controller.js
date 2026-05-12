@@ -616,11 +616,13 @@ export const updatePrivacySettings = async (req, res) => {
           // actually has — don't rely on any extended scheduledEndTime value.
           // expectedEndTime is the original scheduledEndTime as stored; since we
           // removed the heartbeat extension, this is now always accurate.
+          // pomodoro.controller.js / updatePrivacySettings — in the going-public branch
           io.to("live_pomodoro").emit("live_session_started", {
             userId: userId.toString(),
             username: updatedUser.username,
             fullName: updatedUser.fullName,
-            profileImg: updatedUser.profileImg
+            // ── Normalize to the plain { imageUrl } shape that getLiveSessions returns ──
+            profileImg: updatedUser.profileImg?.imageUrl
               ? {
                   _id: updatedUser.profileImg._id,
                   imageUrl: updatedUser.profileImg.imageUrl,

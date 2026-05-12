@@ -3,7 +3,7 @@ import { CiMail, CiTrophy } from "react-icons/ci"
 import { GoBell, GoHome } from "react-icons/go"
 import { IoChatbubblesOutline } from "react-icons/io5"
 import { LuListTodo } from "react-icons/lu"
-import { MdLibraryBooks } from "react-icons/md"
+import { MdOutlineLibraryBooks } from "react-icons/md"
 import { useSocket } from "../../../context/SocketContext"
 import { formatCount } from "../../../utils/textUtils"
 import { PiCoatHanger } from "react-icons/pi"
@@ -79,7 +79,7 @@ function FloatingNav() {
   const studyItems = [
     { icon: <LuListTodo size={22} />, path: "/todos", label: "Tasks" },
     { icon: <CiTrophy size={24} />, path: "/study-leaderboard", label: "Leaderboard" },
-    { icon: <MdLibraryBooks size={22} />, path: "/study-activity", label: "Activity" },
+    { icon: <MdOutlineLibraryBooks size={22} />, path: "/study-activity", label: "Activity" },
     { icon: <PiCoatHanger size={22} />, path: "/wardrobe", label: "Wardrobe" },
   ]
 

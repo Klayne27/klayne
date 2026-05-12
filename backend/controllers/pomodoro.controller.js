@@ -163,24 +163,32 @@ const emitToUser = (userId, eventName, payload) => {
     io.to(socketIds).emit(eventName, payload);
   }
 };
+
+// pomodoro.controller.js — broadcastSessionStart
 const broadcastSessionStart = async (userId, activeSession) => {
   const userDoc = await User.findById(userId)
-    .select("isPomodoroPrivate username fullName profileImg nameColor equipped")
+    .select(
+      "isPomodoroPrivate username fullName profileImg nameColor equipped pomodoroLevel totalStudyDuration totalSessionsCompleted",
+    )
     .populate("profileImg", "imageUrl")
     .lean();
 
   if (!userDoc || userDoc.isPomodoroPrivate) return;
 
   io.to("live_pomodoro").emit("live_session_started", {
-    userId: userId.toString(),
-    username: userDoc.username,
-    fullName: userDoc.fullName,
-    profileImg: userDoc.profileImg,
-    nameColor: userDoc.nameColor,
-    equipped: userDoc.equipped,
-    expectedEndTime: activeSession.scheduledEndTime.getTime(),
-    startTime: activeSession.startTime.getTime(),
-    sessionCount: activeSession.sessionCount,
+    userId:                userId.toString(),
+    username:              userDoc.username,
+    fullName:              userDoc.fullName,
+    profileImg:            userDoc.profileImg,
+    nameColor:             userDoc.nameColor,
+    equipped:              userDoc.equipped ?? null,
+    expectedEndTime:       activeSession.scheduledEndTime.getTime(),
+    startTime:             activeSession.startTime.getTime(),
+    sessionCount:          activeSession.sessionCount,
+    // ── Match the getLiveSessions payload exactly ──────────────────────────
+    pomodoroLevel:         userDoc.pomodoroLevel         ?? 0,
+    totalStudyDuration:    userDoc.totalStudyDuration    ?? 0,
+    totalSessionsCompleted:userDoc.totalSessionsCompleted ?? 0,
   });
 };
 
@@ -362,13 +370,31 @@ export const getActiveSession = async (req, res) => {
 // ── POST /api/study/session/end ───────────────────────────────────────────────
 export const endSession = async (req, res) => {
   try {
-    const { taskId } = req.body;
+    const { taskId, duration: clientDuration } = req.body;
     const userId = req.user._id;
 
     const activeSession = await ActiveSession.findOne({ user: userId });
+
+    // ── Legacy fallback ────────────────────────────────────────────────────
+    // Clients on old builds (or whose startSession call failed) never created
+    // an ActiveSession. Accept client-provided duration as a last resort so
+    // their session is still logged instead of silently dropped.
     if (!activeSession) {
-      return res.status(404).json({ error: "No active session found." });
+      if (!clientDuration || clientDuration <= 0) {
+        return res.status(404).json({ error: "No active session found." });
+      }
+      console.warn(
+        `[endSession] No ActiveSession for user ${userId} — using client duration ${clientDuration}min (legacy fallback)`,
+      );
+      const result = await processStudySession({
+        userId,
+        duration: clientDuration,
+        taskId: taskId || null,
+      });
+      emitToUser(userId, "pomodoroSessionCompleted", { result, validatedDuration: clientDuration });
+      return res.status(200).json(result);
     }
+    // ──────────────────────────────────────────────────────────────────────
 
     const now = new Date();
 
@@ -379,30 +405,22 @@ export const endSession = async (req, res) => {
       });
     }
 
-    const elapsedMs = now - activeSession.startTime;
+    const elapsedMs      = now - activeSession.startTime;
     const elapsedMinutes = elapsedMs / 1000 / 60;
     const TOLERANCE_SECONDS = 15;
 
     if (elapsedMinutes < activeSession.plannedDuration - TOLERANCE_SECONDS / 60) {
       return res.status(400).json({
         error: "Session not complete yet.",
-        remainingSeconds: Math.max(
-          0,
-          Math.ceil((activeSession.scheduledEndTime - now) / 1000),
-        ),
+        remainingSeconds: Math.max(0, Math.ceil((activeSession.scheduledEndTime - now) / 1000)),
       });
     }
 
-    // findOneAndDelete is atomic — prevents double-submission
-    const deleted = await ActiveSession.findOneAndDelete({
-      _id: activeSession._id,
-      user: userId,
-    });
+    const deleted = await ActiveSession.findOneAndDelete({ _id: activeSession._id, user: userId });
     if (!deleted) {
       return res.status(404).json({ error: "No active session found." });
     }
 
-    // Remove from live dashboard and clear denormalized field
     await broadcastSessionStop(userId);
 
     if (activeSession.isBreak) {
@@ -410,19 +428,14 @@ export const endSession = async (req, res) => {
       return res.status(200).json({ message: "Break ended.", isBreak: true });
     }
 
-    const validatedDuration = Math.min(
-      activeSession.plannedDuration,
-      Math.ceil(elapsedMinutes),
-    );
+    const validatedDuration = Math.min(activeSession.plannedDuration, Math.ceil(elapsedMinutes));
     const result = await processStudySession({
       userId,
       duration: validatedDuration,
       taskId: taskId || activeSession.taskId,
     });
 
-    // Notify all the user's devices that the session is complete
     emitToUser(userId, "pomodoroSessionCompleted", { result, validatedDuration });
-
     return res.status(200).json(result);
   } catch (error) {
     console.error("Error in endSession:", error);
@@ -488,6 +501,7 @@ export const pauseSession = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
 
 // ── DELETE /api/study/session/active ─────────────────────────────────────────
 export const cancelSession = async (req, res) => {
@@ -605,4 +619,33 @@ export const getLiveSessions = async (req, res) => {
 // GET /api/study/server-time
 export const getServerTime = (_req, res) => {
   res.status(200).json({ serverTime: Date.now() });
+};
+
+// PATCH /api/study/session/task
+export const updateSessionTask = async (req, res) => {
+  try {
+    const { taskId } = req.body;
+    const userId = req.user._id;
+
+    const session = await ActiveSession.findOneAndUpdate(
+      { user: userId },
+      { taskId: taskId || null },
+      { new: true },
+    );
+
+    if (!session) {
+      // No active session — not an error, user might have switched tasks
+      // right as the session ended. Return the new taskId so the client can
+      // use it when starting the next session.
+      return res.status(200).json({ taskId: taskId || null, noSession: true });
+    }
+
+    // Notify other open devices so they mirror the task change instantly
+    emitToUser(userId, "pomodoroTaskUpdated", { taskId: taskId || null });
+
+    return res.status(200).json({ taskId: session.taskId });
+  } catch (error) {
+    console.error("Error in updateSessionTask:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 };

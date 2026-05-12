@@ -15,11 +15,15 @@ import PomodoroTimerDisplay from "../../features/pomodoro/components/PomodoroTim
 import QuickTaskPanel from "../../features/pomodoro/components/QuickTaskPanel"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { useGetPomodoroSettings } from "../../features/pomodoro/pomodoroHooks/usePomodoroQueries"
-import { usePauseSession, useStartSession } from "../../features/pomodoro/pomodoroHooks/usePomodoroMutations"
+import {
+  usePauseSession,
+  useSelectTask,
+  useStartSession,
+} from "../../features/pomodoro/pomodoroHooks/usePomodoroMutations"
 import { useCompleteTodo } from "../../features/todos/todoHooks/useTodoMutations"
 import { useGetUserTodoLists } from "../../features/todos/todoListHooks/useTodoListQueries"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
-import { usePomodoroTimerStore } from "../../store/usePomodoroTimerStore"
+import { usePomodoroTimerStore, STORAGE_KEYS } from "../../store/usePomodoroTimerStore"
 import { useTodoStore } from "../../store/useTodoStore"
 import useXpStore from "../../store/useXpStore"
 import { showAppToast } from "../../utils/showAppToast"
@@ -30,20 +34,13 @@ const getTimerState = (isGoalReached, isBreak, sessionCount, settings) => {
   if (isGoalReached) {
     return { label: "Finished!", color: "text-slate-400", glow: "rgba(100,116,139,0.15)" }
   }
-
   if (!isBreak) {
-    return {
-      label: "Focus Time",
-      color: "text-primary",
-      glow: "oklch(var(--p) / 0.15)",
-    }
+    return { label: "Focus Time", color: "text-primary", glow: "oklch(var(--p) / 0.15)" }
   }
-
   const isLongBreak =
     sessionCount > 0 &&
     settings?.sessionsBeforeLongBreak > 0 &&
     sessionCount % settings.sessionsBeforeLongBreak === 0
-
   return isLongBreak
     ? { label: "Long Break", color: "text-indigo-400", glow: "rgba(99,102,241,0.18)" }
     : { label: "Short Break", color: "text-teal-400", glow: "rgba(45,212,191,0.18)" }
@@ -52,12 +49,10 @@ const getTimerState = (isGoalReached, isBreak, sessionCount, settings) => {
 const getCurrentPhaseDurationMinutes = (settings, isBreak, sessionCount) => {
   if (!settings) return 0
   if (!isBreak) return settings.sessionDuration
-
   const isLongBreak =
     sessionCount > 0 &&
     settings.sessionsBeforeLongBreak > 0 &&
     sessionCount % settings.sessionsBeforeLongBreak === 0
-
   return isLongBreak ? settings.longBreakDuration : settings.shortBreakDuration
 }
 
@@ -89,7 +84,6 @@ const PomodoroPage = () => {
 
   const timerState = getTimerState(isGoalReached, isBreak, sessionCount, settings)
 
-  const [visuallyCompleted, setVisuallyCompleted] = useState({})
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
   const [milestoneLevel] = useState(null)
@@ -100,16 +94,32 @@ const PomodoroPage = () => {
   const alarmAudioRef = useRef(null)
   const { showCreateTodoListModal, setShowCreateTodoListModal } = useTodoStore()
 
+    const selectTask = useSelectTask()
+
+
   const { myTodoLists } = useGetUserTodoLists()
   const allTodos = useMemo(
     () => myTodoLists?.pages?.flatMap((page) => page.data.flatMap((list) => list.todos)) ?? [],
     [myTodoLists],
   )
 
-  const selectedTask = allTodos.find((todo) => todo._id === selectedTaskId)
-  const isVisuallyCompleted = visuallyCompleted[selectedTask?._id] || selectedTask?.completed
+  // ── Selected task — resolved from store (which reads localStorage on init) ──
+  // selectedTaskId is already persisted by the store's setSelectedTaskId action
+  // (writes to STORAGE_KEYS.SELECTED_TASK), and the store initialises from it:
+  //   selectedTaskId: readStorage(STORAGE_KEYS.SELECTED_TASK) || ""
+  // So a refresh naturally restores it. No extra effect needed.
+  const selectedTask = allTodos.find((todo) => todo._id === selectedTaskId) ?? null
+
+  // When the selected task no longer exists in the todo list (completed / deleted),
+  // clear the selection so we don't silently hold a stale ID.
+  const selectedTaskIdIsStale = selectedTaskId && allTodos.length > 0 && !selectedTask
+  if (selectedTaskIdIsStale) {
+    setSelectedTaskId(null)
+  }
+
   const { completeTodo } = useCompleteTodo()
 
+  // ── Handlers ──────────────────────────────────────────────────────────────
   const handleStart = useCallback(() => {
     if (isActive || !settings || timer <= 0 || isGoalReached) return
 
@@ -117,7 +127,6 @@ const PomodoroPage = () => {
       alarmAudioRef.current = new Audio("/alarm.mp3")
       alarmAudioRef.current.volume = 0.3
     }
-
     alarmAudioRef.current
       .play()
       .then(() => {
@@ -150,7 +159,6 @@ const PomodoroPage = () => {
 
   const handlePause = useCallback(() => {
     if (!isActive) return
-
     setIsActive(false)
     persistPause(timer)
     pauseServerSession({ remainingSeconds: timer })
@@ -158,7 +166,6 @@ const PomodoroPage = () => {
 
   const handleReset = useCallback(() => {
     if (!settings) return
-
     cancelServerSession()
     setIsActive(false)
     setTimer(settings.sessionDuration * 60)
@@ -180,10 +187,8 @@ const PomodoroPage = () => {
 
   const handleResetCurrent = useCallback(() => {
     if (!settings) return
-
     cancelServerSession()
     setIsActive(false)
-
     const duration = getCurrentPhaseDurationMinutes(settings, isBreak, sessionCount) * 60
     setTimer(duration)
     persistPause(duration)
@@ -193,12 +198,10 @@ const PomodoroPage = () => {
 
   const handleSessionEndManual = useCallback(() => {
     if (!engineActions) return
-
     if (engineActions.forceEnd) {
       engineActions.forceEnd()
       return
     }
-
     if (engineActions.isEndingSessionRef) engineActions.isEndingSessionRef.current = false
     engineActions.handleSessionEnd?.()
   }, [engineActions])
@@ -207,27 +210,23 @@ const PomodoroPage = () => {
     handleSessionEndManual()
   }, [handleSessionEndManual])
 
-  const handleComplete = useCallback(
-    (todoId, event) => {
-      event.stopPropagation()
-      if (!selectedTask || selectedTask.user !== authUser._id || isVisuallyCompleted) return
+const handleComplete = useCallback(
+  (todoId, event) => {
+    event.stopPropagation()
+    const task = allTodos.find((t) => t._id === todoId)
+    if (!task || task.user !== authUser._id) return
 
-      showAppToast("Todo completed!", "success")
-      setVisuallyCompleted((prev) => ({ ...prev, [todoId]: true }))
-      completeTodo(todoId)
+    completeTodo(todoId)
 
-      const currentIndex = allTodos.findIndex((todo) => todo._id === todoId)
-      setSelectedTaskId(allTodos[currentIndex + 1]?._id ?? null)
-    },
-    [
-      allTodos,
-      authUser,
-      completeTodo,
-      isVisuallyCompleted,
-      selectedTask,
-      setSelectedTaskId,
-    ],
-  )
+    if (selectedTaskId === todoId) {
+      const currentIndex = allTodos.findIndex((t) => t._id === todoId)
+      const next = allTodos.slice(currentIndex + 1).find((t) => !t.completed)
+      selectTask(next?._id ?? null) // ← was setSelectedTaskId
+    }
+  },
+  [allTodos, authUser, completeTodo, selectTask, selectedTaskId],
+)
+
 
   const handleOpenSettingsPage = () => {
     if (isMobile) navigate("/pomodoro-settings")
@@ -295,26 +294,22 @@ const PomodoroPage = () => {
             onResetTimerClick={() => setShowResetTimerModal(true)}
           />
 
+          {/* ── Active task banner ── */}
           <div className="w-full max-w-sm px-6">
-            {selectedTask ? (
+            {selectedTask && !selectedTask.completed ? (
               <div className="group flex items-center gap-4 rounded-3xl border border-accent/50 bg-white/[0.03] p-2 pr-4 shadow-xl ring-1 ring-white/5 backdrop-blur-md">
                 <button
                   onClick={(event) => handleComplete(selectedTask._id, event)}
                   className={`flex size-6 shrink-0 items-center justify-center rounded-2xl border-2 shadow-inner transition-all hover:scale-105 ${getPriorityColor(selectedTask.priority)}`}
                 />
-
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <p className="text-[8px] font-black uppercase tracking-widest text-slate-500">
                       Focusing
                     </p>
-                    {/* Pulsing indicator to show it's the active task */}
                     <span className="h-1 w-1 animate-pulse rounded-full bg-primary" />
                   </div>
-
                   <p className="truncate text-sm font-bold tracking-tight">{selectedTask.title}</p>
-
-                  {/* --- Enhanced Date & Time Display --- */}
                   {selectedTask.dueDate && (
                     <div className="mt-0.5 flex items-center gap-1.5 text-[10px] font-medium text-slate-500">
                       <span className="opacity-70">Due:</span>
@@ -324,25 +319,16 @@ const PomodoroPage = () => {
                           day: "numeric",
                         })}
                       </span>
-
-                      {/* Show time only if it's not set to 00:00 */}
                       {(() => {
                         const d = new Date(selectedTask.dueDate)
-                        // If minutes or hours exist, we show the time
                         const taskHasTime = d.getHours() !== 0 || d.getMinutes() !== 0
-
-                        return (
-                          <span className="text-">
-                            {formatSuggestedDate(d, taskHasTime)}
-                          </span>
-                        )
+                        return <span>{formatSuggestedDate(d, taskHasTime)}</span>
                       })()}
                     </div>
                   )}
                 </div>
-
                 <button
-                  onClick={() => setSelectedTaskId(null)}
+                  onClick={() => selectTask(null)}
                   className="shrink-0 p-2 text-slate-600 transition-colors hover:text-red-400"
                 >
                   <IoClose size={18} />
@@ -366,10 +352,7 @@ const PomodoroPage = () => {
           <div className="h-[1px] flex-1 bg-gradient-to-r from-slate-800 via-slate-800 to-transparent" />
         </div>
 
-        <QuickTaskPanel
-          visuallyCompleted={visuallyCompleted}
-          setVisuallyCompleted={setVisuallyCompleted}
-        />
+        <QuickTaskPanel />
       </main>
 
       {settings && isSettingsOpen && (

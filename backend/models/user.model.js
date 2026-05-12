@@ -162,7 +162,7 @@ const userSchema = new mongoose.Schema(
     },
     lastReadPublicChatTimestamp: {
       type: Date,
-      default: null,
+      default: Date.now, 
     },
     lastReadVentFeedTimestamp: {
       type: Date,
@@ -176,7 +176,7 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
-    lastReadBoardTimestamp: { type: Date, default: null },
+    lastReadBoardTimestamp: { type: Date, default: Date.now },
     badges: [
       {
         type: String,

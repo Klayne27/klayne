@@ -53,6 +53,7 @@ import UserAvatar from "./UserAvatar"
 import UserFullName from "./UserFullname"
 import { getNameplateClass } from "../../utils/getNameplateClass"
 import { createPortal } from "react-dom"
+import { useTabNotificationBadge } from "../../hooks/customHooks/useTabNotificationBadge"
 
 const Sidebar = ({
   onOpenCreatePostModal,
@@ -88,6 +89,8 @@ const Sidebar = ({
 
   const { pathname } = useLocation()
   const navigate = useNavigate()
+
+
 
   const [showPopover, setShowPopover] = useState(false)
   const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false)
@@ -127,22 +130,22 @@ const Sidebar = ({
     setShowSideModal((prev) => !prev)
   }, [])
 
-  useEffect(() => {
-    let faviconLink = document.querySelector('link[rel="icon"]')
+  // useEffect(() => {
+  //   let faviconLink = document.querySelector('link[rel="icon"]')
 
-    if (!originalFaviconHref.current) {
-      if (faviconLink) {
-        const a = document.createElement("a")
-        a.href = faviconLink.getAttribute("href")
-        originalFaviconHref.current = a.href
-      } else {
-        faviconLink = document.createElement("link")
-        faviconLink.rel = "icon"
-        document.head.appendChild(faviconLink)
-        originalFaviconHref.current = "/klaynelogoreal.png"
-      }
-    }
-  }, [])
+  //   if (!originalFaviconHref.current) {
+  //     if (faviconLink) {
+  //       const a = document.createElement("a")
+  //       a.href = faviconLink.getAttribute("href")
+  //       originalFaviconHref.current = a.href
+  //     } else {
+  //       faviconLink = document.createElement("link")
+  //       faviconLink.rel = "icon"
+  //       document.head.appendChild(faviconLink)
+  //       originalFaviconHref.current = "/klaynelogoreal.png"
+  //     }
+  //   }
+  // }, [])
 
   const isOnline = authUser.statusPreference === "online"
   const nameplateClass = getNameplateClass(authUser?.equipped?.nameplate)
@@ -154,6 +157,8 @@ const Sidebar = ({
     newPostCount +
     newVentPostCount + 
     followRequestCount
+
+  useTabNotificationBadge(totalNotifications)
 
   useEffect(() => {
     const hasAnyNewNotification =
@@ -167,55 +172,55 @@ const Sidebar = ({
       ? `(${totalNotifications}) ${originalTitle.current}`
       : originalTitle.current
 
-    const faviconLink = document.querySelector('link[rel="icon"]')
-    if (!faviconLink || !originalFaviconHref.current) return
+    // const faviconLink = document.querySelector('link[rel="icon"]')
+    // if (!faviconLink || !originalFaviconHref.current) return
 
-    if (!hasAnyNewNotification) {
-      faviconLink.href = originalFaviconHref.current
-      return
-    }
+    // if (!hasAnyNewNotification) {
+    //   faviconLink.href = originalFaviconHref.current
+    //   return
+    // }
 
-    const canvas = document.createElement("canvas")
-    canvas.width = 32
-    canvas.height = 32
-    const ctx = canvas.getContext("2d")
+    // const canvas = document.createElement("canvas")
+    // canvas.width = 32
+    // canvas.height = 32
+    // const ctx = canvas.getContext("2d")
 
-    const img = new Image()
-    img.crossOrigin = "anonymous"
+    // const img = new Image()
+    // img.crossOrigin = "anonymous"
 
-    img.onload = () => {
-      ctx.clearRect(0, 0, 32, 32)
-      ctx.drawImage(img, 0, 0, 32, 32)
+    // img.onload = () => {
+    //   ctx.clearRect(0, 0, 32, 32)
+    //   ctx.drawImage(img, 0, 0, 32, 32)
 
-      const badgeSize = 10
-      ctx.beginPath()
-      ctx.arc(32 - badgeSize / 2, badgeSize / 2, badgeSize / 2, 0, Math.PI * 2)
-      ctx.fillStyle = "red"
-      ctx.fill()
-      ctx.lineWidth = 1
-      ctx.strokeStyle = "#000"
-      ctx.stroke()
+    //   const badgeSize = 10
+    //   ctx.beginPath()
+    //   ctx.arc(32 - badgeSize / 2, badgeSize / 2, badgeSize / 2, 0, Math.PI * 2)
+    //   ctx.fillStyle = "red"
+    //   ctx.fill()
+    //   ctx.lineWidth = 1
+    //   ctx.strokeStyle = "#000"
+    //   ctx.stroke()
 
-      faviconLink.href = canvas.toDataURL("image/png")
-    }
+    //   faviconLink.href = canvas.toDataURL("image/png")
+    // }
 
-    img.onerror = () => {
-      ctx.clearRect(0, 0, 32, 32)
-      ctx.beginPath()
-      ctx.arc(24, 8, 5, 0, Math.PI * 2)
-      ctx.fillStyle = "red"
-      ctx.fill()
-      faviconLink.href = canvas.toDataURL("image/png")
-    }
+    // img.onerror = () => {
+    //   ctx.clearRect(0, 0, 32, 32)
+    //   ctx.beginPath()
+    //   ctx.arc(24, 8, 5, 0, Math.PI * 2)
+    //   ctx.fillStyle = "red"
+    //   ctx.fill()
+    //   faviconLink.href = canvas.toDataURL("image/png")
+    // }
 
-    img.src = originalFaviconHref.current
+    // img.src = originalFaviconHref.current
     const originallTitleCurrent = originalTitle.current
 
     return () => {
       document.title = originallTitleCurrent
-      if (faviconLink && originalFaviconHref.current) {
-        faviconLink.href = originalFaviconHref.current
-      }
+      // if (faviconLink && originalFaviconHref.current) {
+      //   faviconLink.href = originalFaviconHref.current
+      // }
     }
   }, [
     unreadMessageCount,

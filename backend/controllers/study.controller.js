@@ -93,174 +93,174 @@ export const getPomodoroSettings = async (req, res) => {
   }
 };
 
-export const endStudySession = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const { duration, taskId } = req.body;
+// export const endStudySession = async (req, res) => {
+//   try {
+//     const userId = req.user._id;
+//     const { duration, taskId } = req.body;
 
-    if (!duration) {
-      return res.status(400).json({ error: "Duration is required" });
-    }
+//     if (!duration) {
+//       return res.status(400).json({ error: "Duration is required" });
+//     }
 
-    await StudySession.create({
-      user: userId,
-      duration,
-      task: taskId,
-      date: new Date(),
-    });
+//     await StudySession.create({
+//       user: userId,
+//       duration,
+//       task: taskId,
+//       date: new Date(),
+//     });
 
-    const user = await User.findById(userId);
-    const today = new Date();
+//     const user = await User.findById(userId);
+//     const today = new Date();
 
-    // Helper for YYYY-MM-DD
-    const getDateString = (date) => date.toISOString().split("T")[0];
-    const todayString = getDateString(today);
+//     // Helper for YYYY-MM-DD
+//     const getDateString = (date) => date.toISOString().split("T")[0];
+//     const todayString = getDateString(today);
 
-    // --- NEW: HEATMAP LOGIC ---
-    const historyIndex = user.studyHistory.findIndex(
-      (entry) => entry.date === todayString,
-    );
+//     // --- NEW: HEATMAP LOGIC ---
+//     const historyIndex = user.studyHistory.findIndex(
+//       (entry) => entry.date === todayString,
+//     );
 
-    if (historyIndex !== -1) {
-      user.studyHistory[historyIndex].count += 1;
-      user.studyHistory[historyIndex].duration += duration;
-    } else {
-      user.studyHistory.push({
-        date: todayString,
-        count: 1,
-        duration: duration,
-      });
+//     if (historyIndex !== -1) {
+//       user.studyHistory[historyIndex].count += 1;
+//       user.studyHistory[historyIndex].duration += duration;
+//     } else {
+//       user.studyHistory.push({
+//         date: todayString,
+//         count: 1,
+//         duration: duration,
+//       });
 
-      if (user.studyHistory.length > 365) {
-        user.studyHistory.shift();
-      }
-    }
+//       if (user.studyHistory.length > 365) {
+//         user.studyHistory.shift();
+//       }
+//     }
 
-    const getMondayOfWeek = (date) => {
-      const d = new Date(date);
-      const day = d.getUTCDay();
-      const diff = day === 0 ? -6 : 1 - day;
-      d.setUTCDate(d.getUTCDate() + diff);
-      d.setUTCHours(0, 0, 0, 0);
-      return d.toISOString().split("T")[0];
-    };
+//     const getMondayOfWeek = (date) => {
+//       const d = new Date(date);
+//       const day = d.getUTCDay();
+//       const diff = day === 0 ? -6 : 1 - day;
+//       d.setUTCDate(d.getUTCDate() + diff);
+//       d.setUTCHours(0, 0, 0, 0);
+//       return d.toISOString().split("T")[0];
+//     };
 
-    const currentWeekStart = getMondayOfWeek(today);
+//     const currentWeekStart = getMondayOfWeek(today);
 
-    if (user.weeklyStats.weekStart !== currentWeekStart) {
-      user.weeklyStats = {
-        studyDuration: 0,
-        sessionsCompleted: 0,
-        xpEarned: 0,
-        weekStart: currentWeekStart,
-      };
-    }
+//     if (user.weeklyStats.weekStart !== currentWeekStart) {
+//       user.weeklyStats = {
+//         studyDuration: 0,
+//         sessionsCompleted: 0,
+//         xpEarned: 0,
+//         weekStart: currentWeekStart,
+//       };
+//     }
 
-    user.weeklyStats.studyDuration += duration;
-    user.weeklyStats.sessionsCompleted += 1;
+//     user.weeklyStats.studyDuration += duration;
+//     user.weeklyStats.sessionsCompleted += 1;
 
-    const currentMonth = today.toISOString().slice(0, 7);
-    if (user.monthlyStats.lastResetMonth !== currentMonth) {
-      user.monthlyStats = {
-        studyDuration: 0,
-        sessionsCompleted: 0,
-        xpEarned: 0,
-        lastResetMonth: currentMonth,
-      };
-      user.monthlyStudyStreak = 0;
-      user.lastMonthlyStudyDate = null;
-    }
+//     const currentMonth = today.toISOString().slice(0, 7);
+//     if (user.monthlyStats.lastResetMonth !== currentMonth) {
+//       user.monthlyStats = {
+//         studyDuration: 0,
+//         sessionsCompleted: 0,
+//         xpEarned: 0,
+//         lastResetMonth: currentMonth,
+//       };
+//       user.monthlyStudyStreak = 0;
+//       user.lastMonthlyStudyDate = null;
+//     }
 
-    user.totalStudyDuration += duration;
-    user.totalSessionsCompleted += 1;
-    user.monthlyStats.studyDuration += duration;
-    user.monthlyStats.sessionsCompleted += 1;
+//     user.totalStudyDuration += duration;
+//     user.totalSessionsCompleted += 1;
+//     user.monthlyStats.studyDuration += duration;
+//     user.monthlyStats.sessionsCompleted += 1;
 
-    const updateStreak = (lastStudyDate, currentStreak) => {
-      const lastStudyString = lastStudyDate
-        ? getDateString(new Date(lastStudyDate))
-        : null;
+//     const updateStreak = (lastStudyDate, currentStreak) => {
+//       const lastStudyString = lastStudyDate
+//         ? getDateString(new Date(lastStudyDate))
+//         : null;
 
-      if (lastStudyString === todayString) {
-        return { streak: currentStreak, resetVacation: false };
-      }
+//       if (lastStudyString === todayString) {
+//         return { streak: currentStreak, resetVacation: false };
+//       }
 
-      const yesterday = new Date(today);
-      yesterday.setDate(today.getDate() - 1);
-      const yesterdayString = getDateString(yesterday);
+//       const yesterday = new Date(today);
+//       yesterday.setDate(today.getDate() - 1);
+//       const yesterdayString = getDateString(yesterday);
 
-      let newStreak = currentStreak;
-      let resetVacation = false;
+//       let newStreak = currentStreak;
+//       let resetVacation = false;
 
-      if (lastStudyString === yesterdayString || !lastStudyString) {
-        newStreak += 1;
-      } else {
-        const lastStudyDay = lastStudyDate ? new Date(lastStudyDate) : null;
-        const vacationStarted = user.vacationModeStartDate
-          ? new Date(user.vacationModeStartDate)
-          : null;
+//       if (lastStudyString === yesterdayString || !lastStudyString) {
+//         newStreak += 1;
+//       } else {
+//         const lastStudyDay = lastStudyDate ? new Date(lastStudyDate) : null;
+//         const vacationStarted = user.vacationModeStartDate
+//           ? new Date(user.vacationModeStartDate)
+//           : null;
 
-        const dayAfterLastStudy = new Date(lastStudyDay);
-        dayAfterLastStudy.setUTCDate(lastStudyDay.getUTCDate() + 1);
-        dayAfterLastStudy.setUTCHours(0, 0, 0, 0);
+//         const dayAfterLastStudy = new Date(lastStudyDay);
+//         dayAfterLastStudy.setUTCDate(lastStudyDay.getUTCDate() + 1);
+//         dayAfterLastStudy.setUTCHours(0, 0, 0, 0);
 
-        const isGapExcusedByVacation =
-          vacationStarted &&
-          lastStudyDay &&
-          vacationStarted.getTime() <= dayAfterLastStudy.getTime();
+//         const isGapExcusedByVacation =
+//           vacationStarted &&
+//           lastStudyDay &&
+//           vacationStarted.getTime() <= dayAfterLastStudy.getTime();
 
-        if (isGapExcusedByVacation) {
-          newStreak += 1;
-          resetVacation = true;
-        } else {
-          newStreak = 1;
-        }
-      }
-      return { streak: newStreak, resetVacation };
-    };
+//         if (isGapExcusedByVacation) {
+//           newStreak += 1;
+//           resetVacation = true;
+//         } else {
+//           newStreak = 1;
+//         }
+//       }
+//       return { streak: newStreak, resetVacation };
+//     };
 
-    const totalStreakResult = updateStreak(user.lastStudyDate, user.studyStreak);
-    user.studyStreak = totalStreakResult.streak;
+//     const totalStreakResult = updateStreak(user.lastStudyDate, user.studyStreak);
+//     user.studyStreak = totalStreakResult.streak;
 
-    const monthlyStreakResult = updateStreak(
-      user.lastMonthlyStudyDate,
-      user.monthlyStudyStreak,
-    );
-    user.monthlyStudyStreak = monthlyStreakResult.streak;
+//     const monthlyStreakResult = updateStreak(
+//       user.lastMonthlyStudyDate,
+//       user.monthlyStudyStreak,
+//     );
+//     user.monthlyStudyStreak = monthlyStreakResult.streak;
 
-    if (totalStreakResult.resetVacation || monthlyStreakResult.resetVacation) {
-      user.isVacationMode = false;
-      user.vacationModeStartDate = null;
-    }
+//     if (totalStreakResult.resetVacation || monthlyStreakResult.resetVacation) {
+//       user.isVacationMode = false;
+//       user.vacationModeStartDate = null;
+//     }
 
-    user.lastStudyDate = today;
-    user.lastMonthlyStudyDate = today;
+//     user.lastStudyDate = today;
+//     user.lastMonthlyStudyDate = today;
 
-    if (user.studyStreak > user.longestStudyStreak) {
-      user.longestStudyStreak = user.studyStreak;
-    }
+//     if (user.studyStreak > user.longestStudyStreak) {
+//       user.longestStudyStreak = user.studyStreak;
+//     }
 
-    const xpResult = await handleXPAndLeveling(user, duration);
-    if (xpResult && xpResult.xpEarned) {
-      user.monthlyStats.xpEarned += xpResult.xpEarned;
-      user.weeklyStats.xpEarned += xpResult.xpEarned;
-    }
+//     const xpResult = await handleXPAndLeveling(user, duration);
+//     if (xpResult && xpResult.xpEarned) {
+//       user.monthlyStats.xpEarned += xpResult.xpEarned;
+//       user.weeklyStats.xpEarned += xpResult.xpEarned;
+//     }
 
-    await user.save();
-    await checkAndAwardBadges(user);
-    const newUnlocks = await checkUnlocks(user);
+//     await user.save();
+//     await checkAndAwardBadges(user);
+//     const newUnlocks = await checkUnlocks(user);
 
-    res.status(200).json({
-      message: "Study session logged successfully",
-      xpResult,
-      studyHistory: user.studyHistory,
-      newUnlocks, // frontend can show a toast per unlocked item
-    });
-  } catch (error) {
-    console.error("Error in endStudySession", error.message);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
+//     res.status(200).json({
+//       message: "Study session logged successfully",
+//       xpResult,
+//       studyHistory: user.studyHistory,
+//       newUnlocks, // frontend can show a toast per unlocked item
+//     });
+//   } catch (error) {
+//     console.error("Error in endStudySession", error.message);
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// };
 
 export const updatePomodoroSettings = async (req, res) => {
   try {

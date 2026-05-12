@@ -2,22 +2,12 @@ import mongoose from "mongoose";
 
 const studySessionSchema = new mongoose.Schema(
   {
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-    duration: {
-      type: Number,
-      required: true,
-    },
-    date: {
-      type: Date,
-      required: true,
-    },
-
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    duration: { type: Number, required: true },
+    date: { type: Date, required: true },
+    task: { type: mongoose.Schema.Types.ObjectId, ref: "Todo", default: null }, // ← ADD
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const StudySession = mongoose.model("StudySession", studySessionSchema);

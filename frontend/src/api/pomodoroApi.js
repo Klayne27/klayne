@@ -168,15 +168,26 @@ export const endStudySessionApi = async ({ taskId, duration } = {}) => {
 // pomodoroApi.js — add these
 
 export const getLiveSessionsApi = async () => {
-  const res = await fetch("/api/study/sessions/live");
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Failed to fetch live sessions");
-  return data; // SessionCard[]
-};
+  const res = await fetch("/api/study/sessions/live")
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Failed to fetch live sessions")
+  return data // SessionCard[]
+}
 
 export const getServerTimeApi = async () => {
-  const res = await fetch("/api/study/server-time");
-  const data = await res.json();
-  if (!res.ok) throw new Error("Failed to fetch server time");
-  return data.serverTime; // Unix ms
-};
+  const res = await fetch("/api/study/server-time")
+  const data = await res.json()
+  if (!res.ok) throw new Error("Failed to fetch server time")
+  return data.serverTime // Unix ms
+}
+
+export const updateSessionTaskApi = async ({ taskId }) => {
+  const res = await fetch(`${BASE_URL}/session/task`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ taskId: taskId || null }),
+  })
+  const data = await readJson(res)
+  if (!res.ok) throw apiError("Failed to update session task", res, data)
+  return data
+}

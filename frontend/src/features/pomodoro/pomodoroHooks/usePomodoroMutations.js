@@ -7,6 +7,7 @@ import {
   pauseSessionApi,
   startSessionApi,
   updatePomodoroSettingsApi,
+  updateSessionTaskApi,
 } from "../../../api/pomodoroApi"
 import { showAppToast } from "../../../utils/showAppToast"
 import { usePomodoroTimerStore } from "../../../store/usePomodoroTimerStore"
@@ -297,4 +298,55 @@ export const useServerTimeOffset = () => {
   }, [])
 
   return offset
+}
+
+
+/**
+ * Drop-in replacement for setSelectedTaskId in any UI that lets the user
+ * change their focused task.
+ *
+ * - Updates Zustand + localStorage immediately (optimistic)
+ * - Fires a PATCH to keep ActiveSession.taskId in sync when a focus session
+ *   is running so other devices and the final session log stay correct
+ * - Emits pomodoroTaskUpdated via socket so other open tabs/devices update
+ */
+export const useSelectTask = () => {
+  const queryClient = useQueryClient()
+
+  const setSelectedTaskId = usePomodoroTimerStore((s) => s.setSelectedTaskId)
+
+  const { mutate: syncTaskToServer } = useMutation({
+    mutationFn: updateSessionTaskApi,
+    onSuccess: (data) => {
+      if (!data?.noSession) {
+        // Keep the active-session cache consistent
+        queryClient.setQueryData(pomodoroKeys.active(), (old) =>
+          old ? { ...old, taskId: data.taskId } : old,
+        )
+      }
+    },
+    onError: () => {
+      // Task sync is best-effort; local state is already updated so the
+      // session-end path will still use the correct taskId from the store.
+    },
+  })
+
+  const selectTask = useCallback(
+    (taskId) => {
+      const id = taskId || null
+
+      // 1. Local state — always, immediately
+      setSelectedTaskId(id)
+
+      // 2. Server sync — only during an active focus session (not breaks)
+      //    Read from getState() to avoid stale closure over isActive/isBreak
+      const { isActive, isBreak } = usePomodoroTimerStore.getState()
+      if (isActive && !isBreak) {
+        syncTaskToServer({ taskId: id })
+      }
+    },
+    [setSelectedTaskId, syncTaskToServer],
+  )
+
+  return selectTask
 }

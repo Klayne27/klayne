@@ -17,6 +17,7 @@ import {
   pauseSession,
   sessionHeartbeat,
   startSession,
+  updateSessionTask,
 } from "../controllers/pomodoro.controller.js";
 
 const router = express.Router();
@@ -33,6 +34,8 @@ router.post("/session/end", protectRoute, endSession); // replaces old endStudyS
 router.post("/session/pause", protectRoute, pauseSession);
 router.delete("/session/active", protectRoute, cancelSession);
 router.post("/session/heartbeat", protectRoute, sessionHeartbeat);
+router.patch("/session/task", protectRoute, updateSessionTask);
+
 
 router.get("/sessions/live", protectRoute, getLiveSessions);
 router.get("/server-time",   getServerTime);           // no auth needed

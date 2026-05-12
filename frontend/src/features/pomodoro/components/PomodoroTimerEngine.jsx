@@ -2,7 +2,12 @@ import { useCallback, useEffect, useRef } from "react"
 import { usePomodoroTimerStore, STORAGE_KEYS } from "../../../store/usePomodoroTimerStore"
 import { useGetActiveSession, useGetPomodoroSettings } from "../pomodoroHooks/usePomodoroQueries"
 import { useEndStudySession } from "../pomodoroHooks/usePomodoroMutations"
-import { cancelSessionApi, getActiveSessionApi, sessionHeartbeatApi, startSessionApi } from "../../../api/pomodoroApi"
+import {
+  cancelSessionApi,
+  getActiveSessionApi,
+  sessionHeartbeatApi,
+  startSessionApi,
+} from "../../../api/pomodoroApi"
 import { showAppToast } from "../../../utils/showAppToast"
 import useXpStore from "../../../store/useXpStore"
 import { WARDROBE_CONFIG } from "../../wardrobe/wardrobeConfig"
@@ -569,22 +574,47 @@ export const PomodoroTimerEngine = () => {
   useEffect(() => {
     if (!socket) return
 
+    // PomodoroTimerEngine.jsx — inside the socket useEffect
+
     const advanceAfterExternalEnd = () => {
-      if (Date.now() - lastLocalCompletionAtRef.current < 3000) return
+      // ── Guard 1: this device just completed the session itself ──────────────
+      if (Date.now() - lastLocalCompletionAtRef.current < 3_000) return
+
+      // ── Guard 2: this device is already in the middle of ending ────────────
       if (isEndingSessionRef.current) return
+
+      // ── Guard 3: timer isn't even running here ──────────────────────────────
       if (!isActiveRef.current) return
+
+      // ── Guard 4: session hasn't actually expired on THIS device yet ─────────
+      // Prevents Device 2 from skipping to break because Device 1 fired the
+      // completion event while Device 2 still has remaining time.
+      // Both devices use the same (serverStartTime + plannedDuration) formula,
+      // so the clocks should be within a few seconds of each other.
+      const startTime = startTimestampRef.current
+      const duration = durationAtStartRef.current
+      if (startTime > 0 && duration > 0) {
+        const expectedEndMs = startTime + duration * 1000
+        const ADVANCE_BUFFER = 5_000 // 5 s tolerance for network/clock skew
+        if (Date.now() < expectedEndMs - ADVANCE_BUFFER) {
+          // Still has meaningful time left — let processTick call handleSessionEnd
+          // naturally at the right moment instead of jumping the gun.
+          return
+        }
+      }
+      // ──────────────────────────────────────────────────────────────────────
 
       const currentSettings = settingsRef.current
       if (!currentSettings) return
 
       const currentIsBreak = isBreakRef.current
-      const currentSessionCount = sessionCountRef.current
-      const nextSessionCount = currentIsBreak ? currentSessionCount : currentSessionCount + 1
+      const currentCount = sessionCountRef.current
+      const nextCount = currentIsBreak ? currentCount : currentCount + 1
       const nextIsBreak = !currentIsBreak && !currentSettings.skipBreaks
       const isGoalMet =
         !currentIsBreak &&
         currentSettings.sessionGoalCount > 0 &&
-        nextSessionCount >= currentSettings.sessionGoalCount
+        nextCount >= currentSettings.sessionGoalCount
 
       sessionHandledRef.current = true
       isEndingSessionRef.current = false
@@ -593,11 +623,11 @@ export const PomodoroTimerEngine = () => {
       setTimer(0)
 
       if (isGoalMet) {
-        markGoalReached(nextSessionCount)
+        markGoalReached(nextCount)
         return
       }
 
-      startNextTimer(currentSettings.autoplay, nextSessionCount, nextIsBreak)
+      startNextTimer(currentSettings.autoplay, nextCount, nextIsBreak)
     }
 
     const onSessionStarted = ({ activeSession } = {}) => {
@@ -608,16 +638,22 @@ export const PomodoroTimerEngine = () => {
       syncFromServerSession(activeSession)
     }
 
+    const onTaskUpdated = ({ taskId }) => {
+      setSelectedTaskId(taskId || "")
+    }
+
     socket.on("pomodoroSessionStarted", onSessionStarted)
     socket.on("pomodoroSessionPaused", onSessionPaused)
     socket.on("pomodoroSessionCompleted", advanceAfterExternalEnd)
     socket.on("pomodoroBreakEnded", advanceAfterExternalEnd)
+    socket.on("pomodoroTaskUpdated", onTaskUpdated)
 
     return () => {
       socket.off("pomodoroSessionStarted", onSessionStarted)
       socket.off("pomodoroSessionPaused", onSessionPaused)
       socket.off("pomodoroSessionCompleted", advanceAfterExternalEnd)
       socket.off("pomodoroBreakEnded", advanceAfterExternalEnd)
+      socket.off("pomodoroTaskUpdated", onTaskUpdated)
     }
   }, [
     clearSessionEndTimeout,
@@ -627,6 +663,7 @@ export const PomodoroTimerEngine = () => {
     socket,
     startNextTimer,
     syncFromServerSession,
+    setSelectedTaskId,
   ])
 
   useEffect(() => {
