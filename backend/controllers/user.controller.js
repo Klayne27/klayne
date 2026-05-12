@@ -374,7 +374,7 @@ export const getSuggestedUsersPage = async (req, res) => {
       _id: { $nin: excludeIds },
       blockedBy: { $nin: [new mongoose.Types.ObjectId(userId)] },
     })
-      .sort({ followersCount: -1, createdAt: -1 })
+      .sort({ updatedAt: -1})
       .skip(skip)
       .limit(limit + 1)
       .populate({ path: "profileImg", select: "imageUrl" })
