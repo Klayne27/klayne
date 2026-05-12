@@ -3,7 +3,7 @@ import { useNavigate, Outlet, useLocation } from "react-router-dom"
 import { IoIosTimer } from "react-icons/io"
 import { useTodoStore } from "../../store/useTodoStore"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
-import CreateTodoModal from "../../features/todos/components/CreateTodoModal"
+import TodoAddModal from "../../features/todos/components/TodoAddModal"
 
 const TodoPageLayout = () => {
   const {
@@ -77,7 +77,7 @@ const TodoPageLayout = () => {
         </>
       )}
 
-      {showCreateTodoModal && <CreateTodoModal />}
+      {showCreateTodoModal && <TodoAddModal />}
     </div>
   )
 }

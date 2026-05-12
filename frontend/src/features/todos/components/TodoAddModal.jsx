@@ -28,7 +28,7 @@ const CustomDatePickerInput = forwardRef(({ value, onClick }, ref) => (
   </button>
 ))
 
-const CreateTodoModal = () => {
+const TodoAddModal = () => {
   const {
     showCreateTodoModal,
     setShowCreateTodoModal,
@@ -300,4 +300,4 @@ const handleSubmit = (e) => {
   )
 }
 
-export default CreateTodoModal
+export default TodoAddModal
