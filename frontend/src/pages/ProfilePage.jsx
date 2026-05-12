@@ -175,7 +175,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     userProfile?.isPrivate && !amIFollowing && authUser?._id !== userProfile?._id
 
   const liveSession = userProfile?.activeSession
-  
+
   const isSessionLive =
     liveSession?.isActive &&
     liveSession?.expectedEndTime &&
@@ -689,7 +689,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                       <MdSchool className="size-4 text-slate-500" />
                       <span className="text-sm text-slate-400">
                         Studies{" "}
-                        <span className="font-medium text-slate-200">
+                        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-primary">
                           {userProfile.majorOrField}
                         </span>
                       </span>
