@@ -52,7 +52,7 @@ const SearchPanel = () => {
       {/* Results Dropdown */}
       {showResults && (debouncedQuery.length > 0 || suggestedUsers?.length > 0) && (
         <div
-          className="absolute left-0 top-[45px] z-[100] max-h-[70vh] w-full overflow-y-auto rounded-xl border border-accent bg-base-100 shadow-xl"
+          className="absolute left-0 top-[45px] z-[100] max-h-[70vh] w-full overflow-y-hidden overflow-x-hidden rounded-xl border border-accent bg-base-100 shadow-xl"
           // Removing the style={{maxWidth}} calc.
           // w-full here makes it exactly the width of the search input bar.
         >
