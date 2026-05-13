@@ -86,6 +86,26 @@ export const getUserProfile = async (req, res) => {
       hasBlockedYou,
     };
 
+    if (profileData.note) {
+      const isOwner = currentUserId && currentUserId.equals(user._id);
+      const isFollower = currentUserId
+        ? user.followers.some((id) => id.equals(currentUserId))
+        : false;
+
+      if (user.isPrivate && !isOwner && !isFollower) {
+        profileData.note = null;
+      }
+    }
+    // ── Expiry check (unchanged, runs after privacy gate) ──────────────────────
+    if (
+      profileData.note?.expiresAt &&
+      new Date(profileData.note.expiresAt) <= new Date()
+    ) {
+      profileData.note = null;
+      User.findByIdAndUpdate(user._id, {
+        $set: { note: { text: null, emoji: null, expiresAt: null } },
+      }).catch(() => {});
+    }
     res.status(200).json(profileData);
   } catch (error) {
     console.error("Error in getUserProfile:", error.message);
@@ -374,7 +394,7 @@ export const getSuggestedUsersPage = async (req, res) => {
       _id: { $nin: excludeIds },
       blockedBy: { $nin: [new mongoose.Types.ObjectId(userId)] },
     })
-      .sort({ updatedAt: -1})
+      .sort({ updatedAt: -1 })
       .skip(skip)
       .limit(limit + 1)
       .populate({ path: "profileImg", select: "imageUrl" })
@@ -783,12 +803,12 @@ export const searchUsers = async (req, res) => {
     };
 
     // 3. Apply privacy filter: Limit to followers if user is private
-    if (currentUser.isPrivate) {
-      query._id = {
-        $in: currentUser.followers,
-        $ne: currentUserId,
-      };
-    }
+    // if (currentUser.isPrivate) {
+    //   query._id = {
+    //     $in: currentUser.followers,
+    //     $ne: currentUserId,
+    //   };
+    // }
 
     const users = await User.find(query)
       .select("-password -email")
@@ -1397,5 +1417,58 @@ export const declineFollowRequest = async (req, res) => {
   } catch (error) {
     console.error("Error in declineFollowRequest:", error.message);
     res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// ── PATCH /api/users/note ─────────────────────────────────────────────────────
+export const updateNote = async (req, res) => {
+  try {
+    const { text, emoji, expiresInHours } = req.body;
+    const userId = req.user._id;
+
+    const trimmedText = text?.trim() || null;
+
+    if (trimmedText && trimmedText.length > 60) {
+      return res.status(400).json({ error: "Note must be 60 characters or less." });
+    }
+
+    // Require at least one of text or emoji
+    if (!trimmedText && !emoji) {
+      return res.status(400).json({ error: "Provide text, an emoji, or both." });
+    }
+
+    const expiresAt = expiresInHours
+      ? new Date(Date.now() + Number(expiresInHours) * 60 * 60 * 1000)
+      : null;
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        $set: {
+          "note.text": trimmedText,
+          "note.emoji": emoji || null,
+          "note.expiresAt": expiresAt,
+        },
+      },
+      { new: true },
+    ).select("note username");
+
+    return res.status(200).json({ note: updatedUser.note });
+  } catch (error) {
+    console.error("Error in updateNote:", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+// ── DELETE /api/users/note ────────────────────────────────────────────────────
+export const deleteNote = async (req, res) => {
+  try {
+    await User.findByIdAndUpdate(req.user._id, {
+      $set: { note: { text: null, emoji: null, expiresAt: null } },
+    });
+    return res.status(200).json({ note: null });
+  } catch (error) {
+    console.error("Error in deleteNote:", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };

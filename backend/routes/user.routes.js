@@ -6,6 +6,7 @@ import {
   adminDeleteUserAccount,
   blockUnblockUser,
   declineFollowRequest,
+  deleteNote,
   deleteUserAccount,
   followUnfollowUser,
   getFollowers,
@@ -23,6 +24,7 @@ import {
   toggleVacationMode,
   unmuteUser,
   updateNameColor,
+  updateNote,
   updatePreferredBadge,
   updatePrivacySettings,
   updateStatusPreference,
@@ -61,6 +63,8 @@ router.put("/toggle-liked-feed-privacy", toggleLikedFeedPrivacy);
 router.post("/update-preferred-badge", updatePreferredBadge);
 router.put("/update-status-preference", updateStatusPreference);
 router.put("/name-color", protectRoute, updateNameColor);
+router.patch("/note", protectRoute, updateNote);
+router.delete("/note", protectRoute, deleteNote);
 
 
 // --- ACCOUNT MANAGEMENT ---

@@ -35,6 +35,7 @@ import {
   useBlockUnblockUser,
   useFollow,
   useMuteUser,
+  useRemoveUserPhoto,
   useUnmuteUser,
   useUpdateUserProfile,
 } from "../features/users/usersHooks/useUserMutations.js"
@@ -55,6 +56,9 @@ import MuteOptionsModal from "../components/common/MuteOptionsModal.jsx"
 import useDropdownMenu from "../hooks/customHooks/useDropdownMenu.js"
 import { useServerTimeOffset } from "../features/pomodoro/pomodoroHooks/usePomodoroMutations.js"
 import PomodoroCountdown from "../features/pomodoro/components/PomodoroCountdown.jsx"
+import NoteBubble from "../components/common/NoteBubble.jsx"
+import NoteModal from "../components/common/NoteModal.jsx"
+import PhotoOptionsModal from "../components/common/PhotoOptionsModal.jsx"
 
 const formatStudyTime = (totalMinutes) => {
   const hours = Math.floor(totalMinutes / 60)
@@ -91,12 +95,15 @@ const ProfilePage = ({ feedType, setFeedType }) => {
   const [showUnfollowModal, setShowUnfollowModal] = useState(false)
   const [showDeleteUserModal, setShowDeleteUserModal] = useState(false)
   const [userToUnfollow, setUserToUnfollow] = useState(null)
+  const [photoModal, setPhotoModal] = useState(null) // null | "profileImg" | "coverImg"
+
   const navigate = useNavigate()
 
   const [userPostsCount, setUserPostsCount] = useState(0)
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false)
   const [isUnmuteConfirmOpen, setIsUnmuteConfirmOpen] = useState(false)
   const [openEditModal, setOpenEditModal] = useState(false)
+  const [isNoteModalOpen, setIsNoteModalOpen] = useState(false)
 
   const coverImgRef = useRef(null)
   const profileImgRef = useRef(null)
@@ -109,6 +116,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
   const { blockUnblockUser, isBlocking } = useBlockUnblockUser()
   const { adminDeleteUser, isPending: isDeletingUser } = useAdminDeleteUser()
   const { totalLikes, totalReposts } = useGetUserStats(username)
+  const { removePhoto, isRemovingPhoto } = useRemoveUserPhoto()
 
   const { userProfile, isLoading, isRefetching, isError, error, isBlockedByYou, hasBlockedYou } =
     useGetUserProfile(username)
@@ -181,6 +189,13 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     liveSession?.expectedEndTime &&
     new Date(liveSession.expectedEndTime) > new Date()
 
+  // Note to display — own profile reads authUser (always fresh from cache),
+  // others read from userProfile
+  const noteToDisplay = isMyProfile ? authUser?.note : userProfile?.note
+  const isNoteExpired = noteToDisplay?.expiresAt && new Date(noteToDisplay.expiresAt) <= new Date()
+  const showNoteBubble =
+    isMyProfile || (!isNoteExpired && !!(noteToDisplay?.text || noteToDisplay?.emoji))
+
   // Visibility rules:
   // - Always visible to the profile owner (own-view)
   // - Visible to others only if isPomodoroPrivate is false
@@ -234,6 +249,25 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     if (userToUnfollow) {
       follow({ userIdToFollow: userToUnfollow._id })
       closeUnfollowModal()
+    }
+  }
+
+  const handleCoverClick = () => {
+    if (isMyProfile) {
+      setPhotoModal("coverImg")
+    } else {
+      const url = userProfile?.coverImg?.imageUrl || "/cover.png"
+      openLightbox({ imageUrl: url })
+    }
+  }
+
+  const handleAvatarClick = (e) => {
+    e.stopPropagation()
+    if (isMyProfile) {
+      setPhotoModal("profileImg")
+    } else {
+      const url = userProfile?.profileImg?.imageUrl || "/avatar-placeholder.png"
+      openLightbox({ imageUrl: url })
     }
   }
 
@@ -400,23 +434,11 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                     coverImg || userProfile?.coverImg?.imageUrl || "/cover.png",
                     "cover",
                   )}
-                  onClick={() => {
-                    const url = userProfile?.coverImg?.imageUrl || "/cover.png"
-                    openLightbox({ imageUrl: url })
-                  }}
+                  onClick={isMyProfile ? () => setPhotoModal("coverImg") : handleCoverClick}
                   className="h-52 w-full cursor-pointer object-cover"
                   alt="cover image"
                   loading="lazy"
                 />
-                {/* Edit button stays inside inner wrapper so it's clipped correctly */}
-                {isMyProfile && (
-                  <div
-                    className="absolute right-2 top-2 z-10 cursor-pointer rounded-full bg-primary bg-opacity-75 p-2 text-white opacity-0 transition duration-200 group-hover/cover:opacity-100"
-                    onClick={() => coverImgRef.current.click()}
-                  >
-                    <MdEdit className="h-5 w-5" />
-                  </div>
-                )}
               </div>
               <input
                 type="file"
@@ -435,12 +457,26 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               <div className="absolute -bottom-16 left-4 rounded-full border-4 border-base-100">
                 <div
                   className="group/avatar relative cursor-pointer rounded-full"
-                  onClick={() => {
-                    const url =
-                      profileImg || userProfile?.profileImg?.imageUrl || "/avatar-placeholder.png"
-                    openLightbox({ imageUrl: url })
-                  }}
+                  onClick={handleAvatarClick}
                 >
+                  {/* ── Note bubble — above the avatar ── */}
+                  {showNoteBubble && (
+                    <NoteBubble
+                      note={isNoteExpired ? null : noteToDisplay}
+                      isOwn={isMyProfile}
+                      onClick={(e) => {
+                        // 1. This prevents the parent's lightbox click from firing
+                        e.stopPropagation()
+
+                        if (isMyProfile) {
+                          setIsNoteModalOpen(true)
+                        }
+                        // Note: Expansion logic for other users is usually
+                        // handled INSIDE the NoteBubble component via internal state.
+                      }}
+                    />
+                  )}
+
                   <UserAvatar
                     user={{
                       ...userProfile,
@@ -448,21 +484,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                     }}
                     size="xxl"
                     className={`cursor-pointer ${userProfile?.equipped}`}
-                    // 2. Attach the Lightbox click handler here
                   />
-
-                  {/* 3. Keep the edit button overlay */}
-                  {isMyProfile && (
-                    <div
-                      className="absolute right-1 top-1 z-10 cursor-pointer rounded-full bg-primary p-1.5 text-white opacity-0 shadow-md duration-200 group-hover/avatar:opacity-100"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        profileImgRef.current.click()
-                      }}
-                    >
-                      <MdEdit className="h-4 w-4" />
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -634,7 +656,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                 </div>
                 <span className="break-all text-sm text-slate-500">@{userProfile?.username}</span>
                 <span className="my-1 text-sm">{userProfile?.bio}</span>
-                {/* {canSeeLiveSession && (
+                {canSeeLiveSession && (
                   <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5">
                     <RiRadioButtonLine className="animate-pulse text-primary" size={12} />
                     <span className="text-xs font-bold text-primary">
@@ -649,7 +671,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                       <span className="text-[10px] text-slate-500">(only you)</span>
                     )}
                   </div>
-                )} */}
+                )}
               </div>
 
               <div className="flex flex-wrap gap-2">
@@ -687,7 +709,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                   {userProfile?.majorOrField && (
                     <div className="flex items-center gap-1.5">
                       <MdSchool className="size-4 text-slate-500" />
-                      <span className="text-[16px] text-slate-400 flex items-center gap-1.5">
+                      <span className="flex items-center gap-1.5 text-[16px] text-slate-400">
                         Studies{" "}
                         <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-primary">
                           {userProfile.majorOrField}
@@ -1027,6 +1049,36 @@ const ProfilePage = ({ feedType, setFeedType }) => {
           setCoverImg={setCoverImg}
         />
       )}
+
+      {isMyProfile && (
+        <NoteModal
+          isOpen={isNoteModalOpen}
+          onClose={() => setIsNoteModalOpen(false)}
+          currentNote={authUser?.note}
+          authUser={authUser}
+        />
+      )}
+
+      <PhotoOptionsModal
+        isOpen={photoModal === "profileImg"}
+        onClose={() => setPhotoModal(null)}
+        onUpload={() => profileImgRef.current.click()}
+        onRemove={() => removePhoto("profileImg")}
+        hasPhoto={!!userProfile?.profileImg?.imageUrl}
+        isRemoving={isRemovingPhoto}
+        title="Profile Photo"
+      />
+      <PhotoOptionsModal
+        isOpen={photoModal === "coverImg"}
+        onClose={() => setPhotoModal(null)}
+        onUpload={() => coverImgRef.current.click()}
+        onRemove={() => removePhoto("coverImg")}
+        hasPhoto={
+          !!userProfile?.coverImg?.imageUrl && userProfile.coverImg.imageUrl !== "/cover.png"
+        }
+        isRemoving={isRemovingPhoto}
+        title="Cover Photo"
+      />
     </>
   )
 }

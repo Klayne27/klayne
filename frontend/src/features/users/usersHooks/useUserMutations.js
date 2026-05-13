@@ -3,16 +3,19 @@ import {
   acceptFollowRequestApi,
   blockUnblockUserApi,
   declineFollowRequestApi,
+  deleteNoteApi,
   deleteUserAccountAdminApi,
   deleteUserAccountApi,
   followApi,
   getVacationModeStatusApi,
   muteUserApi,
+  removeUserPhotoApi,
   searchUsersApi,
   toggleLikedFeedPrivacyApi,
   toggleVacationModeApi,
   unmuteUserApi,
   updateNameColorApi,
+  updateNoteApi,
   updatePreferredBadgeApi,
   updatePrivacySettingsApi,
   updateStatusPreferenceApi,
@@ -593,4 +596,116 @@ export const useDeclineFollowRequest = () => {
   })
 
   return { declineRequest, isDeclining }
+}
+
+export const useUpdateNote = () => {
+  const queryClient = useQueryClient()
+
+  const { mutate: updateNote, isPending: isUpdatingNote } = useMutation({
+    mutationFn: updateNoteApi,
+    onMutate: async (newNote) => {
+      await queryClient.cancelQueries({ queryKey: userKeys.auth() })
+      const previousAuth = queryClient.getQueryData(userKeys.auth())
+
+      queryClient.setQueryData(userKeys.auth(), (old) =>
+        old
+          ? {
+              ...old,
+              note: {
+                // ── Only pick valid note fields — don't leak expiresInHours ──
+                text: newNote.text ?? null,
+                emoji: newNote.emoji ?? null,
+                expiresAt: null, // server will fill the real value
+              },
+            }
+          : old,
+      )
+
+      return { previousAuth }
+    },
+    onSuccess: (data, _vars, context) => {
+      // Sync with what the server actually stored (correct expiresAt)
+      queryClient.setQueryData(userKeys.auth(), (old) => (old ? { ...old, note: data.note } : old))
+      const auth = queryClient.getQueryData(userKeys.auth())
+      if (auth?.username) {
+        queryClient.invalidateQueries({ queryKey: userKeys.profile(auth.username) })
+      }
+      showAppToast("Note updated!", "success")
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousAuth) queryClient.setQueryData(userKeys.auth(), context.previousAuth)
+      showAppToast("Failed to update note", "error")
+    },
+  })
+
+  return { updateNote, isUpdatingNote }
+}
+
+export const useDeleteNote = () => {
+  const queryClient = useQueryClient()
+
+  const { mutate: deleteNote, isPending: isDeletingNote } = useMutation({
+    mutationFn: deleteNoteApi,
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: userKeys.auth() })
+      const previousAuth = queryClient.getQueryData(userKeys.auth())
+      queryClient.setQueryData(userKeys.auth(), (old) => (old ? { ...old, note: null } : old))
+      return { previousAuth }
+    },
+    onSuccess: () => {
+      const auth = queryClient.getQueryData(userKeys.auth())
+      if (auth?.username) {
+        queryClient.invalidateQueries({ queryKey: userKeys.profile(auth.username) })
+      }
+      showAppToast("Note removed", "success")
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousAuth) queryClient.setQueryData(userKeys.auth(), context.previousAuth)
+    },
+  })
+
+  return { deleteNote, isDeletingNote }
+}
+
+
+export const useRemoveUserPhoto = () => {
+  const queryClient = useQueryClient()
+
+  const { mutate: removePhoto, isPending: isRemovingPhoto } = useMutation({
+    mutationFn: (photoType) => removeUserPhotoApi(photoType),
+
+    onMutate: async (photoType) => {
+      await queryClient.cancelQueries({ queryKey: userKeys.auth() })
+      const previousAuth = queryClient.getQueryData(userKeys.auth())
+
+      // Optimistically clear the image in the auth cache
+      queryClient.setQueryData(userKeys.auth(), (old) => {
+        if (!old) return old
+        return { ...old, [photoType]: null }
+      })
+
+      return { previousAuth }
+    },
+
+    onSuccess: (data) => {
+      showAppToast("Photo removed", "success")
+      // Sync with the server's authoritative response
+      queryClient.setQueryData(userKeys.auth(), (old) => (old ? { ...old, ...data } : data))
+      queryClient.invalidateQueries({ queryKey: userKeys.auth() })
+      queryClient.invalidateQueries({ queryKey: postKeys.all })
+      if (data?.username) {
+        queryClient.invalidateQueries({ queryKey: userKeys.profile(data.username) })
+      }
+    },
+
+    onError: (error, _, context) => {
+      // Roll back optimistic update
+      if (context?.previousAuth) {
+        queryClient.setQueryData(userKeys.auth(), context.previousAuth)
+      }
+      showAppToast(error.message || "Failed to remove photo", "error")
+    },
+  })
+
+  return { removePhoto, isRemovingPhoto }
 }

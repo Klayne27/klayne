@@ -508,7 +508,7 @@ const Sidebar = ({
                 {((feedType === "forYou" && newPostCount > 0) ||
                   (feedType === "venting" && newVentPostCount > 0)) && (
                   <div
-                    className="absolute right-2 top-2 h-3 w-3 rounded-full border-2 border-black bg-primary"
+                    className="absolute right-2 top-2 h-3 w-3 rounded-full border-2 border-base-100 bg-primary"
                     style={{ transform: "translate(25%, -25%)" }}
                   />
                 )}
@@ -535,7 +535,7 @@ const Sidebar = ({
                 )}
                 {unreadMessageCount > 0 && (
                   <div
-                    className={`absolute right-2 top-2 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold ${shouldTextBeWhite(theme)}`}
+                    className={`absolute right-2 top-2 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-base-100 bg-primary px-1 text-[11px] font-bold ${shouldTextBeWhite(theme)}`}
                     style={{ transform: "translate(40%, -40%)" }}
                   >
                     {formatCount(unreadMessageCount)}
@@ -564,7 +564,7 @@ const Sidebar = ({
                 )}
                 {notificationsCount > 0 && (
                   <div
-                    className={`absolute right-2 top-2 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold ${shouldTextBeWhite(theme)}`}
+                    className={`absolute right-2 top-2 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-base-100 bg-primary px-1 text-[11px] font-bold ${shouldTextBeWhite(theme)}`}
                     style={{ transform: "translate(40%, -40%)" }}
                   >
                     {formatCount(notificationsCount)}
@@ -593,7 +593,7 @@ const Sidebar = ({
                 )}
                 {unreadPublicChatCount > 0 && (
                   <div
-                    className={`absolute right-2 top-2 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold ${shouldTextBeWhite(theme)}`}
+                    className={`absolute right-2 top-2 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-base-100 bg-primary px-1 text-[11px] font-bold ${shouldTextBeWhite(theme)}`}
                     style={{ transform: "translate(40%, -40%)" }}
                   >
                     {formatCount(unreadPublicChatCount)}
@@ -621,7 +621,7 @@ const Sidebar = ({
                 )}
                 {showNewBoardPostsButton && newBoardPostCount > 0 && (
                   <div
-                    className="absolute right-2 top-2 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white"
+                    className="absolute right-2 top-2 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-base-100 bg-primary px-1 text-[11px] font-bold text-white"
                     style={{ transform: "translate(40%, -40%)" }}
                   >
                     {formatCount(newBoardPostCount)}
@@ -790,7 +790,7 @@ const Sidebar = ({
                           navigate("/devlog")
                           setShowMorePopover(false)
                         }}
-                        className="flex w-full items-center gap-3 px-4 py-3 text-left font-semibold transition hover:bg-secondary"
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left font-semibold transition hover:bg-secondary/50"
                       >
                         <MdOutlineLibraryBooks className="size-6" />
                         <span>Devlog</span>
@@ -803,7 +803,7 @@ const Sidebar = ({
                             navigate("/admin/suggestions")
                             setShowMorePopover(false)
                           }}
-                          className="flex w-full items-center gap-3 px-4 py-3 text-left font-semibold transition hover:bg-secondary"
+                          className="flex w-full items-center gap-3 px-4 py-3 text-left font-semibold transition hover:bg-secondary/50"
                         >
                           <HiOutlineLightBulb className="size-6" />
                           <span>Suggestion Page</span>
@@ -816,7 +816,7 @@ const Sidebar = ({
                           navigate("/suggestions")
                           setShowMorePopover(false)
                         }}
-                        className="flex w-full items-center gap-3 px-4 py-3 text-left font-semibold transition hover:bg-secondary"
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left font-semibold transition hover:bg-secondary/50"
                       >
                         <HiOutlineLightBulb className="size-6" />
                         <span>Suggestion</span>
@@ -828,7 +828,7 @@ const Sidebar = ({
                           navigate("/wardrobe")
                           setShowMorePopover(false)
                         }}
-                        className="flex w-full items-center gap-3 px-4 py-3 text-left font-semibold transition hover:bg-secondary"
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left font-semibold transition hover:bg-secondary/50"
                       >
                         <PiCoatHangerBold className="size-6" />
                         <span>Wardrobe</span>
@@ -840,7 +840,7 @@ const Sidebar = ({
                           navigate("/themes")
                           setShowMorePopover(false)
                         }}
-                        className="flex w-full items-center gap-3 px-4 py-3 text-left font-semibold transition hover:bg-secondary"
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left font-semibold transition hover:bg-secondary/50"
                       >
                         <HiOutlinePaintBrush className="size-6" />
                         <span>Themes</span>

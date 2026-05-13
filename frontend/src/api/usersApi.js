@@ -274,22 +274,51 @@ export const getSuggestedUsersPageApi = async ({ pageParam = 1 }) => {
 // api/userApi.js — add these three:
 
 export const getFollowRequestsApi = async () => {
-  const res  = await fetch(`${BASE_URL}/follow-requests`);
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Failed to fetch follow requests");
-  return data;
-};
+  const res = await fetch(`${BASE_URL}/follow-requests`)
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Failed to fetch follow requests")
+  return data
+}
 
 export const acceptFollowRequestApi = async (requesterId) => {
-  const res  = await fetch(`${BASE_URL}/${requesterId}/accept-request`, { method: "POST" });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Failed to accept request");
-  return data;
-};
+  const res = await fetch(`${BASE_URL}/${requesterId}/accept-request`, { method: "POST" })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Failed to accept request")
+  return data
+}
 
 export const declineFollowRequestApi = async (requesterId) => {
-  const res  = await fetch(`${BASE_URL}/${requesterId}/decline-request`, { method: "POST" });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Failed to decline request");
-  return data;
-};
+  const res = await fetch(`${BASE_URL}/${requesterId}/decline-request`, { method: "POST" })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Failed to decline request")
+  return data
+}
+
+export const updateNoteApi = async ({ text, emoji, expiresInHours }) => {
+  const res = await fetch(`${BASE_URL}/note`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, emoji, expiresInHours }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Failed to update note")
+  return data
+}
+
+export const deleteNoteApi = async () => {
+  const res = await fetch(`${BASE_URL}/note`, { method: "DELETE" })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Failed to delete note")
+  return data
+}
+
+export const removeUserPhotoApi = async (photoType) => {
+  const res = await fetch(`${BASE_URL}/update`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ [photoType]: "" }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Failed to remove photo")
+  return data
+}

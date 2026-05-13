@@ -162,7 +162,7 @@ const userSchema = new mongoose.Schema(
     },
     lastReadPublicChatTimestamp: {
       type: Date,
-      default: Date.now, 
+      default: Date.now,
     },
     lastReadVentFeedTimestamp: {
       type: Date,
@@ -342,6 +342,11 @@ const userSchema = new mongoose.Schema(
       startTime: { type: Date, default: null },
       expectedEndTime: { type: Date, default: null },
       sessionCount: { type: Number, default: 0 },
+    },
+    note: {
+      text: { type: String, default: null, maxlength: 60 },
+      emoji: { type: String, default: null },
+      expiresAt: { type: Date, default: null }, // null = never expires
     },
   },
   { timestamps: true },
