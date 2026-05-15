@@ -4,6 +4,7 @@ import FloatingPomodoroSkeleton from "../../../components/skeletons/FloatingPomo
 import { usePomodoroTimerStore } from "../../../store/usePomodoroTimerStore"
 import { usePauseSession, useStartSession } from "../pomodoroHooks/usePomodoroMutations"
 import { useGetPomodoroSettings } from "../pomodoroHooks/usePomodoroQueries"
+import { useSound } from "../../../hooks/customHooks/useSound"
 
 const getPhaseDurationMinutes = (settings, isBreak, sessionCount) => {
   if (!settings) return 0
@@ -24,6 +25,9 @@ const FloatingPomodoroTimer = () => {
   const selectedTaskId = usePomodoroTimerStore((s) => s.selectedTaskId)
   const setIsActive = usePomodoroTimerStore((s) => s.setIsActive)
   const persistPause = usePomodoroTimerStore((s) => s.persistPause)
+
+  const { play: playPlay } = useSound("/sounds/click-001.mp3", 1)
+
 
   const { settings, isSettingsLoading } = useGetPomodoroSettings()
   const { startSession } = useStartSession()
@@ -47,6 +51,7 @@ const FloatingPomodoroTimer = () => {
 
   const handleToggle = (event) => {
     event.preventDefault()
+    playPlay()
     if (timer <= 0 || isGoalReached) return
     if (isActive) {
       setIsActive(false)

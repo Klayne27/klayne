@@ -3,6 +3,9 @@ import { FaBell, FaBellSlash, FaForward } from "react-icons/fa6"
 import { RxReset } from "react-icons/rx"
 import { useUpdatePomodoroSettings } from "../pomodoroHooks/usePomodoroMutations"
 import { useGetPomodoroSettings } from "../pomodoroHooks/usePomodoroQueries"
+import { Tooltip } from "react-tooltip" // 1. Import Tooltip
+import QuoteWidget from "./QuoteWidget"
+import { useSound } from "../../../hooks/customHooks/useSound"
 
 function PomodoroTimerDisplay({
   isBreak,
@@ -16,7 +19,11 @@ function PomodoroTimerDisplay({
   const { updateSettings } = useUpdatePomodoroSettings()
   const { settings } = useGetPomodoroSettings()
 
+  const { play: playClick } = useSound("/sounds/click-004.mp3", 1)
+  const { play: playClickAlarm } = useSound("/sounds/toggle-001.mp3", 1)
+
   const toggleMute = () => {
+    playClickAlarm()
     updateSettings({ ...settings, isMuted: !settings.isMuted })
     showAppToast(settings.isMuted ? "Alarm unmuted" : "Alarm muted")
   }
@@ -50,8 +57,12 @@ function PomodoroTimerDisplay({
     showAppToast(isBreak ? "Break skipped!" : "Session skipped", isBreak ? "info" : "warning")
   }
 
+  const handleResetSessionClick = () => {
+    playClick()
+    setShowResetCurrentSessionModal(true)
+  }
+
   const isUrgent = minutes === 0 && seconds < 10 && !isGoalReached
-  // Determine if skip should be visible (During break OR if timer is 00:00 but stuck)
   const showSkip = !isGoalReached && (isBreak || (minutes <= 0 && seconds <= 0))
 
   const ringColor = isGoalReached
@@ -69,10 +80,8 @@ function PomodoroTimerDisplay({
         />
 
         <svg
-          className="h-full w-full -rotate-90 overflow-visible" // CRITICAL: overflow-visible
-          style={{
-            filter: `drop-shadow(0 0 20px ${timerState.glow})`,
-          }}
+          className="h-full w-full -rotate-90 overflow-visible"
+          style={{ filter: `drop-shadow(0 0 20px ${timerState.glow})` }}
           viewBox="0 0 100 100"
         >
           <circle
@@ -111,6 +120,8 @@ function PomodoroTimerDisplay({
             {/* Finish Time / Mute Toggle */}
             <button
               onClick={toggleMute}
+              data-tooltip-id="display-tooltip"
+              data-tooltip-content={settings?.isMuted ? "Unmute Alarm" : "Mute Alarm"}
               className="flex items-center gap-2 rounded-full border border-white/5 bg-white/[0.05] px-4 py-1.5 text-[10px] font-black text-slate-400 backdrop-blur-sm transition-all hover:bg-white/[0.1] hover:text-white"
             >
               {settings?.isMuted ? <FaBellSlash size={10} /> : <FaBell size={10} />}
@@ -120,9 +131,10 @@ function PomodoroTimerDisplay({
             {/* Sub-Controls Row */}
             <div className="flex items-center gap-4">
               <button
-                onClick={() => setShowResetCurrentSessionModal(true)}
+                onClick={handleResetSessionClick}
+                data-tooltip-id="display-tooltip"
+                data-tooltip-content="Reset Session"
                 className="group flex flex-col items-center gap-1 text-slate-600 transition-all hover:text-slate-400"
-                title="Reset Session"
               >
                 <RxReset
                   size={18}
@@ -136,8 +148,9 @@ function PomodoroTimerDisplay({
               {showSkip && (
                 <button
                   onClick={handleSkipAction}
+                  data-tooltip-id="display-tooltip"
+                  data-tooltip-content={isBreak ? "Skip Break" : "Emergency Skip"}
                   className="group flex flex-col items-center gap-1 text-primary transition-all hover:scale-110"
-                  title={isBreak ? "Skip Break" : "Emergency Skip"}
                 >
                   <FaForward size={18} className="animate-pulse" />
                   <span className="text-[8px] font-black uppercase tracking-tighter">Skip</span>
@@ -151,8 +164,11 @@ function PomodoroTimerDisplay({
       {/* Progress Dots */}
       <div className="flex flex-col items-center gap-3">
         {settings?.sessionGoalCount > 0 && (
-          <div className="flex items-center gap-4 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 shadow-xl backdrop-blur-sm">
-            {/* Dots Container */}
+          <div
+            className="flex items-center gap-4 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 shadow-xl backdrop-blur-sm"
+            data-tooltip-id="display-tooltip"
+            data-tooltip-content={`Goal: ${sessionCount} of ${settings.sessionGoalCount} sessions`}
+          >
             <div className="flex gap-2">
               {Array.from({ length: settings.sessionGoalCount }).map((_, i) => (
                 <div
@@ -163,19 +179,11 @@ function PomodoroTimerDisplay({
                         ? "bg-teal-400 shadow-[0_0_8px_rgba(45,212,191,0.5)]"
                         : "bg-primary shadow-[0_0_8px_rgba(var(--primary-rgb),0.5)]"
                       : "bg-white/50"
-                  } ${
-                    i === sessionCount && !isGoalReached
-                      ? "scale-125 animate-pulse ring-2 ring-white/20"
-                      : ""
-                  }`}
+                  } ${i === sessionCount && !isGoalReached ? "scale-125 animate-pulse ring-2 ring-white/20" : ""}`}
                 />
               ))}
             </div>
-
-            {/* Divider */}
             <div className="h-3 w-[1px] bg-gray-300" />
-
-            {/* Counter Text */}
             <div className="flex items-baseline gap-0.5 font-mono text-xs font-medium tracking-wider">
               <span className={isBreak ? "text-teal-400" : "text-primary"}>{sessionCount}</span>
               <span className="text-gray-500">/</span>
@@ -184,6 +192,15 @@ function PomodoroTimerDisplay({
           </div>
         )}
       </div>
+
+      {/* Tooltip Instance for Display Area */}
+      <Tooltip
+        id="display-tooltip"
+        place="top"
+        className="!z-[100] !rounded-lg !px-2.5 !py-1 !text-[10px] font-bold shadow-2xl"
+      />
+
+      {/* <QuoteWidget /> */}
     </div>
   )
 }

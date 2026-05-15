@@ -3,7 +3,7 @@ import { todoKeys } from "./todoKeys"
 import { completeTodoApi, createTodoApi, deleteTodoApi, updateTodoApi } from "../../../api/todoApi"
 import { showAppToast } from "../../../utils/showAppToast"
 import { userKeys } from "../../users/usersHooks/userKeys"
-import { findTodoAndParent } from "../../../utils/todoUtils"
+import { calculateXpGainForTodo, findTodoAndParent } from "../../../utils/todoUtils"
 import useXpStore from "../../../store/useXpStore"
 
 export const useCreateTodo = () => {
@@ -165,16 +165,16 @@ export const useCompleteTodo = () => {
       if (found) {
         const { todoToComplete, parentList } = found
 
-        // const optimisticXpGain = calculateXpGainForTodo(todoToComplete, parentList)
-        // setXpGainedAmount(optimisticXpGain)
-        // setShowXpGain(true)
-        // setTimeout(() => setShowXpGain(false), 2000)
+        const optimisticXpGain = calculateXpGainForTodo(todoToComplete, parentList)
+        setXpGainedAmount(optimisticXpGain)
+        setShowXpGain(true)
+        setTimeout(() => setShowXpGain(false), 2000)
 
         queryClient.setQueryData(userKeys.auth(), (oldData) => {
           if (!oldData) return oldData
           return {
             ...oldData,
-            // pomodoroXP: oldData.pomodoroXP + optimisticXpGain,
+            pomodoroXP: oldData.pomodoroXP + optimisticXpGain,
           }
         })
       }

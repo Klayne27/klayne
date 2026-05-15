@@ -44,13 +44,13 @@ export const get = (priority) => {
 
 export const calculateXpGainForTodo = (todo, todoList) => {
   const xpRewards = {
-    low: 25,
-    medium: 50,
-    high: 100,
-    urgent: 200,
+    low: 10,
+    medium: 20,
+    high: 30,
+    urgent: 50,
   }
 
-  let xpToAdd = xpRewards[todo.priority] || 25
+  let xpToAdd = xpRewards[todo.priority] || 10
 
   if (todoList && todoList.isPublic) {
     xpToAdd *= 2

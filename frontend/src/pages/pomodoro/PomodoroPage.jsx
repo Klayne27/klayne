@@ -13,6 +13,7 @@ import PomodoroSettingsModal from "../../features/pomodoro/components/PomodoroSe
 import PomodoroTimerControls from "../../features/pomodoro/components/PomodoroTimerControls"
 import PomodoroTimerDisplay from "../../features/pomodoro/components/PomodoroTimerDisplay"
 import QuickTaskPanel from "../../features/pomodoro/components/QuickTaskPanel"
+import QuoteWidget from "../../features/pomodoro/components/QuoteWidget"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { useGetPomodoroSettings } from "../../features/pomodoro/pomodoroHooks/usePomodoroQueries"
 import {
@@ -29,6 +30,8 @@ import useXpStore from "../../store/useXpStore"
 import { showAppToast } from "../../utils/showAppToast"
 import { getPriorityColor } from "../../utils/todoUtils"
 import { formatSuggestedDate } from "../../hooks/customHooks/useDateRecognition"
+import { useSound } from "../../hooks/customHooks/useSound"
+import { FaCheckCircle } from "react-icons/fa"
 
 const getTimerState = (isGoalReached, isBreak, sessionCount, settings) => {
   if (isGoalReached) {
@@ -65,6 +68,8 @@ const PomodoroPage = () => {
   const isMobile = useIsMobile()
   const { xpGainedAmount, showXpGain } = useXpStore()
 
+  const [completingId, setCompletingId] = useState(null)
+
   const timer = usePomodoroTimerStore((s) => s.timer)
   const isActive = usePomodoroTimerStore((s) => s.isActive)
   const isBreak = usePomodoroTimerStore((s) => s.isBreak)
@@ -82,6 +87,10 @@ const PomodoroPage = () => {
   const persistPause = usePomodoroTimerStore((s) => s.persistPause)
   const persistReset = usePomodoroTimerStore((s) => s.persistReset)
 
+  const { play: playPlay } = useSound("/sounds/click-001.mp3", 1)
+  const { play: playClick } = useSound("/sounds/click-004.mp3", 1)
+  const { play: playComplete } = useSound("/sounds/confirmation-003.mp3", 0.6)
+
   const timerState = getTimerState(isGoalReached, isBreak, sessionCount, settings)
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
@@ -94,8 +103,7 @@ const PomodoroPage = () => {
   const alarmAudioRef = useRef(null)
   const { showCreateTodoListModal, setShowCreateTodoListModal } = useTodoStore()
 
-    const selectTask = useSelectTask()
-
+  const selectTask = useSelectTask()
 
   const { myTodoLists } = useGetUserTodoLists()
   const allTodos = useMemo(
@@ -103,15 +111,8 @@ const PomodoroPage = () => {
     [myTodoLists],
   )
 
-  // ── Selected task — resolved from store (which reads localStorage on init) ──
-  // selectedTaskId is already persisted by the store's setSelectedTaskId action
-  // (writes to STORAGE_KEYS.SELECTED_TASK), and the store initialises from it:
-  //   selectedTaskId: readStorage(STORAGE_KEYS.SELECTED_TASK) || ""
-  // So a refresh naturally restores it. No extra effect needed.
   const selectedTask = allTodos.find((todo) => todo._id === selectedTaskId) ?? null
 
-  // When the selected task no longer exists in the todo list (completed / deleted),
-  // clear the selection so we don't silently hold a stale ID.
   const selectedTaskIdIsStale = selectedTaskId && allTodos.length > 0 && !selectedTask
   if (selectedTaskIdIsStale) {
     setSelectedTaskId(null)
@@ -119,7 +120,6 @@ const PomodoroPage = () => {
 
   const { completeTodo } = useCompleteTodo()
 
-  // ── Handlers ──────────────────────────────────────────────────────────────
   const handleStart = useCallback(() => {
     if (isActive || !settings || timer <= 0 || isGoalReached) return
 
@@ -134,6 +134,8 @@ const PomodoroPage = () => {
         alarmAudioRef.current.currentTime = 0
       })
       .catch(() => {})
+
+      playPlay()
 
     if (typeof Notification !== "undefined" && Notification.permission === "default") {
       Notification.requestPermission()
@@ -155,14 +157,16 @@ const PomodoroPage = () => {
     settings,
     startSession,
     timer,
+    playPlay
   ])
 
   const handlePause = useCallback(() => {
     if (!isActive) return
     setIsActive(false)
+    playPlay()
     persistPause(timer)
     pauseServerSession({ remainingSeconds: timer })
-  }, [isActive, pauseServerSession, persistPause, setIsActive, timer])
+  }, [isActive, pauseServerSession, persistPause, setIsActive, timer, playPlay])
 
   const handleReset = useCallback(() => {
     if (!settings) return
@@ -210,27 +214,48 @@ const PomodoroPage = () => {
     handleSessionEndManual()
   }, [handleSessionEndManual])
 
-const handleComplete = useCallback(
-  (todoId, event) => {
-    event.stopPropagation()
-    const task = allTodos.find((t) => t._id === todoId)
-    if (!task || task.user !== authUser._id) return
+  const handleComplete = useCallback(
+    (todoId, event) => {
+      event.stopPropagation()
 
-    completeTodo(todoId)
+      // 1. Play Sound
+      playComplete()
 
-    if (selectedTaskId === todoId) {
-      const currentIndex = allTodos.findIndex((t) => t._id === todoId)
-      const next = allTodos.slice(currentIndex + 1).find((t) => !t.completed)
-      selectTask(next?._id ?? null) // ← was setSelectedTaskId
-    }
-  },
-  [allTodos, authUser, completeTodo, selectTask, selectedTaskId],
-)
+      // 2. Trigger local animation state
+      setCompletingId(todoId)
 
+      // 3. Delay the actual cache removal so animation can play
+      setTimeout(() => {
+        const task = allTodos.find((t) => t._id === todoId)
+        if (!task || task.user !== authUser._id) {
+          setCompletingId(null)
+          return
+        }
+
+        completeTodo(todoId)
+
+        if (selectedTaskId === todoId) {
+          const currentIndex = allTodos.findIndex((t) => t._id === todoId)
+          const next = allTodos.slice(currentIndex + 1).find((t) => !t.completed)
+          selectTask(next?._id ?? null)
+        }
+
+        setCompletingId(null)
+      }, 400) // Match this with the CSS duration
+    },
+    [allTodos, authUser, completeTodo, selectTask, selectedTaskId, playComplete],
+  )
 
   const handleOpenSettingsPage = () => {
+    playClick()
     if (isMobile) navigate("/pomodoro-settings")
     else setIsSettingsOpen(true)
+    
+  }
+
+  const handleResetTimerClick = () => {
+    playClick()
+    setShowResetTimerModal(true)
   }
 
   if (isSettingsLoading) {
@@ -244,7 +269,7 @@ const handleComplete = useCallback(
   return (
     <>
       <main
-        className="template container mx-auto flex min-h-screen w-full max-w-2xl flex-col items-center border-accent bg-base-100 pb-28 font-sans md:border-x md:pb-10"
+        className="template container mx-auto flex min-h-screen w-full flex-col items-center border-accent bg-base-100 pb-28 font-sans md:pb-10"
         style={{
           background: `radial-gradient(circle at 50% 35%, ${timerState.glow} 0%, transparent 45%)`,
         }}
@@ -257,92 +282,137 @@ const handleComplete = useCallback(
 
         <FloatingNav />
 
-        <section className="flex min-h-[75dvh] w-full shrink-0 flex-col items-center justify-center gap-8 py-10 transition-all duration-1000">
-          <div className="flex items-center gap-2">
-            <div
-              className={`size-2 rounded-full ${isActive && !isGoalReached ? "animate-ping" : ""} bg-current ${timerState.color}`}
-            />
-            <h1
-              className={`text-sm font-black uppercase tracking-[0.4em] opacity-80 transition-colors duration-700 ${timerState.color}`}
-            >
-              {timerState.label}
-            </h1>
-          </div>
+        {/*
+          ── Layout shell ─────────────────────────────────────────────────────
+          On desktop (xl+) this becomes a 3-column grid:
+            [quote] [timer — centre] [empty mirror column]
+          The centre column is unconstrained so the timer stays perfectly
+          centred, and the quote panel occupies the left rail.
+          On smaller screens it collapses back to a single column (flex-col)
+          so nothing breaks on mobile / tablet.
+        */}
+        <div className="relative w-full xl:grid xl:min-h-[75dvh] xl:grid-cols-[280px_1fr_280px] xl:items-center">
+          {/* ── Quote widget — left rail, desktop only ── */}
+          <div className="hidden xl:block" />
+          {/* ── Timer + controls — always centred ── */}
+          <section className="flex min-h-[75dvh] w-full shrink-0 flex-col items-center justify-center gap-8 py-10 transition-all duration-1000 xl:min-h-0">
+            <div className="flex items-center gap-2">
+              <div
+                className={`size-2 rounded-full ${isActive && !isGoalReached ? "animate-ping" : ""} bg-current ${timerState.color}`}
+              />
+              <h1
+                className={`text-sm font-black uppercase tracking-[0.4em] opacity-80 transition-colors duration-700 ${timerState.color}`}
+              >
+                {timerState.label}
+              </h1>
+            </div>
 
-          <div className="relative flex flex-col items-center">
-            <PomodoroTimerDisplay
-              isBreak={isBreak}
-              timer={timer}
-              setIsActive={setIsActive}
-              startNextTimer={(...args) => engineActions?.startNextTimer(...args)}
-              sessionCount={sessionCount}
-              setShowResetCurrentSessionModal={setShowResetCurrentSessionModal}
+            <div className="relative flex flex-col items-center">
+              <PomodoroTimerDisplay
+                isBreak={isBreak}
+                timer={timer}
+                setIsActive={setIsActive}
+                startNextTimer={(...args) => engineActions?.startNextTimer(...args)}
+                sessionCount={sessionCount}
+                setShowResetCurrentSessionModal={setShowResetCurrentSessionModal}
+                isGoalReached={isGoalReached}
+                onSessionEnd={handleSessionEndManual}
+                onSkipBreak={handleSkipBreak}
+                timerState={timerState}
+              />
+            </div>
+
+            <PomodoroTimerControls
+              onOpenSettingsPage={handleOpenSettingsPage}
               isGoalReached={isGoalReached}
-              onSessionEnd={handleSessionEndManual}
-              onSkipBreak={handleSkipBreak}
-              timerState={timerState}
+              isActive={isActive}
+              onPause={handlePause}
+              onStart={handleStart}
+              timer={timer}
+              onResetTimerClick={handleResetTimerClick}
             />
-          </div>
 
-          <PomodoroTimerControls
-            onOpenSettingsPage={handleOpenSettingsPage}
-            isGoalReached={isGoalReached}
-            isActive={isActive}
-            onPause={handlePause}
-            onStart={handleStart}
-            timer={timer}
-            onResetTimerClick={() => setShowResetTimerModal(true)}
-          />
-
-          {/* ── Active task banner ── */}
-          <div className="w-full max-w-sm px-6">
-            {selectedTask && !selectedTask.completed ? (
-              <div className="group flex items-center gap-4 rounded-3xl border border-accent/50 bg-white/[0.03] p-2 pr-4 shadow-xl ring-1 ring-white/5 backdrop-blur-md">
-                <button
-                  onClick={(event) => handleComplete(selectedTask._id, event)}
-                  className={`flex size-6 shrink-0 items-center justify-center rounded-2xl border-2 shadow-inner transition-all hover:scale-105 ${getPriorityColor(selectedTask.priority)}`}
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="text-[8px] font-black uppercase tracking-widest text-slate-500">
-                      Focusing
-                    </p>
-                    <span className="h-1 w-1 animate-pulse rounded-full bg-primary" />
-                  </div>
-                  <p className="truncate text-sm font-bold tracking-tight">{selectedTask.title}</p>
-                  {selectedTask.dueDate && (
-                    <div className="mt-0.5 flex items-center gap-1.5 text-[10px] font-medium text-slate-500">
-                      <span className="opacity-70">Due:</span>
-                      <span className="text-slate-400">
-                        {new Date(selectedTask.dueDate).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </span>
-                      {(() => {
-                        const d = new Date(selectedTask.dueDate)
-                        const taskHasTime = d.getHours() !== 0 || d.getMinutes() !== 0
-                        return <span>{formatSuggestedDate(d, taskHasTime)}</span>
-                      })()}
-                    </div>
-                  )}
-                </div>
-                <button
-                  onClick={() => selectTask(null)}
-                  className="shrink-0 p-2 text-slate-600 transition-colors hover:text-red-400"
+            {/* ── Active task banner ── */}
+            <div className="w-full max-w-xl px-6">
+              {selectedTask && !selectedTask.completed ? (
+                <div
+                  className={`group flex items-center gap-4 rounded-3xl border border-accent/50 bg-white/[0.03] p-2 pr-4 shadow-xl ring-1 ring-white/5 backdrop-blur-md transition-all duration-500 ${completingId === selectedTask._id ? "translate-x-4 skew-x-2 scale-95 opacity-0" : "scale-100 opacity-100"} `}
                 >
-                  <IoClose size={18} />
-                </button>
+                  <button
+                    onClick={(event) => handleComplete(selectedTask._id, event)}
+                    disabled={completingId === selectedTask._id}
+                    className={`flex size-6 shrink-0 items-center justify-center rounded-2xl border-2 shadow-inner transition-all hover:scale-110 active:scale-90 ${getPriorityColor(selectedTask.priority)} ${completingId === selectedTask._id ? "animate-ping" : ""} `}
+                  >
+
+                  {completingId && (
+                    <FaCheckCircle className="absolute inset-0 size-5 animate-pulse text-success" />
+                  )}
+                  </button>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-[8px] font-black uppercase tracking-widest text-slate-500">
+                        {completingId === selectedTask._id ? "Mission Accomplished" : "Focusing"}
+                      </p>
+                      <span
+                        className={`h-1 w-1 rounded-full bg-primary ${completingId === selectedTask._id ? "hidden" : "animate-pulse"}`}
+                      />
+                    </div>
+                    <p
+                      className={`truncate text-sm font-bold tracking-tight transition-all duration-300 ${completingId === selectedTask._id ? "line-through opacity-50" : ""}`}
+                    >
+                      {selectedTask.title}
+                    </p>
+                    {selectedTask.dueDate && (
+                      <div className="mt-0.5 flex items-center gap-1.5 text-[10px] font-medium text-slate-500">
+                        <span className="opacity-70">Due:</span>
+                        <span className="text-slate-400">
+                          {new Date(selectedTask.dueDate).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </span>
+                        {(() => {
+                          const d = new Date(selectedTask.dueDate)
+                          const taskHasTime = d.getHours() !== 0 || d.getMinutes() !== 0
+                          return <span>{formatSuggestedDate(d, taskHasTime)}</span>
+                        })()}
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => selectTask(null)}
+                    className="shrink-0 p-2 text-slate-600 transition-colors hover:text-red-400"
+                  >
+                    <IoClose size={18} />
+                  </button>
+                </div>
+              ) : (
+                <div className="rounded-3xl border border-dashed border-accent/50 py-4 text-center">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-700">
+                    No Task Selected
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="w-full xl:hidden">
+              <div className="">
+                <QuoteWidget />
               </div>
-            ) : (
-              <div className="rounded-3xl border border-dashed border-accent/50 py-4 text-center">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-700">
-                  No Task Selected
-                </p>
-              </div>
-            )}
-          </div>
-        </section>
+            </div>
+          </section>
+
+          {/* ── Mirror column — keeps the timer centred ── */}
+
+          <aside className="hidden xl:flex xl:flex-col xl:items-center xl:self-stretch">
+            {/* Subtle vertical divider on the right edge of the aside */}
+            <div className="relative w-full">
+              <div className="absolute left-0 top-1/2 h-32 w-px -translate-y-1/2" />
+              <QuoteWidget />
+            </div>
+          </aside>
+        </div>
 
         <div className="mt-4 flex w-full items-center gap-4 px-8 py-4">
           <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-slate-800 to-transparent" />

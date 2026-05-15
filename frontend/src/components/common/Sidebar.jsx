@@ -474,9 +474,9 @@ const Sidebar = ({
           <div
             to="/"
             onClick={handleHomeClick}
-            className={`hidden h-12 w-auto cursor-pointer justify-start rounded-full fill-primary p-1.5 ${shouldCollapseSidebar ? "mr-1.5" : ""} hover:bg-secondary md:flex ${
+            className={`hidden h-12 w-auto cursor-pointer transition duration-300 justify-start rounded-full fill-primary p-1.5 ${shouldCollapseSidebar ? "mr-1.5" : ""} hover:bg-secondary/50 md:flex ${
               isTouchDevice && activeButtonId === "k-logo"
-                ? "bg-secondary bg-opacity-50 transition duration-150"
+                ? "bg-secondary/50  transition duration-150"
                 : ""
             }`}
             onTouchStart={() => handleTouchStart("k-logo")}

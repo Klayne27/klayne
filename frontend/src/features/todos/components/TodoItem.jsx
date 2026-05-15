@@ -13,12 +13,16 @@ import { showAppToast } from "../../../utils/showAppToast.js"
 
 import { useAuthUser } from "../../auth/authHooks/useAuthUser.js"
 import { useCompleteTodo, useDeleteTodo, useUpdateTodo } from "../todoHooks/useTodoMutations.js"
+import { useSound } from "../../../hooks/customHooks/useSound.js"
 
 function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
   const { authUser: currentUser } = useAuthUser()
   const { setSelectedTodo, setShowEditTodoModal, isEditTodoMenuOpen, setIsEditTodoMenuOpen } =
     useTodoStore()
   const ellipsisRef = useRef(null)
+
+  const { play: playComplete } = useSound("/sounds/confirmation-003.mp3", 0.6)
+  const [isAnimatingOut, setIsAnimatingOut] = useState(false)
 
   const [visuallyCompleted, setVisuallyCompleted] = useState({})
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 })
@@ -66,17 +70,23 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
     setOpenTodoDropdownId(openTodoDropdownId === todo._id ? null : todo._id)
   }
 
-  const handleComplete = (todoId, e) => {
-    if (todo.user !== currentUser._id || isVisuallyCompleted) {
-      return
-    }
-    e.stopPropagation()
-    showAppToast("Todo completed! ✨", "success")
-
-    setVisuallyCompleted((prev) => ({ ...prev, [todoId]: true }))
-
-    completeTodo(todoId)
+const handleComplete = (todoId, e) => {
+  if (todo.user !== currentUser._id || isVisuallyCompleted || isAnimatingOut) {
+    return
   }
+  e.stopPropagation()
+
+  // Trigger Sound
+  playComplete()
+  // Trigger local animation
+  setIsAnimatingOut(true)
+
+  // Delay the actual backend call/cache removal to let animation finish
+  setTimeout(() => {
+    completeTodo(todoId)
+    showAppToast("Todo completed! ✨", "success")
+  }, 400)
+}
 
   const handleDelete = (e) => {
     e.stopPropagation()
@@ -85,7 +95,7 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
     setOpenTodoDropdownId(null)
   }
 
-  const isVisuallyCompleted = visuallyCompleted[todo._id] || todo.completed
+  const isVisuallyCompleted = todo.completed || isAnimatingOut
   // const formattedDueDate = todo.dueDate ? new Date(todo.dueDate).toLocaleDateString() : null
   const isTodoOwner = todo.user === currentUser._id
   
@@ -111,23 +121,28 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
         dueDateObj.getSeconds() !== 0)
 
   return (
-    <div className="relative">
+    <div className="relative overflow-hidden">
+      {" "}
+      {/* Added overflow-hidden to contain the slide */}
       <li
         onClick={isMobile ? handleMenuToggle : null}
-        className={`relative flex items-center justify-between border-b border-accent bg-base-100 py-[3px] pr-6 shadow-sm transition-all duration-500 ease-in-out ${isMobile ? "cursor-pointer" : ""} `}
+        className={`relative flex items-center justify-between border-b border-accent bg-base-100 py-[3px] pr-6 shadow-sm transition-all duration-500 ease-in-out ${isMobile ? "cursor-pointer" : ""} ${isAnimatingOut ? "translate-x-full skew-x-12 opacity-0" : "translate-x-0 opacity-100"} `}
       >
         <div className="flex items-center gap-2 py-1">
           <button
-            onClick={(e) => {
-              handleComplete(todo._id, e)
-            }}
-            className={`flex-shrink-0 rounded-full ${isVisuallyCompleted ? getCompletedColor(todo.priority) : getPriorityColor(todo.priority)} ${getPriorityColor(todo.priority) === "rounded-full border-slate-400" ? "border" : "border-2"} size-5`}
-            disabled={isCompletingTodo}
+            onClick={(e) => handleComplete(todo._id, e)}
+            className={`flex flex-shrink-0 items-center justify-center rounded-full transition-all duration-300 ${isVisuallyCompleted ? getCompletedColor(todo.priority) : getPriorityColor(todo.priority)} ${getPriorityColor(todo.priority) === "rounded-full border-slate-400" ? "border" : "border-2"} size-5 ${isAnimatingOut ? "scale-125 animate-ping" : ""}`}
+            disabled={isCompletingTodo || isAnimatingOut}
           >
-            {isVisuallyCompleted && <FaCheckCircle className="size-4" />}
+            {isVisuallyCompleted && <FaCheckCircle className="size-4 text-success" />}
           </button>
-          <div className="flex flex-col gap-[2px]">
-            <span className="text-base leading-[16px]">{todo.title}</span>
+
+          <div className="flex flex-col gap-[2px] transition-all">
+            <span
+              className={`text-base leading-[16px] transition-all duration-300 ${isAnimatingOut ? "line-through opacity-40" : ""}`}
+            >
+              {todo.title}
+            </span>
             <span className="min-w-0 break-words text-xs text-slate-500">{todo.description}</span>
             {formattedDate && (
               <span className="flex items-center gap-1 text-xs">
@@ -158,7 +173,6 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
           </div>
         }
       </li>
-
       {/* Desktop Dropdown Menu - Rendered via Portal */}
       {!isMobile && openTodoDropdownId === todo._id && (
         <>
@@ -196,7 +210,6 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
           </ul>
         </>
       )}
-
       {/* Mobile Slide Up Menu with Edit Form */}
       {shouldShowMobileMenu && (
         <SlideUpMenu isOpen={isEditTodoMenuOpen} onClose={handleCloseMenu}>
