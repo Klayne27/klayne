@@ -197,7 +197,7 @@ const QuickTaskPanel = () => {
       <div className="flex flex-col gap-3">
         <form
           onSubmit={handleQuickAdd}
-          className="group relative flex flex-col rounded-2xl border border-accent/50 p-1 backdrop-blur-md transition-all focus-within:border-primary/40 focus-within:bg-secondary/20 focus-within:ring-4 focus-within:ring-primary/5"
+          className="group relative flex flex-col rounded-2xl border border-accent/50 p-1 backdrop-blur-sm transition-all focus-within:border-primary/40 focus-within:bg-secondary/20 focus-within:ring-4 focus-within:ring-primary/5"
         >
           <div className="flex items-center gap-3 px-3">
             <IoAdd
@@ -245,7 +245,7 @@ const QuickTaskPanel = () => {
           </div>
         </form>
 
-        <div className="group relative flex items-center gap-3 rounded-2xl border border-accent/50 px-4 py-1 backdrop-blur-md transition-all focus-within:border-primary/40 focus-within:bg-secondary/20 focus-within:ring-4 focus-within:ring-primary/5">
+        <div className="group relative flex items-center gap-3 rounded-2xl border border-accent/50 px-4 py-1 backdrop-blur-sm transition-all focus-within:border-primary/40 focus-within:bg-secondary/20 focus-within:ring-4 focus-within:ring-primary/5">
           <input
             type="text"
             placeholder="Filter tasks..."

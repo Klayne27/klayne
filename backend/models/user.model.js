@@ -348,6 +348,9 @@ const userSchema = new mongoose.Schema(
       emoji: { type: String, default: null },
       expiresAt: { type: Date, default: null }, // null = never expires
     },
+    pomodoroBackground: { type: String, default: null }, // preset key
+    pomodoroBackgroundUrl: { type: String, default: null }, // custom Cloudinary URL
+    pomodoroBackgroundPublicId: { type: String, default: null }, // stored at upload for reliable deletion
   },
   { timestamps: true },
 );

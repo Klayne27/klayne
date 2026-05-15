@@ -2,6 +2,8 @@ import { useState, useCallback, useRef, useEffect } from "react"
 import { CATEGORIES, getRandomByCategory } from "../../../constants/quotes"
 import { FaChevronDown } from "react-icons/fa6"
 import { Tooltip } from "react-tooltip"
+import { useAuthUser } from "../../auth/authHooks/useAuthUser"
+import { useIsMobile } from "../../../hooks/customHooks/useIsMobile"
 
 const CATEGORY_STYLES = {
   all: {
@@ -36,6 +38,8 @@ function QuoteWidget() {
   const [isAnimating, setIsAnimating] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef(null)
+  const { authUser } = useAuthUser()
+  const isMobile = useIsMobile()
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -65,9 +69,10 @@ function QuoteWidget() {
   }
 
   const activeStyle = CATEGORY_STYLES[activeCategory]
+  const isBackgroundPicked = authUser?.pomodoroBackgroundUrl || authUser.pomodoroBackground
 
   return (
-    <div className="flex flex-col items-center gap-3 p-6 text-center">
+    <div className="flex flex-col items-center gap-3 rounded-lg p-6 px-6 text-center backdrop-blur-sm">
       {/* Category dropdown */}
       <div className="relative w-full max-w-[160px]" ref={dropdownRef}>
         <button
@@ -103,16 +108,18 @@ function QuoteWidget() {
 
       {/* Quote body */}
       <div
-        className={`flex min-h-[140px] flex-col items-center justify-center gap-4 transition-all duration-200 ${
+        className={`flex min-h-[140px] flex-col items-center justify-center gap-4 rounded-xl transition-all duration-200 ${
           isAnimating ? "translate-y-1 opacity-0" : "translate-y-0 opacity-100"
         }`}
       >
-        <p className="font-serif text-sm leading-relaxed ">
+        <p
+          className={`duration transition-300 font-serif text-sm leading-relaxed ${isBackgroundPicked && !isMobile ? "text-slate-400" : ""}`}
+        >
           &ldquo;{quote.text}&rdquo;
         </p>
         <div className="flex items-center gap-2">
-          <div className={`h-px w-5 ${activeStyle.dot} opacity-40`} />
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+          <div className={`h-[2px] w-5 ${activeStyle.dot} opacity-40`} />
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
             {quote.author}
           </span>
         </div>
@@ -123,7 +130,7 @@ function QuoteWidget() {
         onClick={() => cycleQuote()}
         data-tooltip-id="refresh-quote-tooltip"
         data-tooltip-content="New Quote"
-        className="group mt-1 flex items-center justify-center gap-2 rounded-full border border-white/5 bg-white/[0.03] px-5 py-2 text-[10px] font-black uppercase tracking-[0.25em] text-slate-600 transition-all hover:bg-white/[0.07] hover:text-slate-400"
+        className="group mt-1 flex items-center justify-center gap-2 rounded-full border border-white/5 bg-white/[0.03] px-5 py-2 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 transition-all hover:bg-white/[0.07] hover:text-slate-500"
       >
         <svg
           className="size-3 transition-transform duration-500 group-hover:rotate-180"

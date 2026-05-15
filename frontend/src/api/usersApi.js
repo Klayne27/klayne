@@ -322,3 +322,21 @@ export const removeUserPhotoApi = async (photoType) => {
   if (!res.ok) throw new Error(data.error || "Failed to remove photo")
   return data
 }
+
+export const setPomodoroBackgroundApi = async ({ presetKey, customImage }) => {
+  const res = await fetch(`${BASE_URL}/pomodoro-background`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ presetKey, customImage }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Failed to set background")
+  return data
+}
+
+export const removePomodoroBackgroundApi = async () => {
+  const res = await fetch(`${BASE_URL}/pomodoro-background`, { method: "DELETE" })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Failed to remove background")
+  return data
+}

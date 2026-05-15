@@ -9,8 +9,10 @@ import {
   followApi,
   getVacationModeStatusApi,
   muteUserApi,
+  removePomodoroBackgroundApi,
   removeUserPhotoApi,
   searchUsersApi,
+  setPomodoroBackgroundApi,
   toggleLikedFeedPrivacyApi,
   toggleVacationModeApi,
   unmuteUserApi,
@@ -667,7 +669,6 @@ export const useDeleteNote = () => {
   return { deleteNote, isDeletingNote }
 }
 
-
 export const useRemoveUserPhoto = () => {
   const queryClient = useQueryClient()
 
@@ -708,4 +709,64 @@ export const useRemoveUserPhoto = () => {
   })
 
   return { removePhoto, isRemovingPhoto }
+}
+
+export const useSetPomodoroBackground = () => {
+  const queryClient = useQueryClient()
+
+  const { mutate: setBackground, isPending: isSettingBackground } = useMutation({
+    mutationFn: setPomodoroBackgroundApi,
+    onMutate: async (vars) => {
+      await queryClient.cancelQueries({ queryKey: userKeys.auth() })
+      const prev = queryClient.getQueryData(userKeys.auth())
+      queryClient.setQueryData(userKeys.auth(), (old) =>
+        old
+          ? {
+              ...old,
+              pomodoroBackground: vars.presetKey ?? null,
+              pomodoroBackgroundUrl: vars.customImage ? "pending" : null,
+            }
+          : old,
+      )
+      return { prev }
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(userKeys.auth(), (old) => (old ? { ...old, ...data } : old))
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(userKeys.auth(), ctx.prev)
+      showAppToast("Failed to set background", "error")
+    },
+  })
+
+  return { setBackground, isSettingBackground }
+}
+
+export const useRemovePomodoroBackground = () => {
+  const queryClient = useQueryClient()
+
+  const { mutate: removeBackground, isPending: isRemovingBackground } = useMutation({
+    mutationFn: removePomodoroBackgroundApi,
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: userKeys.auth() })
+      const prev = queryClient.getQueryData(userKeys.auth())
+      queryClient.setQueryData(userKeys.auth(), (old) =>
+        old
+          ? {
+              ...old,
+              pomodoroBackground: null,
+              pomodoroBackgroundUrl: null,
+              pomodoroBackgroundPublicId: null,
+            }
+          : old,
+      )
+      return { prev }
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(userKeys.auth(), ctx.prev)
+      showAppToast("Failed to remove background", "error")
+    },
+  })
+
+  return { removeBackground, isRemovingBackground }
 }

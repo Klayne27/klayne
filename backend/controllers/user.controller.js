@@ -1472,3 +1472,93 @@ export const deleteNote = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+// PATCH /api/users/pomodoro-background
+export const setPomodoroBackground = async (req, res) => {
+  try {
+    const { presetKey, customImage } = req.body;
+    const userId = req.user._id;
+
+    if (!presetKey && !customImage) {
+      return res.status(400).json({ error: "Provide presetKey or customImage." });
+    }
+    if (presetKey && customImage) {
+      return res.status(400).json({ error: "Provide only one: presetKey or customImage." });
+    }
+
+    // Destroy existing custom asset before replacing
+    const user = await User.findById(userId).select("pomodoroBackgroundPublicId");
+    if (!user) return res.status(404).json({ error: "User not found." });
+
+    if (user.pomodoroBackgroundPublicId) {
+      await cloudinary.uploader
+        .destroy(user.pomodoroBackgroundPublicId)
+        .catch((err) => console.warn("[background] Cloudinary destroy:", err.message));
+    }
+
+    const updateFields = {
+      pomodoroBackground:         null,
+      pomodoroBackgroundUrl:      null,
+      pomodoroBackgroundPublicId: null,
+    };
+
+    if (presetKey) {
+      updateFields.pomodoroBackground = presetKey;
+    } else {
+      // Images only — no GIFs, no videos
+      if (!customImage.match(/^data:image\/(jpeg|jpg|png|webp)/i)) {
+        return res.status(400).json({ error: "Only JPEG, PNG, and WebP are allowed." });
+      }
+      // Size guard: base64 length × 0.75 ≈ bytes
+      if (customImage.length * 0.75 > 5 * 1024 * 1024) {
+        return res.status(400).json({ error: "Image must be under 5 MB." });
+      }
+
+      const uploadResponse = await cloudinary.uploader.upload(customImage, {
+        upload_preset: "ml_backgrounds", // ← create this unsigned preset in Cloudinary dashboard
+        transformation: [
+          { width: 1920, height: 1080, crop: "fill", gravity: "auto" },
+          { quality: "auto:good", fetch_format: "webp" },
+        ],
+      });
+
+      updateFields.pomodoroBackgroundUrl      = uploadResponse.secure_url;
+      updateFields.pomodoroBackgroundPublicId = uploadResponse.public_id; // stored, not extracted later
+    }
+
+    const updated = await User.findByIdAndUpdate(userId, { $set: updateFields }, { new: true })
+      .select("pomodoroBackground pomodoroBackgroundUrl pomodoroBackgroundPublicId");
+
+    return res.status(200).json(updated);
+  } catch (error) {
+    console.error("Error in setPomodoroBackground:", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+// DELETE /api/users/pomodoro-background
+export const removePomodoroBackground = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select("pomodoroBackgroundPublicId");
+    if (!user) return res.status(404).json({ error: "User not found." });
+
+    if (user.pomodoroBackgroundPublicId) {
+      await cloudinary.uploader
+        .destroy(user.pomodoroBackgroundPublicId)
+        .catch((err) => console.warn("[background] Cloudinary destroy:", err.message));
+    }
+
+    await User.findByIdAndUpdate(req.user._id, {
+      $set: {
+        pomodoroBackground:         null,
+        pomodoroBackgroundUrl:      null,
+        pomodoroBackgroundPublicId: null,
+      },
+    });
+
+    return res.status(200).json({ message: "Background removed." });
+  } catch (error) {
+    console.error("Error in removePomodoroBackground:", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};

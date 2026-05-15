@@ -5,6 +5,9 @@ import { IoIosStats } from "react-icons/io"
 import { getBadgeIcon } from "../../../utils/badgeUtils.jsx"
 import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils.js"
 import { Tooltip } from "react-tooltip" // 1. Import Tooltip
+import { useRef, useState } from "react"
+import { LuImagePlay } from "react-icons/lu"
+import PomodoroBackgroundPicker from "./PomodoroBackgroundPicker.jsx"
 
 const xpForLevel = (level) => {
   if (level <= 1) return 500
@@ -13,6 +16,10 @@ const xpForLevel = (level) => {
 
 const PomodoroHeader = ({ showXpGain, xpGainedAmount, setShowInfoModal }) => {
   const { authUser: currentUser } = useAuthUser()
+  const [showBgPicker, setShowBgPicker] = useState(false)
+  const bgBtnRef = useRef(null)
+  const hasBackground = !!(currentUser.pomodoroBackground || currentUser.pomodoroBackgroundUrl)
+
 
   if (!currentUser) return null
 
@@ -25,14 +32,19 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount, setShowInfoModal }) => {
     isVerified,
     isGoldVerified,
     preferredBadge,
+    pomodoroBackground,
+    pomodoroBackgroundUrl
   } = currentUser
 
   const xpNeededForNextLevel = xpForLevel(pomodoroLevel + 1)
   const xpProgress = (pomodoroXP / xpNeededForNextLevel) * 100
 
+    const isBackgroundPicked = pomodoroBackgroundUrl || pomodoroBackground
+
+
   return (
-    <header className="sticky top-0 z-50 w-full border-accent/20 bg-base-100/60 backdrop-blur-md flex justify-center">
-      <div className="flex max-w-2xl w-full flex-col gap-3 px-4 py-3">
+    <header className="sticky top-0 z-50 flex w-full justify-center border-accent/20 bg-transparent backdrop-blur-sm">
+      <div className="flex w-full max-w-2xl flex-col gap-3 px-4 py-3">
         {/* Top Row: Profile & Actions */}
         <div className="flex items-center justify-between">
           {/* User Info Group */}
@@ -58,7 +70,7 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount, setShowInfoModal }) => {
 
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5">
-                <h2 className="text-sm font-black tracking-tight">{fullName}</h2>
+                <h2 className={`${isBackgroundPicked ? "text-slate-400" :""} transition duration-300 text-sm font-black tracking-tight`}>{fullName}</h2>
                 <div className="flex items-center gap-1">
                   {isVerified && <img src="/verified2.png" className="size-3.5" alt="v" />}
                   {isGoldVerified && (
@@ -97,6 +109,25 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount, setShowInfoModal }) => {
             >
               <FaInfoCircle size={17} />
             </button>
+            <div className="relative">
+              <button
+                ref={bgBtnRef}
+                onClick={() => setShowBgPicker((v) => !v)}
+                data-tooltip-id="header-tooltip"
+                data-tooltip-content="Background"
+                className={`flex h-9 w-9 items-center justify-center rounded-xl border border-accent/50 bg-white/5 text-slate-400 transition-all hover:bg-secondary/50 ${
+                  hasBackground ? "border-primary/40 text-primary" : ""
+                }`}
+              >
+                <LuImagePlay size={17} />
+              </button>
+
+              <PomodoroBackgroundPicker
+                isOpen={showBgPicker}
+                onClose={() => setShowBgPicker(false)}
+                anchorRef={bgBtnRef}
+              />
+            </div>
           </div>
         </div>
 

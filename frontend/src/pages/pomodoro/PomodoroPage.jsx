@@ -32,6 +32,8 @@ import { getPriorityColor } from "../../utils/todoUtils"
 import { formatSuggestedDate } from "../../hooks/customHooks/useDateRecognition"
 import { useSound } from "../../hooks/customHooks/useSound"
 import { FaCheckCircle } from "react-icons/fa"
+import { POMODORO_PRESETS } from "../../constants/pomodoroPresets"
+import PomodoroBackground from "../../features/pomodoro/components/PomodoroBackground"
 
 const getTimerState = (isGoalReached, isBreak, sessionCount, settings) => {
   if (isGoalReached) {
@@ -117,6 +119,17 @@ const PomodoroPage = () => {
   if (selectedTaskIdIsStale) {
     setSelectedTaskId(null)
   }
+
+  const backgroundUrl = useMemo(() => {
+    if (authUser?.pomodoroBackgroundUrl && authUser.pomodoroBackgroundUrl !== "pending") {
+      return authUser.pomodoroBackgroundUrl
+    }
+    if (authUser?.pomodoroBackground) {
+      return POMODORO_PRESETS.find((p) => p.key === authUser.pomodoroBackground)?.path ?? null
+    }
+    return null
+  }, [authUser?.pomodoroBackground, authUser?.pomodoroBackgroundUrl])
+
 
   const { completeTodo } = useCompleteTodo()
 
@@ -258,6 +271,9 @@ const PomodoroPage = () => {
     setShowResetTimerModal(true)
   }
 
+    const isBackgroundPicked = authUser?.pomodoroBackgroundUrl || authUser.pomodoroBackground
+
+
   if (isSettingsLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
@@ -268,8 +284,9 @@ const PomodoroPage = () => {
 
   return (
     <>
+      <PomodoroBackground bgUrl={backgroundUrl} />
       <main
-        className="template container mx-auto flex min-h-screen w-full flex-col items-center border-accent bg-base-100 pb-28 font-sans md:pb-10"
+        className="template flex min-h-screen w-full flex-col items-center border-accent bg-base-100 pb-28 font-sans md:pb-10"
         style={{
           background: `radial-gradient(circle at 50% 35%, ${timerState.glow} 0%, transparent 45%)`,
         }}
@@ -282,16 +299,7 @@ const PomodoroPage = () => {
 
         <FloatingNav />
 
-        {/*
-          ── Layout shell ─────────────────────────────────────────────────────
-          On desktop (xl+) this becomes a 3-column grid:
-            [quote] [timer — centre] [empty mirror column]
-          The centre column is unconstrained so the timer stays perfectly
-          centred, and the quote panel occupies the left rail.
-          On smaller screens it collapses back to a single column (flex-col)
-          so nothing breaks on mobile / tablet.
-        */}
-        <div className="relative w-full xl:grid xl:min-h-[75dvh] xl:grid-cols-[280px_1fr_280px] xl:items-center">
+        <div className="relative w-full xl:grid xl:min-h-[75dvh] xl:grid-cols-[400px_1fr_400px] xl:items-center">
           {/* ── Quote widget — left rail, desktop only ── */}
           <div className="hidden xl:block" />
           {/* ── Timer + controls — always centred ── */}
@@ -336,17 +344,16 @@ const PomodoroPage = () => {
             <div className="w-full max-w-xl px-6">
               {selectedTask && !selectedTask.completed ? (
                 <div
-                  className={`group flex items-center gap-4 rounded-3xl border border-accent/50 bg-white/[0.03] p-2 pr-4 shadow-xl ring-1 ring-white/5 backdrop-blur-md transition-all duration-500 ${completingId === selectedTask._id ? "translate-x-4 skew-x-2 scale-95 opacity-0" : "scale-100 opacity-100"} `}
+                  className={`group flex items-center gap-4 rounded-3xl border border-accent/50 bg-white/[0.03] p-2 pr-4 shadow-xl ring-1 ring-white/5 backdrop-blur-sm transition-all duration-500 ${completingId === selectedTask._id ? "translate-x-4 skew-x-2 scale-95 opacity-0" : "scale-100 opacity-100"} `}
                 >
                   <button
                     onClick={(event) => handleComplete(selectedTask._id, event)}
                     disabled={completingId === selectedTask._id}
                     className={`flex size-6 shrink-0 items-center justify-center rounded-2xl border-2 shadow-inner transition-all hover:scale-110 active:scale-90 ${getPriorityColor(selectedTask.priority)} ${completingId === selectedTask._id ? "animate-ping" : ""} `}
                   >
-
-                  {completingId && (
-                    <FaCheckCircle className="absolute inset-0 size-5 animate-pulse text-success" />
-                  )}
+                    {completingId && (
+                      <FaCheckCircle className="absolute inset-0 size-5 animate-pulse text-success" />
+                    )}
                   </button>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
@@ -358,7 +365,7 @@ const PomodoroPage = () => {
                       />
                     </div>
                     <p
-                      className={`truncate text-sm font-bold tracking-tight transition-all duration-300 ${completingId === selectedTask._id ? "line-through opacity-50" : ""}`}
+                      className={`duration transition-300 ${isBackgroundPicked ? "text-slate-400" : ""} truncate text-sm font-bold tracking-tight transition-all duration-300 ${completingId === selectedTask._id ? "line-through opacity-50" : ""}`}
                     >
                       {selectedTask.title}
                     </p>
@@ -395,26 +402,23 @@ const PomodoroPage = () => {
                 </div>
               )}
             </div>
-
-            <div className="w-full xl:hidden">
-              <div className="">
-                <QuoteWidget />
-              </div>
-            </div>
           </section>
-
+         
+          <div className="w-full px-4 pb-2 xl:hidden">
+             <QuoteWidget />
+        
+          </div>
           {/* ── Mirror column — keeps the timer centred ── */}
-
-          <aside className="hidden xl:flex xl:flex-col xl:items-center xl:self-stretch">
+          <aside className="mt-10 hidden xl:flex xl:flex-col xl:items-center xl:self-stretch mr-12">
             {/* Subtle vertical divider on the right edge of the aside */}
             <div className="relative w-full">
-              <div className="absolute left-0 top-1/2 h-32 w-px -translate-y-1/2" />
+              <div className="absolute left-0 top-1/2 h-32 -translate-y-1/2" />
               <QuoteWidget />
             </div>
           </aside>
         </div>
 
-        <div className="mt-4 flex w-full items-center gap-4 px-8 py-4">
+        <div className="flex w-full items-center gap-4 px-8 py-4 md:mt-12">
           <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-slate-800 to-transparent" />
           <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-600">
             Tasks

@@ -55,6 +55,8 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
   const isBoardPage = pathname.includes("/board")
   const isPublicChatPage = pathname.includes("/public-chat")
   const isWardrobePage = pathname.includes("/wardrobe")
+  const isPomodoroPage = pathname.includes("/pomodoro")
+
   const {
     showCreatePostModal,
     setShowCreatePostModal,
@@ -71,7 +73,7 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
     <>
       <StyleWrapper />
 
-      <div className="mx-auto flex min-h-screen flex-col bg-base-100 md:max-w-[1242px] md:flex-row">
+      <div className={`mx-auto flex min-h-screen flex-col bg-base-100 ${isPomodoroPage ? "" : "md:max-w-[1242px]"} md:flex-row`}>
         {!shouldHideSidePanels && (
           <Sidebar
             onOpenCreatePostModal={() => setShowCreatePostModal(true)}

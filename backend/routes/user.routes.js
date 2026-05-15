@@ -19,7 +19,9 @@ import {
   getUserStats,
   getVacationModeStatus,
   muteUser,
+  removePomodoroBackground,
   searchUsers,
+  setPomodoroBackground,
   toggleLikedFeedPrivacy,
   toggleVacationMode,
   unmuteUser,
@@ -65,6 +67,9 @@ router.put("/update-status-preference", updateStatusPreference);
 router.put("/name-color", protectRoute, updateNameColor);
 router.patch("/note", protectRoute, updateNote);
 router.delete("/note", protectRoute, deleteNote);
+
+router.patch("/pomodoro-background", protectRoute, setPomodoroBackground);
+router.delete("/pomodoro-background", protectRoute, removePomodoroBackground);
 
 
 // --- ACCOUNT MANAGEMENT ---

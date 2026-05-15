@@ -36,7 +36,7 @@ const NavItem = ({ icon, path, label, badge, navigate }) => {
       }`}
       title={label}
     >
-      <div className="relative transition-transform duration-200 group-hover:-translate-y-0.5 md:group-hover:-translate-y-0 md:group-hover:translate-x-0.5">
+      <div className="relative text-slate-400 transition-transform duration-200 group-hover:-translate-y-0.5 md:group-hover:-translate-y-0 md:group-hover:translate-x-0.5">
         {icon}
         {badge}
       </div>
@@ -91,7 +91,7 @@ function FloatingNav() {
         ))}
 
         {/* Responsive Glass Divider */}
-        <div className="mx-1 h-7 w-[1.5px] bg-gradient-to-b from-transparent via-white/20 to-transparent md:mx-0 md:my-1 md:h-[1.5px] md:w-7 md:bg-gradient-to-r" />
+        <div className="mx-1 h-7 w-[1.5px] bg-gradient-to-b from-transparent via-slate-400 to-transparent md:mx-0 md:my-1 md:h-[1.5px] md:w-7 md:bg-gradient-to-r" />
 
         {studyItems.map((item) => (
           <NavItem key={item.path} {...item} navigate={navigate} />

@@ -6,6 +6,7 @@ import { useGetPomodoroSettings } from "../pomodoroHooks/usePomodoroQueries"
 import { Tooltip } from "react-tooltip" // 1. Import Tooltip
 import QuoteWidget from "./QuoteWidget"
 import { useSound } from "../../../hooks/customHooks/useSound"
+import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 
 function PomodoroTimerDisplay({
   isBreak,
@@ -18,6 +19,7 @@ function PomodoroTimerDisplay({
 }) {
   const { updateSettings } = useUpdatePomodoroSettings()
   const { settings } = useGetPomodoroSettings()
+  const {authUser} = useAuthUser()
 
   const { play: playClick } = useSound("/sounds/click-004.mp3", 1)
   const { play: playClickAlarm } = useSound("/sounds/toggle-001.mp3", 1)
@@ -71,6 +73,8 @@ function PomodoroTimerDisplay({
       ? "stroke-teal-400"
       : "stroke-primary"
 
+  const isBackgroundPicked = authUser?.pomodoroBackgroundUrl || authUser.pomodoroBackground
+
   return (
     <div className="relative flex flex-col items-center gap-6">
       <div className={`relative h-64 w-64 md:h-80 md:w-80 ${isUrgent ? "animate-pulse" : ""}`}>
@@ -80,7 +84,7 @@ function PomodoroTimerDisplay({
         />
 
         <svg
-          className="h-full w-full -rotate-90 overflow-visible"
+          className="h-full w-full -rotate-90 overflow-visible rounded-full backdrop-blur-sm"
           style={{ filter: `drop-shadow(0 0 20px ${timerState.glow})` }}
           viewBox="0 0 100 100"
         >
@@ -110,7 +114,9 @@ function PomodoroTimerDisplay({
         </svg>
 
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="font-mono text-6xl font-black tabular-nums tracking-tighter md:text-7xl">
+          <span
+            className={`font-mono text-6xl font-black tabular-nums tracking-tighter md:text-7xl duration transition-300 ${isBackgroundPicked ? "text-slate-400" : ""}`}
+          >
             {isGoalReached
               ? "00:00"
               : `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`}

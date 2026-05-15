@@ -21,7 +21,7 @@ function PomodoroTimerControls({
         onClick={onOpenSettingsPage}
         data-tooltip-id="timer-tooltip"
         data-tooltip-content="Settings"
-        className="group flex h-12 w-12 items-center justify-center rounded-2xl border border-white/5 bg-white/[0.03] text-slate-500 backdrop-blur-md transition-all hover:bg-white/[0.08] hover:text-slate-200"
+        className="group flex h-12 w-12 items-center justify-center rounded-2xl border border-white/5 bg-white/[0.03] text-slate-500 backdrop-blur-sm transition-all hover:bg-white/[0.08] hover:text-slate-200"
       >
         <FaCog size={24} className="transition-transform duration-500 group-hover:rotate-45" />
       </button>
@@ -32,7 +32,7 @@ function PomodoroTimerControls({
         disabled={timer <= 0 || isGoalReached}
         data-tooltip-id="timer-tooltip"
         data-tooltip-content={isActive ? "Pause" : "Start"}
-        className={`relative flex h-20 w-20 items-center justify-center shadow-2xl active:scale-90 ${
+        className={`relative flex h-20 w-20 items-center justify-center shadow-2xl backdrop-blur-sm active:scale-90 ${
           isActive
             ? "rounded-3xl bg-teal-500/10 text-teal-400 ring-1 ring-teal-500/30 hover:bg-teal-500/20"
             : "rounded-full bg-primary/10 text-primary ring-1 ring-primary/30 hover:bg-primary/20"
@@ -49,11 +49,10 @@ function PomodoroTimerControls({
         onClick={onResetTimerClick}
         data-tooltip-id="timer-tooltip"
         data-tooltip-content="Reset Timer"
-        className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/5 bg-white/[0.03] text-slate-500 backdrop-blur-md transition-all hover:bg-white/[0.08] hover:text-slate-200"
+        className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/5 bg-white/[0.03] text-slate-500 backdrop-blur-sm transition-all hover:bg-white/[0.08] hover:text-slate-200"
       >
         <RxReset size={26} />
       </button>
-
 
       <Tooltip
         id="timer-tooltip"
