@@ -418,7 +418,7 @@ const PomodoroPage = () => {
           </aside>
         </div>
 
-        <div className="flex w-full items-center gap-4 px-8 py-4 md:mt-12">
+        <div className="flex w-full items-center gap-4 px-8 py-4 md:mt-20">
           <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-slate-800 to-transparent" />
           <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-600">
             Tasks

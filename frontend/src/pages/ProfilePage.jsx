@@ -656,7 +656,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                 </div>
                 <span className="break-all text-sm text-slate-500">@{userProfile?.username}</span>
                 <span className="my-1 text-sm">{userProfile?.bio}</span>
-                {canSeeLiveSession && (
+                {/* {canSeeLiveSession && (
                   <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5">
                     <RiRadioButtonLine className="animate-pulse text-primary" size={12} />
                     <span className="text-xs font-bold text-primary">
@@ -671,7 +671,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                       <span className="text-[10px] text-slate-500">(only you)</span>
                     )}
                   </div>
-                )}
+                )} */}
               </div>
 
               <div className="flex flex-wrap gap-2">

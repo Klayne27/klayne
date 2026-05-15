@@ -2,7 +2,7 @@ export const POMODORO_PRESETS = [
   { key: "galaxy", label: "Deep Space", path: "/backgrounds/galaxy.mp4" },
   { key: "aurora", label: "Aurora Borealis", path: "/backgrounds/aurora.mp4" },
   { key: "sky", label: "Endless Sky", path: "/backgrounds/sky_man.mp4" },
-  { key: "camp", label: "Campfire", path: "/backgrounds/camp.mp4" },
+  { key: "camp", label: "Camping", path: "/backgrounds/camp.mp4" },
   { key: "cabin", label: "Rainy Cabin", path: "/backgrounds/cabin.mp4" },
   { key: "dead-tree", label: "Lonely Tree", path: "/backgrounds/dead_tree.mp4" },
   { key: "ocean", label: "Ocean", path: "/backgrounds/ocean.mp4" },
