@@ -2396,6 +2396,9 @@ export const editPost = async (req, res) => {
   }
 };
 
+// ─── deletePost ────────────────────────────────────────────────────────────
+// FIX: decrement hashtag counts for every post being deleted (the root post
+// and all its descendants) so counts don't permanently inflate over time.
 export const deletePost = async (req, res) => {
   try {
     const { postId } = req.params;
