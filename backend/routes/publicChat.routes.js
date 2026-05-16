@@ -8,6 +8,7 @@ import {
   editPublicMessage,
   getPublicMessages,
   sendPublicMessage,
+  toggleMutePublicChat,
   unbanUserFromPublicChat,
 } from "../controllers/publicChat.controller.js";
 
@@ -23,6 +24,8 @@ router.post("/send", sendPublicMessage);
 router.put("/edit/:messageId", editPublicMessage);
 router.post("/react/:messageId", addReactionToPublicMessage);
 router.delete("/:messageId", deleteOwnPublicMessage);
+router.post("/mute", toggleMutePublicChat);
+
 
 // --- ADMIN MODERATION ---
 router.delete("/admin/delete/:messageId", adminDeletePublicMessage);

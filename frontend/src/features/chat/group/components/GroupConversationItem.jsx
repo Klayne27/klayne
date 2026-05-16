@@ -2,7 +2,7 @@ import React, { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { MdImage } from "react-icons/md"
 import { PiMicrophoneStageFill } from "react-icons/pi"
-import { BsThreeDots } from "react-icons/bs"
+import { BsBell, BsBellSlash, BsThreeDots } from "react-icons/bs"
 import { FaTrashCan } from "react-icons/fa6"
 import { FaDoorOpen } from "react-icons/fa6"
 import { IoSettingsOutline } from "react-icons/io5"
@@ -16,7 +16,7 @@ import useMobileConversationLongPress from "../../../../hooks/customHooks/useMob
 import SlideUpMenu from "../../../../components/common/SlideUpMenu"
 import { TbUser, TbUserMinus } from "react-icons/tb"
 import { useDeleteGroup, useLeaveGroup } from "../groupChatHooks/useGroupMutations"
-import { useToggleConversationVisibility } from "../../private/privateChatHooks/usePrivateChatMutations"
+import { useMuteConversation, useToggleConversationVisibility } from "../../private/privateChatHooks/usePrivateChatMutations"
 import { buildNicknameMap, resolveDisplayName } from "../../../../utils/nicknameUtils"
 import { useMemo } from "react"
 
@@ -65,6 +65,11 @@ function GroupConversationItem({ conv }) {
       (id) => (id?._id ?? id)?.toString() === currentUser._id.toString(),
     )
   // ──────────────────────────────────────────────────────────────────────────
+
+  const { muteConversation, isMutingConversation } = useMuteConversation()
+  const isConvMuted = (currentUser?.mutedConversations ?? []).some(
+    (id) => (id?.toString?.() ?? id) === conv._id,
+  )
 
   let lastMessageContent = "No messages yet..."
   if (conv.lastMessage?.img) {
@@ -137,6 +142,11 @@ function GroupConversationItem({ conv }) {
           <span className="absolute bottom-0 right-0.5 flex h-3 w-3 items-center justify-center rounded-full border border-base-100 bg-primary text-[8px]">
             G
           </span>
+          {isConvMuted && (
+            <span className="absolute -top-0.5 right-0 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-base-100">
+              <BsBellSlash size={9} className="text-slate-500" />
+            </span>
+          )}
         </div>
 
         <div className="flex flex-1 flex-col overflow-hidden">
@@ -179,6 +189,17 @@ function GroupConversationItem({ conv }) {
             >
               <TbUserMinus />
               Hide conversation
+            </button>
+            <button
+              className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold transition hover:bg-gray-700/30"
+              disabled={isMutingConversation}
+              onClick={(e) => {
+                e.stopPropagation()
+                muteConversation(conv._id)
+              }}
+            >
+              {isConvMuted ? <BsBell /> : <BsBellSlash />}
+              {isConvMuted ? "Unmute" : "Mute notifications"}
             </button>
             {!isOwner && (
               <button

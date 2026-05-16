@@ -170,3 +170,10 @@ export const addPublicMessageReactionApi = async (messageId, emoji) => {
 
   return data
 }
+
+export const mutePublicChatApi = async () => {
+  const res = await fetch(`${BASE_URL}/mute`, { method: "POST" })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Failed to toggle public chat mute")
+  return data // { muted: boolean }
+}

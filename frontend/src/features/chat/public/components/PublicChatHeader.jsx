@@ -3,10 +3,16 @@ import { FaArrowLeft } from "react-icons/fa6";
 import { useNavigate } from "react-router-dom";
 import { HiOutlineInformationCircle } from "react-icons/hi"; // Import a new icon for info/rules
 import { IoChatbubblesOutline } from "react-icons/io5";
+import { useAuthUser } from "../../../auth/authHooks/useAuthUser";
+import { useMutePublicChat } from "../publicChatHooks/usePublicChatMutations";
+import { BsBell, BsBellSlash } from "react-icons/bs";
 
 const PublicChatHeader = () => {
   const navigate = useNavigate();
   const [showRulesModal, setShowRulesModal] = useState(false);
+  const { authUser } = useAuthUser()
+  const { mutePublicChat, isMutingPublicChat } = useMutePublicChat()
+  const isPublicChatMuted = !!authUser?.isPublicChatMuted
 
   const toggleRulesModal = () => {
     setShowRulesModal(!showRulesModal);
@@ -22,6 +28,7 @@ const PublicChatHeader = () => {
           >
             <FaArrowLeft className="h-4 w-4" />
           </button>
+
           <div className="flex items-center">
             <IoChatbubblesOutline size={30} />
           </div>
@@ -32,7 +39,15 @@ const PublicChatHeader = () => {
       </div>
 
       {/* Rules Button */}
-      <div className="relative">
+      <div className="relative flex items-center">
+        <button
+          onClick={() => mutePublicChat()}
+          disabled={isMutingPublicChat}
+          className="btn btn-circle btn-ghost"
+          title={isPublicChatMuted ? "Unmute notifications" : "Mute notifications"}
+        >
+          {isPublicChatMuted ? <BsBellSlash size={20} /> : <BsBell size={20} />}
+        </button>
         <button
           onClick={toggleRulesModal}
           className="btn btn-circle btn-ghost"

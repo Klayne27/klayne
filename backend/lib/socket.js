@@ -39,7 +39,6 @@ const socketUserMap = new Map();
 export const offlineStatusUsers = new Map(); // Key: userId, Value: true/false
 const disconnectTimers = new Map();
 
-
 const io = new Server(server, {
   cors: {
     origin: (origin, callback) => {
@@ -92,13 +91,22 @@ export async function emitUnreadMessageStatus(userId) {
   try {
     const userIdObj = new mongoose.Types.ObjectId(userId);
 
-    const user = await User.findById(userIdObj).select("blockedUsers blockedBy").lean();
+    // Extend select to include mutedConversations
+    const user = await User.findById(userIdObj)
+      .select("blockedUsers blockedBy mutedConversations")
+      .lean();
+
     const blockedUserIds = [
       ...(user?.blockedUsers?.map((id) => id.toString()) || []),
       ...(user?.blockedBy?.map((id) => id.toString()) || []),
     ];
     const blockedUserObjectIds = [...new Set(blockedUserIds)].map(
       (id) => new mongoose.Types.ObjectId(id),
+    );
+
+    // Build muted set for O(1) lookup
+    const mutedConvIds = new Set(
+      (user?.mutedConversations || []).map((id) => id.toString()),
     );
 
     const conversations = await Conversation.find({
@@ -128,17 +136,18 @@ export async function emitUnreadMessageStatus(userId) {
       }
     });
 
-    // Exclude the active conversation from the count
     const activeConversationId = userActiveChats.get(userId.toString());
     const filterActive = (ids) =>
       activeConversationId
         ? ids.filter((id) => id.toString() !== activeConversationId)
         : ids;
 
-    const eligibleDmIds = filterActive(dmConversationIds);
-    const eligibleGroupIds = filterActive(groupConversationIds);
+    // NEW: also filter out muted conversations
+    const filterMuted = (ids) => ids.filter((id) => !mutedConvIds.has(id.toString()));
 
-    // DMs: original boolean seen=false count
+    const eligibleDmIds = filterMuted(filterActive(dmConversationIds));
+    const eligibleGroupIds = filterMuted(filterActive(groupConversationIds));
+
     const dmUnread = eligibleDmIds.length
       ? await Message.countDocuments({
           conversationId: { $in: eligibleDmIds },
@@ -147,12 +156,11 @@ export async function emitUnreadMessageStatus(userId) {
         })
       : 0;
 
-    // Groups: per-user — count messages not yet in the user's seenBy array
     const groupUnread = eligibleGroupIds.length
       ? await Message.countDocuments({
           conversationId: { $in: eligibleGroupIds },
           sender: { $ne: userIdObj },
-          seenBy: { $nin: [userIdObj] }, // user hasn't read it yet
+          seenBy: { $nin: [userIdObj] },
         })
       : 0;
 
@@ -323,11 +331,18 @@ export async function emitUnreadPublicChatStatus(userId) {
     }
 
     const user = await User.findById(userIdObj)
-      .select("lastReadPublicChatTimestamp isBannedInPublicChat") // Select isBannedInPublicChat too
+      .select("lastReadPublicChatTimestamp isBannedInPublicChat isPublicChatMuted")
       .lean();
 
-    // If user is banned, they shouldn't receive notifications/counts for public chat.
     if (!user || user.isBannedInPublicChat) {
+      recipientSocketIds.forEach((socketId) => {
+        io.to(socketId).emit("unreadPublicChatStatus", { unreadPublicChatCount: 0 });
+      });
+      return;
+    }
+
+    // NEW: muted public chat → always 0 badge
+    if (user.isPublicChatMuted) {
       recipientSocketIds.forEach((socketId) => {
         io.to(socketId).emit("unreadPublicChatStatus", { unreadPublicChatCount: 0 });
       });
@@ -654,13 +669,13 @@ export async function emitNoteUpdated(authorId, note) {
     if (!author) return;
 
     const payload = {
-      _id:       authorId.toString(),
-      userId:    authorId.toString(),
-      username:  author.username,
-      fullName:  author.fullName,
+      _id: authorId.toString(),
+      userId: authorId.toString(),
+      username: author.username,
+      fullName: author.fullName,
       profileImg: author.profileImg,
       nameColor: author.nameColor,
-      equipped:  author.equipped,
+      equipped: author.equipped,
       note,
     };
 
@@ -693,10 +708,10 @@ export async function emitNoteDeleted(authorId) {
 export const PUBLIC_CHAT_ROOM = "public_chat_room";
 
 io.on("connection", async (socket) => {
-const userId =
-  socket.handshake.auth?.userId ||
-  socket.handshake.query?.userId || // ← existing clients send via query
-  socket.data?.userId;
+  const userId =
+    socket.handshake.auth?.userId ||
+    socket.handshake.query?.userId || // ← existing clients send via query
+    socket.data?.userId;
 
   socket.on("join_pomodoro_room", () => {
     socket.join("live_pomodoro");
@@ -776,7 +791,6 @@ const userId =
     await emitUnreadPublicChatStatus(userId);
     await emitNewBoardPostCount(userId); // ADD THIS
     await emitFollowRequestCount(userId);
-
   } else {
     socket.disconnect(true);
     return;
@@ -1261,71 +1275,73 @@ const userId =
     }
   });
 
-socket.on("disconnect", () => {
-  const disconnectedUserId = socket.userId;
+  socket.on("disconnect", () => {
+    const disconnectedUserId = socket.userId;
 
-  const userInfo = socketUserMap.get(socket.id);
-  const username = userInfo?.username || "Unknown User";
-  const uid = userInfo?.userId;
+    const userInfo = socketUserMap.get(socket.id);
+    const username = userInfo?.username || "Unknown User";
+    const uid = userInfo?.userId;
 
-  console.log(`User disconnected: ${username} - ${uid}`);
-  socketUserMap.delete(socket.id);
+    console.log(`User disconnected: ${username} - ${uid}`);
+    socketUserMap.delete(socket.id);
 
-  if (!disconnectedUserId) return;
+    if (!disconnectedUserId) return;
 
-  const wasActiveInChat = userActiveChats.has(disconnectedUserId.toString());
-  const activeConversationId = userActiveChats.get(disconnectedUserId.toString());
+    const wasActiveInChat = userActiveChats.has(disconnectedUserId.toString());
+    const activeConversationId = userActiveChats.get(disconnectedUserId.toString());
 
-  activePublicChatUsers.delete(disconnectedUserId);
-  userActiveChats.delete(disconnectedUserId.toString());
+    activePublicChatUsers.delete(disconnectedUserId);
+    userActiveChats.delete(disconnectedUserId.toString());
 
-  if (publicChatTypingUsers.has(disconnectedUserId)) {
-    publicChatTypingUsers.delete(disconnectedUserId);
-    io.to(PUBLIC_CHAT_ROOM).emit("public_typing_update", {
-      typingUsers: Array.from(publicChatTypingUsers.values()),
-    });
-  }
-
-  const userSockets = onlineUsersMap.get(disconnectedUserId);
-
-  const LIVE_POMODORO_GRACE_MS = 20_000;
-
-  if (userSockets) {
-    userSockets.delete(socket.id);
-
-    if (userSockets.size === 0) {
-      onlineUsersMap.delete(disconnectedUserId);
-
-      typingUsersInConversation.forEach((typingMap, convId) => {
-        if (typingMap.has(disconnectedUserId)) {
-          typingMap.delete(disconnectedUserId);
-          if (typingMap.size === 0) typingUsersInConversation.delete(convId);
-        }
+    if (publicChatTypingUsers.has(disconnectedUserId)) {
+      publicChatTypingUsers.delete(disconnectedUserId);
+      io.to(PUBLIC_CHAT_ROOM).emit("public_typing_update", {
+        typingUsers: Array.from(publicChatTypingUsers.values()),
       });
-
-      if (wasActiveInChat && activeConversationId) {
-        emitUnreadMessageStatus(disconnectedUserId);
-      }
-
-      // ── Grace-period live-dashboard removal ──────────────────────────────
-      // Don't remove immediately — give the user 20s to reconnect (page refresh).
-      // If they call join_pomodoro_room within that window the timer is cancelled.
-  if (!disconnectTimers.has(disconnectedUserId)) {
-    const timerId = setTimeout(() => {
-      disconnectTimers.delete(disconnectedUserId);
-      io.to("live_pomodoro").emit("live_session_stopped", {
-        userId: disconnectedUserId,
-      });
-      console.log(`[LivePomodoro] Grace period expired — removed ${disconnectedUserId}`);
-    }, LIVE_POMODORO_GRACE_MS);
-
-    disconnectTimers.set(disconnectedUserId, timerId);
-  }
     }
-  }
 
-  io.emit("getOnlineUsers", getOnlineUserIds());
-});
+    const userSockets = onlineUsersMap.get(disconnectedUserId);
+
+    const LIVE_POMODORO_GRACE_MS = 20_000;
+
+    if (userSockets) {
+      userSockets.delete(socket.id);
+
+      if (userSockets.size === 0) {
+        onlineUsersMap.delete(disconnectedUserId);
+
+        typingUsersInConversation.forEach((typingMap, convId) => {
+          if (typingMap.has(disconnectedUserId)) {
+            typingMap.delete(disconnectedUserId);
+            if (typingMap.size === 0) typingUsersInConversation.delete(convId);
+          }
+        });
+
+        if (wasActiveInChat && activeConversationId) {
+          emitUnreadMessageStatus(disconnectedUserId);
+        }
+
+        // ── Grace-period live-dashboard removal ──────────────────────────────
+        // Don't remove immediately — give the user 20s to reconnect (page refresh).
+        // If they call join_pomodoro_room within that window the timer is cancelled.
+        if (!disconnectTimers.has(disconnectedUserId)) {
+          const timerId = setTimeout(() => {
+            disconnectTimers.delete(disconnectedUserId);
+            io.to("live_pomodoro").emit("live_session_stopped", {
+              userId: disconnectedUserId,
+            });
+            console.log(
+              `[LivePomodoro] Grace period expired — removed ${disconnectedUserId}`,
+            );
+          }, LIVE_POMODORO_GRACE_MS);
+
+          disconnectTimers.set(disconnectedUserId, timerId);
+        }
+      }
+    }
+
+    io.emit("getOnlineUsers", getOnlineUserIds());
+  });
 
   socket.on("heartbeat", () => {
     if (socket.userId) {

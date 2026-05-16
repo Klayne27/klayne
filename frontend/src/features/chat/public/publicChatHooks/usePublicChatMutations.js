@@ -1,8 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { addPublicMessageReactionApi, adminDeletePublicMessageApi, banUserFromPublicChatApi, deleteOwnPublicMessageApi, editPublicMessageApi, sendPublicMessageApi, unbanUserFromPublicChatApi } from "../../../../api/publicChatApi"
+import { addPublicMessageReactionApi, adminDeletePublicMessageApi, banUserFromPublicChatApi, deleteOwnPublicMessageApi, editPublicMessageApi, mutePublicChatApi, sendPublicMessageApi, unbanUserFromPublicChatApi } from "../../../../api/publicChatApi"
 import { useAuthUser } from "../../../auth/authHooks/useAuthUser"
 import { showAppToast } from "../../../../utils/showAppToast"
 import { messageKeys } from "../../common/hooks/messageKeys"
+import { userKeys } from "../../../users/usersHooks/userKeys"
 
 export const useSendPublicMessage = ({ onSenderMessageSent }) => {
   const queryClient = useQueryClient()
@@ -348,4 +349,34 @@ export const useUnbanUserFromPublicChat = () => {
   })
 
   return { unbanUser, isPending, isError, error }
+}
+
+
+export const useMutePublicChat = () => {
+  const queryClient = useQueryClient()
+
+  const { mutate: mutePublicChat, isPending: isMutingPublicChat } = useMutation({
+    mutationFn: mutePublicChatApi,
+
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: userKeys.auth() })
+      const previousAuth = queryClient.getQueryData(userKeys.auth())
+      queryClient.setQueryData(userKeys.auth(), (old) =>
+        old ? { ...old, isPublicChatMuted: !old.isPublicChatMuted } : old,
+      )
+      return { previousAuth }
+    },
+
+    onError: (err, _, context) => {
+      if (context?.previousAuth) queryClient.setQueryData(userKeys.auth(), context.previousAuth)
+      showAppToast(err.message || "Failed to toggle mute", "error")
+    },
+
+    onSuccess: (data) => {
+      showAppToast(data.muted ? "Public chat muted" : "Public chat unmuted")
+      queryClient.invalidateQueries({ queryKey: userKeys.auth() })
+    },
+  })
+
+  return { mutePublicChat, isMutingPublicChat }
 }

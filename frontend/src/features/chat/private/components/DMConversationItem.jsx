@@ -4,7 +4,7 @@ import React, { useState } from "react"
 import { FaTrashCan } from "react-icons/fa6"
 import { FaBroom } from "react-icons/fa6"
 import { TbUser, TbUserMinus } from "react-icons/tb"
-import { BsThreeDots, BsVolumeMute, BsVolumeUp } from "react-icons/bs"
+import { BsBell, BsBellSlash, BsThreeDots, BsVolumeMute, BsVolumeUp } from "react-icons/bs"
 import { PiMicrophoneStageFill } from "react-icons/pi"
 import { useAuthUser } from "../../../auth/authHooks/useAuthUser"
 import { useSocket } from "../../../../context/SocketContext"
@@ -20,6 +20,7 @@ import useMobileConversationLongPress from "../../../../hooks/customHooks/useMob
 import {
   useDeleteAllMessagesOnMySide,
   useDeleteConversation,
+  useMuteConversation,
   useToggleConversationVisibility,
 } from "../privateChatHooks/usePrivateChatMutations"
 import {
@@ -98,6 +99,11 @@ function DMConversationItem({ conv }) {
     !conv.lastMessage?.seen
 
   const nicknameMap = useMemo(() => buildNicknameMap(conv), [conv])
+
+  const { muteConversation, isMutingConversation } = useMuteConversation()
+  const isConvMuted = (currentUser?.mutedConversations ?? []).some(
+    (id) => (id?.toString?.() ?? id) === conv._id,
+  )
 
   // 2. Resolve the display name of the last message sender
   const senderDisplayName = useMemo(() => {
@@ -216,6 +222,11 @@ function DMConversationItem({ conv }) {
         ) : (
           <span className="absolute bottom-2 right-0.5 h-3 w-3 rounded-full border-2 border-base-100 bg-gray-500"></span>
         )}
+        {isConvMuted && (
+          <span className="absolute -top-0.5 right-0 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-base-100">
+            <BsBellSlash size={9} className="text-slate-500" />
+          </span>
+        )}
       </div>
 
       <div className="flex flex-1 flex-col overflow-hidden" style={userSelectStyle}>
@@ -244,7 +255,7 @@ function DMConversationItem({ conv }) {
               <img src="/gold-verified2.png" className="size-[17px]" alt="Gold Verified" />
             )}
             {otherUser.isCha && <img src="/cha.png" className="size-[15px] rounded-md" />}
-            <span className="ml-1 flex-shrink-1 min-w-0 truncate text-sm text-gray-400">
+            <span className="flex-shrink-1 ml-1 min-w-0 truncate text-sm text-gray-400">
               @{otherUser.username}
             </span>
             <span className="mx-1 text-xs text-gray-400">·</span>
@@ -279,12 +290,24 @@ function DMConversationItem({ conv }) {
             <TbUser />
             View profile
           </button>
+
           <button
             className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
             onClick={handleToggleHide}
           >
             <TbUserMinus />
             Hide conversation
+          </button>
+          <button
+            className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
+            disabled={isMuting}
+            onClick={(e) => {
+              e.stopPropagation()
+              muteConversation(conv._id)
+            }}
+          >
+            {isConvMuted ? <BsBell /> : <BsBellSlash />}
+            {isConvMuted ? "Unmute" : "Mute notifications"}
           </button>
           <button
             className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
@@ -297,8 +320,9 @@ function DMConversationItem({ conv }) {
             }}
           >
             {isMuted ? <BsVolumeUp /> : <BsVolumeMute />}
-            {isMuted ? "Unmute" : "Mute"}
+            {isMuted ? "Unmute User" : "Mute User"}
           </button>
+
           <button
             className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
             onClick={openBlockConfirmationModal}

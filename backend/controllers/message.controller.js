@@ -1351,3 +1351,28 @@ export const getPinnedMessages = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+// Add to message.controller.js
+export const toggleMuteConversation = async (req, res) => {
+  try {
+    const { conversationId } = req.params
+    const userId = req.user._id
+
+    const user = await User.findById(userId).select("mutedConversations").lean()
+    if (!user) return res.status(404).json({ error: "User not found." })
+
+    const isMuted = user.mutedConversations?.some((id) => id.equals(conversationId))
+
+    await User.findByIdAndUpdate(
+      userId,
+      isMuted
+        ? { $pull: { mutedConversations: conversationId } }
+        : { $addToSet: { mutedConversations: conversationId } },
+    )
+
+    res.status(200).json({ muted: !isMuted, conversationId })
+  } catch (error) {
+    console.error("Error in toggleMuteConversation:", error.message)
+    res.status(500).json({ error: "Internal server error" })
+  }
+}

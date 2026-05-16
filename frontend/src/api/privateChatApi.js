@@ -236,3 +236,13 @@ export const unpinMessageApi = async ({ conversationId, messageId }) => {
   }
   return data
 }
+
+// Add to messagesApi.js
+export const muteConversationApi = async (conversationId) => {
+  const res = await fetch(`${BASE_URL}/conversations/mute/${conversationId}`, {
+    method: "POST",
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Failed to toggle mute")
+  return data // { muted: boolean, conversationId }
+}

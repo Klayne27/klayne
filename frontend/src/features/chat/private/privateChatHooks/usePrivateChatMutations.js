@@ -8,6 +8,7 @@ import {
   deleteConversationApi,
   deleteMessageApi,
   editMessageApi,
+  muteConversationApi,
   pinMessageApi,
   reactToMessageApi,
   sendMessageApi,
@@ -15,6 +16,7 @@ import {
   unpinMessageApi,
 } from "../../../../api/privateChatApi"
 import { showAppToast } from "../../../../utils/showAppToast"
+import { userKeys } from "../../../users/usersHooks/userKeys"
 
 export const useSendMessage = (onSenderMessageSent) => {
   const replyingToMessage = usePrivateChatStore((state) => state.replyingToMessage)
@@ -461,4 +463,46 @@ export const useToggleConversationVisibility = () => {
   })
 
   return { toggleVisibility, isTogglingVisibility }
+}
+
+export const useMuteConversation = () => {
+  const queryClient = useQueryClient()
+
+  const { mutate: muteConversation, isPending: isMutingConversation } = useMutation({
+    mutationFn: muteConversationApi,
+
+    // Optimistic: flip the conversationId in auth cache
+    onMutate: async (conversationId) => {
+      await queryClient.cancelQueries({ queryKey: userKeys.auth() })
+      const previousAuth = queryClient.getQueryData(userKeys.auth())
+
+      queryClient.setQueryData(userKeys.auth(), (old) => {
+        if (!old) return old
+        const muted = old.mutedConversations ?? []
+        const alreadyMuted = muted.some((id) => id === conversationId || id?.toString?.() === conversationId)
+        return {
+          ...old,
+          mutedConversations: alreadyMuted
+            ? muted.filter((id) => (id?.toString?.() ?? id) !== conversationId)
+            : [...muted, conversationId],
+        }
+      })
+
+      return { previousAuth }
+    },
+
+    onError: (err, _, context) => {
+      if (context?.previousAuth) {
+        queryClient.setQueryData(userKeys.auth(), context.previousAuth)
+      }
+      showAppToast(err.message || "Failed to update mute", "error")
+    },
+
+    onSuccess: (data) => {
+      showAppToast(data.muted ? "Conversation muted" : "Conversation unmuted")
+      queryClient.invalidateQueries({ queryKey: userKeys.auth() })
+    },
+  })
+
+  return { muteConversation, isMutingConversation }
 }

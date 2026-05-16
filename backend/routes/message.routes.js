@@ -16,6 +16,7 @@ import {
   searchConversationsAndUsers,
   sendMessage,
   toggleConversationVisibility,
+  toggleMuteConversation,
   unpinMessage,
 } from "../controllers/message.controller.js";
 
@@ -32,6 +33,7 @@ router.get("/conversations", getConversations);
 router.post("/conversations/get-or-create", getOrCreateConversation);
 router.get("/conversations/between/:otherUserId", getConversationBetweenUsers);
 router.put("/conversations/visibility/:conversationId", toggleConversationVisibility);
+router.post("/conversations/mute/:conversationId", toggleMuteConversation);
 router.delete("/conversations/:id", deleteConversation);
 
 // --- MESSAGE ACTIONS (CRUD) ---
@@ -40,6 +42,7 @@ router.put("/edit/:messageId", editMessage);
 router.post("/react/:messageId", reactToMessage);
 router.delete("/:messageId", deleteMessage);
 router.delete("/all/:conversationId", deleteAllMessagesOnMySide);
+
 
 // --- PINNED MESSAGES ---
 router.post("/pin-message", pinMessage);
