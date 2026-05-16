@@ -1,5 +1,5 @@
 export const POMODORO_PRESETS = [
-  { key: "galaxy", label: "Deep Space", path: "/backgrounds/galaxy.mp4" },
+  // { key: "galaxy", label: "Deep Space", path: "/backgrounds/galaxy.mp4" },
   { key: "aurora", label: "Aurora Borealis", path: "/backgrounds/aurora.mp4" },
   { key: "sky", label: "Endless Sky", path: "/backgrounds/sky_man.mp4" },
   { key: "camp", label: "Camping", path: "/backgrounds/camp.mp4" },
@@ -22,6 +22,7 @@ export const POMODORO_PRESETS = [
   { key: "above_clouds", label: "Above the Clouds", path: "/backgrounds/above_clouds.mp4" },
   { key: "huskies", label: "Huskies", path: "/backgrounds/huskies.jpg" },
   { key: "milkyway", label: "Milky Way", path: "/backgrounds/milkyway.jpg" },
+  { key: "universe", label: "Universe", path: "/backgrounds/universe.jpg" },
   { key: "moon", label: "Midnight Sky", path: "/backgrounds/moon.mp4" },
   { key: "river", label: "Mountain Landscape", path: "/backgrounds/river.mp4" },
   { key: "puppy", label: "Puppy", path: "/backgrounds/puppy.jpg" },
