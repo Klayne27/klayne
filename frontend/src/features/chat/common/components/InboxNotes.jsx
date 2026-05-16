@@ -16,8 +16,6 @@ import NoteModal from "../../../../components/common/NoteModal"
 import { useGetOrCreateConversation } from "../../private/privateChatHooks/usePrivateChatQueries"
 import { useGetInboxNotes } from "../../../users/usersHooks/useUserQueries"
 
-const TRUNCATE_AT = 18
-
 // ── Bubble ────────────────────────────────────────────────────────────────────
 const InboxNoteBubble = ({ note, isOwn, onBubbleClick }) => {
   const [expanded, setExpanded] = useState(false)
@@ -28,8 +26,6 @@ const InboxNoteBubble = ({ note, isOwn, onBubbleClick }) => {
   if (!hasContent && !isOwn) return null
 
   const rawText = note?.text ?? ""
-  const isTruncated = rawText.length > TRUNCATE_AT
-  const displayText = isTruncated && !expanded ? rawText.slice(0, TRUNCATE_AT) + "…" : rawText
 
   const handleClick = (e) => {
     e.stopPropagation()
@@ -41,10 +37,8 @@ const InboxNoteBubble = ({ note, isOwn, onBubbleClick }) => {
   }
 
   return (
-    // FIXED: Changed `left-0 right-0` to `left-1/2 -translate-x-1/2` and `w-max max-w-[84px]`
-    // This allows the bubble wrapper to size itself perfectly to the text length rather than expanding to the full avatar width.
     <div
-      className="absolute -top-5 left-1/2 z-20 flex w-max max-w-[84px] -translate-x-1/2 flex-col items-start pb-3"
+      className="absolute -top-6 left-1/2 z-20 flex w-max max-w-[90px] -translate-x-1/2 flex-col items-start pb-3"
       style={{ pointerEvents: "none" }}
     >
       {/* Actual bubble — pointer-events re-enabled */}
@@ -52,7 +46,7 @@ const InboxNoteBubble = ({ note, isOwn, onBubbleClick }) => {
         onClick={handleClick}
         style={{ pointerEvents: "auto" }}
         className={[
-          "w-full rounded-2xl border border-white/10 bg-base-200/95 px-2.5 py-1.5",
+          "w-full rounded-2xl  bg-base-200/95 px-2 py-1.5",
           "shadow-lg backdrop-blur-sm transition-all duration-200",
           "cursor-pointer",
           expanded ? "rounded-b-2xl" : "",
@@ -61,14 +55,18 @@ const InboxNoteBubble = ({ note, isOwn, onBubbleClick }) => {
           .join(" ")}
       >
         {hasContent ? (
-          // FIXED: Changed flex layout direction to `flex-col` to move emojis cleanly to the top, separate from text row.
-          <div className="flex flex-col gap-0.5">
-            {note.emoji && (
-              <span className="mb-0.5 block text-left text-xs leading-none">{note.emoji}</span>
-            )}
-            {displayText && (
-              <span className="break-words text-left text-[10px] font-semibold leading-tight tracking-wide">
-                {displayText}
+          /* FIXED: Changed layout to row alignment so emoji stays cleanly on the left */
+          <div className="flex flex-row items-center justify-start gap-1">
+            {note.emoji && <span className="shrink-0 text-xs leading-none">{note.emoji}</span>}
+            {rawText && (
+              /* FIXED: Applied Tailwind's line-clamp utilities to cleanly lock to 2 lines maximum when collapsed */
+              <span
+                className={[
+                  "break-words text-left text-[10px] font-semibold leading-tight tracking-wide",
+                  !expanded ? "line-clamp-2" : "",
+                ].join(" ")}
+              >
+                {rawText}
               </span>
             )}
           </div>
@@ -79,13 +77,13 @@ const InboxNoteBubble = ({ note, isOwn, onBubbleClick }) => {
         )}
       </div>
 
-      {/* Thought-bubble tail — FIXED: Anchored to the bottom-left corner of the bubble */}
+      {/* Thought-bubble tail — Anchored to the bottom-left corner of the bubble */}
       <div
-        className="absolute bottom-0 left-3 flex flex-col items-center gap-[2px]"
+        className="absolute bottom-[2px] left-3 flex flex-col items-center gap-[2px]"
         style={{ pointerEvents: "none" }}
       >
-        <div className="h-[8px] w-[8px] rounded-full bg-base-200/95 shadow-sm" />
-        <div className="h-[4px] w-[4px] rounded-full bg-base-200/90 ml-2" />
+        <div className="h-[6px] w-[6px] rounded-full bg-base-200/95 shadow-sm" />
+        <div className="ml-1.5 h-[3.5px] w-[3.5px] rounded-full bg-base-200/90" />
       </div>
     </div>
   )
@@ -93,7 +91,7 @@ const InboxNoteBubble = ({ note, isOwn, onBubbleClick }) => {
 
 // ── Card ──────────────────────────────────────────────────────────────────────
 const NoteCard = ({ user, isOwn, onAvatarClick, onBubbleClick }) => {
-  const note = isOwn ? user.note : user.note
+  const note = user?.note
   const nameColor = user?.nameColor
 
   return (
@@ -136,7 +134,7 @@ const InboxNotes = () => {
   return (
     <>
       <div
-        className="flex gap-8 px-4 py-3"
+        className="flex gap-10 px-4 py-3"
         style={{
           overflowX: "auto",
           overflowY: "visible",
