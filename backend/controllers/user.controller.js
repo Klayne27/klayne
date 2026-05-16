@@ -6,7 +6,7 @@ import bcrypt from "bcryptjs";
 import Post from "../models/post.model.js";
 import Conversation from "../models/conversation.model.js";
 import Message from "../models/message.model.js";
-import { createAndSendNotification, emitFollowRequestCount, io } from "../lib/socket.js";
+import { createAndSendNotification, emitFollowRequestCount, emitNoteDeleted, emitNoteUpdated, io } from "../lib/socket.js";
 import mongoose from "mongoose";
 import PublicChatMessage from "../models/publicMessage.model.js";
 import { getBlockingUsers, getMutedUsers } from "../lib/utils/helpers.js";
@@ -1420,7 +1420,6 @@ export const declineFollowRequest = async (req, res) => {
   }
 };
 
-// ── PATCH /api/users/note ─────────────────────────────────────────────────────
 export const updateNote = async (req, res) => {
   try {
     const { text, emoji, expiresInHours } = req.body;
@@ -1428,17 +1427,14 @@ export const updateNote = async (req, res) => {
 
     const trimmedText = text?.trim() || null;
 
-    if (trimmedText && trimmedText.length > 60) {
+    if (trimmedText && trimmedText.length > 60)
       return res.status(400).json({ error: "Note must be 60 characters or less." });
-    }
 
-    // Require at least one of text or emoji
-    if (!trimmedText && !emoji) {
+    if (!trimmedText && !emoji)
       return res.status(400).json({ error: "Provide text, an emoji, or both." });
-    }
 
     const expiresAt = expiresInHours
-      ? new Date(Date.now() + Number(expiresInHours) * 60 * 60 * 1000)
+      ? new Date(Date.now() + Number(expiresInHours) * 3_600_000)
       : null;
 
     const updatedUser = await User.findByIdAndUpdate(
@@ -1453,6 +1449,9 @@ export const updateNote = async (req, res) => {
       { new: true },
     ).select("note username");
 
+    // ── Broadcast to online followers (non-blocking) ─────────────────────
+    emitNoteUpdated(userId, updatedUser.note).catch(() => {});
+
     return res.status(200).json({ note: updatedUser.note });
   } catch (error) {
     console.error("Error in updateNote:", error.message);
@@ -1463,12 +1462,50 @@ export const updateNote = async (req, res) => {
 // ── DELETE /api/users/note ────────────────────────────────────────────────────
 export const deleteNote = async (req, res) => {
   try {
-    await User.findByIdAndUpdate(req.user._id, {
+    const userId = req.user._id;
+
+    await User.findByIdAndUpdate(userId, {
       $set: { note: { text: null, emoji: null, expiresAt: null } },
     });
+
+    // ── Broadcast removal to online followers (non-blocking) ─────────────
+    emitNoteDeleted(userId).catch(() => {});
+
     return res.status(200).json({ note: null });
   } catch (error) {
     console.error("Error in deleteNote:", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+// ── GET /api/users/notes/following ────────────────────────────────────────────
+// Returns all followed users who currently have an active (non-expired) note.
+export const getFollowingNotes = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const now = new Date();
+
+    const currentUser = await User.findById(userId).select("following").lean();
+    if (!currentUser) return res.status(404).json({ error: "User not found" });
+
+    if (!currentUser.following?.length) return res.status(200).json([]);
+
+    const usersWithNotes = await User.find({
+      _id: { $in: currentUser.following },
+      $and: [
+        // Has at least one of: text or emoji
+        { $or: [{ "note.text": { $ne: null } }, { "note.emoji": { $ne: null } }] },
+        // Not expired
+        { $or: [{ "note.expiresAt": null }, { "note.expiresAt": { $gt: now } }] },
+      ],
+    })
+      .select("username fullName profileImg nameColor equipped note")
+      .populate("profileImg", "imageUrl")
+      .lean();
+
+    return res.status(200).json(usersWithNotes);
+  } catch (error) {
+    console.error("Error in getFollowingNotes:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };

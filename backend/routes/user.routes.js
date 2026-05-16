@@ -10,6 +10,7 @@ import {
   deleteUserAccount,
   followUnfollowUser,
   getFollowers,
+  getFollowingNotes,
   getFollowingUsers,
   getFollowRequests,
   getMuteStatus,
@@ -67,6 +68,7 @@ router.put("/update-status-preference", updateStatusPreference);
 router.put("/name-color", protectRoute, updateNameColor);
 router.patch("/note", protectRoute, updateNote);
 router.delete("/note", protectRoute, deleteNote);
+router.get("/notes/following", protectRoute, getFollowingNotes);
 
 router.patch("/pomodoro-background", protectRoute, setPomodoroBackground);
 router.delete("/pomodoro-background", protectRoute, removePomodoroBackground);

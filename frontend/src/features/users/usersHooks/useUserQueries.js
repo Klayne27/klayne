@@ -1,5 +1,6 @@
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query"
+import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
+  getFollowingNotesApi,
   getFollowRequestsApi,
   getMuteStatusApi,
   getSuggestedUsersApi,
@@ -9,6 +10,8 @@ import {
   getUserStatsApi,
 } from "../../../api/usersApi"
 import { userKeys } from "./userKeys"
+import { useSocket } from "../../../context/SocketContext"
+import { useEffect } from "react"
 
 export const useGetUserProfile = (username) => {
   const { data, isLoading, isRefetching, error, isError, refetch } = useQuery({
@@ -156,4 +159,72 @@ export const useGetFollowRequests = () => {
     staleTime: 60_000,
   })
   return { followRequests, isLoading }
+}
+
+const INBOX_NOTES_KEY = ["inbox", "notes", "following"]
+
+export const useGetInboxNotes = () => {
+  const queryClient = useQueryClient()
+  const { socket } = useSocket()
+
+  const { data: notes = [], isLoading } = useQuery({
+    queryKey: INBOX_NOTES_KEY,
+    queryFn: getFollowingNotesApi,
+    staleTime: 2 * 60 * 1000,
+    // Notes change infrequently — socket events keep us real-time
+    refetchOnWindowFocus: false,
+  })
+
+  useEffect(() => {
+    if (!socket) return
+
+    // ── Someone we follow set or updated their note ───────────────────────
+    const onNoteUpdated = (payload) => {
+      const now = new Date()
+      const isExpired = payload.note?.expiresAt && new Date(payload.note.expiresAt) <= now
+      const hasContent = payload.note?.text || payload.note?.emoji
+
+      queryClient.setQueryData(INBOX_NOTES_KEY, (old = []) => {
+        // Remove if expired or empty
+        if (isExpired || !hasContent) {
+          return old.filter((u) => u._id !== payload.userId)
+        }
+
+        const exists = old.some((u) => u._id === payload.userId)
+
+        if (exists) {
+          return old.map((u) => (u._id === payload.userId ? { ...u, note: payload.note } : u))
+        }
+
+        // New person added a note — append
+        return [
+          ...old,
+          {
+            _id: payload.userId,
+            username: payload.username,
+            fullName: payload.fullName,
+            profileImg: payload.profileImg,
+            nameColor: payload.nameColor,
+            equipped: payload.equipped,
+            note: payload.note,
+          },
+        ]
+      })
+    }
+
+    // ── Someone we follow deleted their note ──────────────────────────────
+    const onNoteDeleted = ({ userId }) => {
+      queryClient.setQueryData(INBOX_NOTES_KEY, (old = []) => old.filter((u) => u._id !== userId))
+    }
+
+    socket.on("inbox_note_updated", onNoteUpdated)
+    socket.on("inbox_note_deleted", onNoteDeleted)
+
+    return () => {
+      socket.off("inbox_note_updated", onNoteUpdated)
+      socket.off("inbox_note_deleted", onNoteDeleted)
+    }
+  }, [socket, queryClient])
+
+  return { notes, isLoading }
 }

@@ -644,6 +644,52 @@ export const createAndSendNotification = async ({
   }
 };
 
+// Emit to all online followers when a user sets/updates their note
+export async function emitNoteUpdated(authorId, note) {
+  try {
+    const author = await User.findById(authorId)
+      .select("followers username fullName profileImg nameColor equipped")
+      .populate("profileImg", "imageUrl")
+      .lean();
+    if (!author) return;
+
+    const payload = {
+      _id:       authorId.toString(),
+      userId:    authorId.toString(),
+      username:  author.username,
+      fullName:  author.fullName,
+      profileImg: author.profileImg,
+      nameColor: author.nameColor,
+      equipped:  author.equipped,
+      note,
+    };
+
+    for (const followerId of author.followers) {
+      const sids = getReceiverSocketIds(followerId.toString());
+      if (sids.length) io.to(sids).emit("inbox_note_updated", payload);
+    }
+  } catch (err) {
+    console.error("emitNoteUpdated error:", err.message);
+  }
+}
+
+// Emit to all online followers when a user removes their note
+export async function emitNoteDeleted(authorId) {
+  try {
+    const author = await User.findById(authorId).select("followers").lean();
+    if (!author) return;
+
+    const payload = { userId: authorId.toString() };
+
+    for (const followerId of author.followers) {
+      const sids = getReceiverSocketIds(followerId.toString());
+      if (sids.length) io.to(sids).emit("inbox_note_deleted", payload);
+    }
+  } catch (err) {
+    console.error("emitNoteDeleted error:", err.message);
+  }
+}
+
 export const PUBLIC_CHAT_ROOM = "public_chat_room";
 
 io.on("connection", async (socket) => {

@@ -312,6 +312,13 @@ export const deleteNoteApi = async () => {
   return data
 }
 
+export const getFollowingNotesApi = async () => {
+  const res  = await fetch(`${BASE_URL}/notes/following`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to fetch following notes");
+  return data; 
+};
+
 export const removeUserPhotoApi = async (photoType) => {
   const res = await fetch(`${BASE_URL}/update`, {
     method: "POST",

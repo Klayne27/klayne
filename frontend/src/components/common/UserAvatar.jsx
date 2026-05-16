@@ -14,8 +14,9 @@ const SIZE_MAP = {
   md: "h-10 w-10",
   lg: "h-14 w-14",
   lg2: "h-16 w-16",
+  lg3: "h-18 w-18",
   xl: "h-20 w-20",
-  xxl: "w-24 h-24 md:h-32 md:w-32"
+  xxl: "w-24 h-24 md:h-32 md:w-32",
 }
 
 const UserAvatar = ({ user, size = "md", className = "", onClick }) => {

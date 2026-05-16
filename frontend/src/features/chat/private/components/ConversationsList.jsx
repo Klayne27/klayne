@@ -9,6 +9,7 @@ import {
   useGetOrCreateConversation,
   useSearchConversations,
 } from "../privateChatHooks/usePrivateChatQueries"
+import InboxNotes from "../../common/components/InboxNotes"
 
 const ConversationsList = ({ conversations }) => {
   const { authUser } = useAuthUser()
@@ -60,7 +61,7 @@ const ConversationsList = ({ conversations }) => {
     <div className="template flex h-full flex-col border-accent">
       <ConversationsListHeader />
 
-      <div className="px-3 py-2">
+      <div className="px-5 py-2">
         <div ref={searchInputWrapperRef} className="relative w-full">
           <IoSearch className="absolute top-1/2 mx-3 h-4 w-4 -translate-y-1/2 text-gray-500" />
           <input
@@ -162,6 +163,8 @@ const ConversationsList = ({ conversations }) => {
           )}
         </div>
       </div>
+
+      <InboxNotes />
 
       <div className="scrollbar-on-hover flex-1 overflow-y-auto overflow-x-hidden pb-12">
         {conversations.length === 0 ? (
