@@ -112,6 +112,7 @@ const PostPage = () => {
     [replyInput, handleCloseEmojiPickerPopover],
   )
 
+
   const displayPost = post?.repostedFrom || post
 
   const adjustTextareaHeight = useCallback(() => {

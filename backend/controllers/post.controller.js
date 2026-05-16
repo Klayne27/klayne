@@ -226,7 +226,7 @@ export const createReply = async (req, res) => {
       mediaType = "video";
     }
 
-const mentionedUsersIds = await extractAndValidateMentions(text);
+    const mentionedUsersIds = await extractAndValidateMentions(text);
 
     // ── Extract hashtags ───────────────────────────────────────────────────
     const tags = extractHashtags(text);
@@ -1281,6 +1281,7 @@ export const getLikedPosts = async (req, res) => {
     console.log("Error in getLikedPosts controller: ", error);
   }
 };
+
 export const getFollowingPosts = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -1484,28 +1485,30 @@ export const getUserPosts = async (req, res) => {
 
     const now = new Date();
 
-    const queryConditions = {
-      isVent: { $ne: true },
-      parentPost: null,
-      $and: [
-        { "deletedFor.user": { $ne: currentUserId } },
+const queryConditions = {
+  parentPost: null,
+  $and: [
+    // Show regular posts AND non-anonymous vent posts
+    {
+      $or: [{ isVent: { $ne: true } }, { isVent: true, isAnonymous: { $ne: true } }],
+    },
+    { "deletedFor.user": { $ne: currentUserId } },
+    {
+      $or: [
+        { isScheduled: { $ne: true } },
+        { user: currentUserId },
         {
-          $or: [
-            { isScheduled: { $ne: true } },
-            { user: currentUserId },
-            {
-              $and: [
-                { isScheduled: true },
-                { scheduledAt: { $ne: null } },
-                { scheduledAt: { $lte: now } },
-              ],
-            },
+          $and: [
+            { isScheduled: true },
+            { scheduledAt: { $ne: null } },
+            { scheduledAt: { $lte: now } },
           ],
         },
-        { $or: [{ user: user._id }] },
       ],
-    };
-
+    },
+    { $or: [{ user: user._id }] },
+  ],
+};
     const totalUserPosts = await Post.countDocuments(queryConditions);
 
     const rawUserPosts = await Post.find(queryConditions)
@@ -1627,8 +1630,8 @@ export const getUserReplies = async (req, res) => {
     const matchConditions = {
       user: targetUser._id,
       parentPost: { $ne: null },
-      isVent: { $ne: true },
       "deletedFor.user": { $ne: currentUserId },
+      $or: [{ isVent: { $ne: true } }, { isVent: true, isAnonymous: { $ne: true } }],
     };
 
     const totalCount = await Post.countDocuments(matchConditions);
@@ -1681,12 +1684,23 @@ export const getUserReplies = async (req, res) => {
                 localField: "user",
                 foreignField: "_id",
                 as: "user",
-                // Only need _id to run the exclusion filter; include name for display
                 pipeline: [{ $project: { _id: 1, username: 1, fullName: 1 } }],
               },
             },
             { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
-            { $project: { _id: 1, text: 1, user: 1 } },
+            // ── Mask identity if the parent post is anonymous ──────────────────
+            {
+              $addFields: {
+                "user.username": {
+                  $cond: [{ $eq: ["$isAnonymous", true] }, "Anonymous", "$user.username"],
+                },
+                "user.fullName": {
+                  $cond: [{ $eq: ["$isAnonymous", true] }, "Anonymous", "$user.fullName"],
+                },
+              },
+            },
+            // ──────────────────────────────────────────────────────────────────
+            { $project: { _id: 1, text: 1, user: 1, isAnonymous: 1 } }, // ← add isAnonymous
           ],
         },
       },
@@ -2168,7 +2182,7 @@ export const createPost = async (req, res) => {
       mediaType = "video";
     }
 
-const mentionedUsersIds = await extractAndValidateMentions(text);
+    const mentionedUsersIds = await extractAndValidateMentions(text);
 
     // ── Extract hashtags early so they can be stored on the post ──────────
     const tags = extractHashtags(text);
@@ -2350,7 +2364,6 @@ export const editPost = async (req, res) => {
     post.hashtags = newTags;
     post.mentionedUsers = await extractAndValidateMentions(text);
 
-
     await post.save();
 
     // Persist count changes after the document is saved so we don't update
@@ -2383,9 +2396,6 @@ export const editPost = async (req, res) => {
   }
 };
 
-// ─── deletePost ────────────────────────────────────────────────────────────
-// FIX: decrement hashtag counts for every post being deleted (the root post
-// and all its descendants) so counts don't permanently inflate over time.
 export const deletePost = async (req, res) => {
   try {
     const { postId } = req.params;
@@ -2746,7 +2756,10 @@ export const checkIfUserReposted = async (req, res) => {
     const { originalPostId } = req.params;
     const userId = req.user._id;
 
-    const originalPost = await Post.findById(originalPostId).select("user", "-password -email");
+    const originalPost = await Post.findById(originalPostId).select(
+      "user",
+      "-password -email",
+    );
     if (!originalPost) return res.status(404).json({ error: "Original post not found." });
 
     if (await isBlockedOrBlockedBy(userId, originalPost.user)) {
@@ -2919,7 +2932,7 @@ export const updateScheduledPost = async (req, res) => {
       return res.status(400).json({ error: "Scheduled post must have text content." });
     }
 
-const mentionedUsersIds = await extractAndValidateMentions(text);
+    const mentionedUsersIds = await extractAndValidateMentions(text);
 
     post.text = text;
     post.img = null;
