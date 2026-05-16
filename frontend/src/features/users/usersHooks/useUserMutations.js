@@ -31,6 +31,7 @@ import { messageKeys } from "../../chat/common/hooks/messageKeys"
 import { notificationKeys } from "../../notifications/notificationsHooks/notificationKeys"
 import { conversationKeys } from "../../chat/common/hooks/conversationKeys"
 import { useNavigate } from "react-router-dom"
+import { INBOX_NOTES_KEY } from "./useUserQueries"
 
 export const useUpdateUserProfile = () => {
   const queryClient = useQueryClient()
@@ -167,6 +168,10 @@ export const useFollow = () => {
       const { userIdToFollow } = variables
       queryClient.invalidateQueries({ queryKey: userKeys.auth() })
       queryClient.invalidateQueries({ queryKey: ["userProfile", userIdToFollow] })
+      queryClient.invalidateQueries({ queryKey: INBOX_NOTES_KEY })
+      // queryClient.invalidateQueries({ queryKey: conversationKeys.list() })
+
+     
 
       if (data?.action === "requested" || data?.action === "cancelled") {
         queryClient.invalidateQueries({ queryKey: userKeys.followRequests() })

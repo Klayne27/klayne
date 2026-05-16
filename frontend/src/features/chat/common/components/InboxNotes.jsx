@@ -1,21 +1,13 @@
-// features/chat/private/components/InboxNotes.jsx
-//
-// Instagram-style note strip.
-// Layout per card:
-//   - Avatar is the layout anchor (fixed size, always on the same baseline)
-//   - Bubble is position:absolute, top-0, overlapping DOWN onto the avatar
-//   - Bubble width shrinks to match content length dynamically
-//   - Bubble expands downward when tapped (more z-index, grows height)
-//   - Strip is a single fixed-height scrollable row — no vertical shift ever
 
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuthUser } from "../../../auth/authHooks/useAuthUser"
 import UserAvatar from "../../../../components/common/UserAvatar"
 import NoteModal from "../../../../components/common/NoteModal"
-import { useGetOrCreateConversation } from "../../private/privateChatHooks/usePrivateChatQueries"
+import { useGetConversations, useGetOrCreateConversation } from "../../private/privateChatHooks/usePrivateChatQueries"
 import { useGetInboxNotes } from "../../../users/usersHooks/useUserQueries"
 import UserFullName from "../../../../components/common/UserFullname"
+import { usePrivateChatStore } from "../../../../store/usePrivateChatStore"
 
 // ── Bubble ────────────────────────────────────────────────────────────────────
 const InboxNoteBubble = ({ note, isOwn, onBubbleClick }) => {
@@ -115,13 +107,36 @@ const NoteCard = ({ user, isOwn, onAvatarClick, onBubbleClick }) => {
   )
 }
 
-// ── Strip ─────────────────────────────────────────────────────────────────────
+// ── Strip ────────────────────────────────────────────────────────────────────
 const InboxNotes = () => {
   const { authUser } = useAuthUser()
   const { notes, isLoading } = useGetInboxNotes()
   const navigate = useNavigate()
   const { getOrCreateConversation, isCreatingConversation } = useGetOrCreateConversation()
   const [noteModalOpen, setNoteModalOpen] = useState(false)
+
+  const {conversations} = useGetConversations()
+  const setReplyingToMessage = usePrivateChatStore((state) => state.setReplyingToMessage)
+  const setAudioBlob = usePrivateChatStore((state) => state.setAudioBlob)
+
+  const handleAvatarClick = (targetUser) => {
+    // Look through active conversations list for a DM with this participant
+    const directMatch = conversations.find(
+      (c) =>
+        !c.isGroup && c.participants?.some((p) => String(p._id || p) === String(targetUser._id)),
+    )
+
+    if (directMatch) {
+      // Recreate exactly how your conversation item clicks navigate locally
+      navigate(`/messages/${directMatch._id}`)
+      if (setReplyingToMessage) setReplyingToMessage(null)
+      if (setAudioBlob) setAudioBlob(null)
+    } else {
+      // Fallback: If no previous conversation exists in local memory array,
+      // view their profile instead of breaking
+      navigate(`/profile/${targetUser.username}`)
+    }
+  }
 
   if (!authUser) return null
 
@@ -134,10 +149,10 @@ const InboxNotes = () => {
   return (
     <>
       <div
-        className="flex gap-10 px-4 py-3"
+        className="flex gap-10 px-4 py-3 overflow-y-hidden"
         style={{
           overflowX: "auto",
-          overflowY: "visible",
+        //   overflowY: "visible",
           WebkitOverflowScrolling: "touch",
         }}
       >
@@ -157,7 +172,7 @@ const InboxNotes = () => {
               user={u}
               isOwn={false}
               onAvatarClick={() =>
-                !isCreatingConversation && getOrCreateConversation({ targetUserId: u._id })
+                handleAvatarClick(u)
               }
             />
           ))}

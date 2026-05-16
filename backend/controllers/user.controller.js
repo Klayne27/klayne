@@ -222,7 +222,10 @@ export const followUnfollowUser = async (req, res) => {
         User.findByIdAndUpdate(userId, { $pull: { followers: currentUserId } }),
         User.findByIdAndUpdate(currentUserId, { $pull: { following: userId } }),
         Conversation.updateOne(
-          { participants: { $all: [currentUserId, userId] } },
+          {
+            isGroup: false,
+            participants: { $all: [currentUserId, userId] },
+          },
           { $addToSet: { hiddenFor: currentUserId } },
           { timestamps: false },
         ),

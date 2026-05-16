@@ -161,7 +161,7 @@ export const useGetFollowRequests = () => {
   return { followRequests, isLoading }
 }
 
-const INBOX_NOTES_KEY = ["inbox", "notes", "following"]
+export const INBOX_NOTES_KEY = ["inbox", "notes", "following"]
 
 export const useGetInboxNotes = () => {
   const queryClient = useQueryClient()
