@@ -14,8 +14,8 @@ export const POMODORO_PRESETS = [
   { key: "stars", label: "Stars", path: "/backgrounds/stars.mp4" },
   { key: "piggy", label: "Piggy", path: "/backgrounds/piggy.mp4" },
   { key: "fireplace", label: "Fireplace", path: "/backgrounds/fireplace.mp4" },
-  { key: "coffee_outside", label: "Coffee Outside", path: "/backgrounds/coffee_outside.mp4" },
-  { key: "coffee_inside", label: "Coffee Inside", path: "/backgrounds/coffee_inside.mp4" },
+  { key: "coffee_outside", label: "Coffee 1", path: "/backgrounds/coffee_outside.mp4" },
+  { key: "coffee_inside", label: "Coffee 2", path: "/backgrounds/coffee_inside.mp4" },
   { key: "cafe", label: "Café", path: "/backgrounds/cafe.mp4" },
   { key: "cyberpunk", label: "Cyberpunk", path: "/backgrounds/cyberpunk.mp4" },
 ]

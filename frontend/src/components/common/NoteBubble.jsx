@@ -45,9 +45,9 @@ const NoteBubble = ({ note, isOwn, onClick, className = "" }) => {
         onClick={handleClick}
         className={[
           "relative flex items-start gap-1 rounded-3xl bg-base-200/95",
-          "max-w-32 px-3 py-2 shadow-xl backdrop-blur-sm transition-all duration-300 ease-in-out",
+          "w-max max-w-32 px-3 py-2 shadow-xl backdrop-blur-sm transition-all duration-300 ease-in-out",
           "origin-bottom",
-          isExpanded ? "flex-col w-32" : "flex-row items-center",
+          isExpanded ? "flex-col" : "flex-row items-center",
           isClickable ? "cursor-pointer select-none" : "",
           isOwn ? "hover:border-primary/40 hover:bg-base-200" : "",
         ]
@@ -68,7 +68,7 @@ const NoteBubble = ({ note, isOwn, onClick, className = "" }) => {
             <div className="flex w-full items-center gap-1.5 overflow-hidden">
               {note.emoji && <span className="shrink-0 text-sm">{note.emoji}</span>}
               {displayText && (
-                <span className="flex-1 line-clamp-2 w-32 text-[11px] font-medium leading-tight">
+                <span className="line-clamp-2 flex-1 break-words text-[11px] font-medium leading-tight">
                   {displayText}
                 </span>
               )}
