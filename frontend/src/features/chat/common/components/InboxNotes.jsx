@@ -15,6 +15,7 @@ import UserAvatar from "../../../../components/common/UserAvatar"
 import NoteModal from "../../../../components/common/NoteModal"
 import { useGetOrCreateConversation } from "../../private/privateChatHooks/usePrivateChatQueries"
 import { useGetInboxNotes } from "../../../users/usersHooks/useUserQueries"
+import UserFullName from "../../../../components/common/UserFullname"
 
 // ── Bubble ────────────────────────────────────────────────────────────────────
 const InboxNoteBubble = ({ note, isOwn, onBubbleClick }) => {
@@ -46,7 +47,7 @@ const InboxNoteBubble = ({ note, isOwn, onBubbleClick }) => {
         onClick={handleClick}
         style={{ pointerEvents: "auto" }}
         className={[
-          "w-full rounded-2xl  bg-base-200/95 px-2 py-1.5",
+          "w-full rounded-2xl bg-base-200/95 px-2 py-1.5",
           "shadow-lg backdrop-blur-sm transition-all duration-200",
           "cursor-pointer",
           expanded ? "rounded-b-2xl" : "",
@@ -95,7 +96,7 @@ const NoteCard = ({ user, isOwn, onAvatarClick, onBubbleClick }) => {
   const nameColor = user?.nameColor
 
   return (
-    <div className="flex w-16 flex-shrink-0 flex-col items-center gap-1.5">
+    <div className="flex w-16 flex-shrink-0 flex-col items-center ">
       {/* Avatar + bubble container — the layout anchor */}
       <div className="relative mt-8 w-20">
         <InboxNoteBubble note={note ?? null} isOwn={isOwn} onBubbleClick={onBubbleClick} />
@@ -105,12 +106,11 @@ const NoteCard = ({ user, isOwn, onAvatarClick, onBubbleClick }) => {
       </div>
 
       {/* Label */}
-      <span
-        className="w-full truncate text-center text-[11px] font-medium"
-        style={nameColor ? { color: nameColor } : undefined}
-      >
-        {isOwn ? <span className="text-slate-500">You</span> : user.fullName}
-      </span>
+      {isOwn ? (
+        <span className="text-slate-500 text-xs">Your Note</span>
+      ) : (
+        <UserFullName className={"text-xs font-semibold"} user={user} style={nameColor ? { color: nameColor } : undefined} />
+      )}
     </div>
   )
 }
