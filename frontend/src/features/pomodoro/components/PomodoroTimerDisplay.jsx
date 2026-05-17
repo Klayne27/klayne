@@ -7,6 +7,7 @@ import { Tooltip } from "react-tooltip" // 1. Import Tooltip
 import QuoteWidget from "./QuoteWidget"
 import { useSound } from "../../../hooks/customHooks/useSound"
 import { useAuthUser } from "../../auth/authHooks/useAuthUser"
+import { usePomodoroBackgroundStore } from "../../../store/usePomodoroBackgroundStore"
 
 function PomodoroTimerDisplay({
   isBreak,
@@ -20,6 +21,8 @@ function PomodoroTimerDisplay({
   const { updateSettings } = useUpdatePomodoroSettings()
   const { settings } = useGetPomodoroSettings()
   const {authUser} = useAuthUser()
+  const activePreset = usePomodoroBackgroundStore((s) => s.presetKey)
+  const activeCustomUrl = usePomodoroBackgroundStore((s) => s.customImageUrl)
 
   const { play: playClick } = useSound("/sounds/click-004.mp3", 1)
   const { play: playClickAlarm } = useSound("/sounds/toggle-001.mp3", 1)
@@ -73,7 +76,7 @@ function PomodoroTimerDisplay({
       ? "stroke-teal-400"
       : "stroke-primary"
 
-  const isBackgroundPicked = authUser?.pomodoroBackgroundUrl || authUser.pomodoroBackground
+  const hasBackground = !!(activePreset || activeCustomUrl)
 
   return (
     <div className="relative flex flex-col items-center gap-6">
@@ -115,7 +118,7 @@ function PomodoroTimerDisplay({
 
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span
-            className={`font-mono text-6xl font-black tabular-nums tracking-tighter md:text-7xl duration transition-300 ${isBackgroundPicked ? "text-slate-400" : ""}`}
+            className={`font-mono text-6xl font-black tabular-nums tracking-tighter md:text-7xl duration transition-300 ${hasBackground ? "text-slate-400" : ""}`}
           >
             {isGoalReached
               ? "00:00"

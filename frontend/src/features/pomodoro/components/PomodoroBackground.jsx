@@ -10,18 +10,7 @@ export function isVideoUrl(url) {
   )
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
-/**
- * Pomodoro page background layer.
- *
- * MUST be rendered as the FIRST child inside a `position: relative` <main>.
- * Uses `position: absolute` (not fixed) so it is contained within <main> and
- * never competes with the layout wrapper's `bg-base-100` stacking context.
- *
- * Props:
- *  bgUrl      – image or video URL (preset path or Cloudinary URL)
- *  timerGlow  – radial-gradient CSS string for the timer-state colour pulse
- */
+
 const PomodoroBackground = ({ bgUrl, timerGlow }) => {
   const [readySrc, setReadySrc] = useState(null)
   const [isLoaded, setIsLoaded] = useState(false)
@@ -66,9 +55,7 @@ const PomodoroBackground = ({ bgUrl, timerGlow }) => {
           muted
           playsInline
           onCanPlay={() => setIsLoaded(true)}
-          className={`h-full w-full select-none object-cover transition-opacity duration-700 ${
-            isLoaded ? "opacity-100" : "opacity-0"
-          }`}
+          className={`h-full w-full select-none object-cover `}
         />
       ) : (
         <img

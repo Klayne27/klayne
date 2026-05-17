@@ -4,6 +4,7 @@ import { FaChevronDown } from "react-icons/fa6"
 import { Tooltip } from "react-tooltip"
 import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 import { useIsMobile } from "../../../hooks/customHooks/useIsMobile"
+import { usePomodoroBackgroundStore } from "../../../store/usePomodoroBackgroundStore"
 
 const CATEGORY_STYLES = {
   all: {
@@ -40,6 +41,8 @@ function QuoteWidget() {
   const dropdownRef = useRef(null)
   const { authUser } = useAuthUser()
   const isMobile = useIsMobile()
+  const activePreset = usePomodoroBackgroundStore((s) => s.presetKey)
+  const activeCustomUrl = usePomodoroBackgroundStore((s) => s.customImageUrl)
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -69,7 +72,7 @@ function QuoteWidget() {
   }
 
   const activeStyle = CATEGORY_STYLES[activeCategory]
-  const isBackgroundPicked = authUser?.pomodoroBackgroundUrl || authUser.pomodoroBackground
+  const hasBackground = !!(activePreset || activeCustomUrl)
 
   return (
     <div className="flex flex-col items-center gap-3 rounded-lg p-6 px-6 text-center backdrop-blur-sm">
@@ -113,7 +116,7 @@ function QuoteWidget() {
         }`}
       >
         <p
-          className={`duration transition-300 font-serif text-sm leading-relaxed ${isBackgroundPicked && !isMobile ? "text-slate-400" : ""}`}
+          className={`duration transition-300 font-serif text-sm leading-relaxed ${hasBackground && !isMobile ? "text-slate-400" : ""}`}
         >
           &ldquo;{quote.text}&rdquo;
         </p>

@@ -8,6 +8,7 @@ import { Tooltip } from "react-tooltip" // 1. Import Tooltip
 import { useRef, useState } from "react"
 import { LuImagePlay } from "react-icons/lu"
 import PomodoroBackgroundPicker from "./PomodoroBackgroundPicker.jsx"
+import { usePomodoroBackgroundStore } from "../../../store/usePomodoroBackgroundStore.js"
 
 const xpForLevel = (level) => {
   if (level <= 1) return 500
@@ -18,9 +19,11 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount, setShowInfoModal }) => {
   const { authUser: currentUser } = useAuthUser()
   const [showBgPicker, setShowBgPicker] = useState(false)
   const bgBtnRef = useRef(null)
-  const hasBackground = !!(currentUser.pomodoroBackground || currentUser.pomodoroBackgroundUrl)
 
 
+  const activePreset = usePomodoroBackgroundStore((s) => s.presetKey)
+  const activeCustomUrl = usePomodoroBackgroundStore((s) => s.customImageUrl)
+  const hasBackground = !!(activePreset || activeCustomUrl)
   if (!currentUser) return null
 
   const {
@@ -39,7 +42,7 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount, setShowInfoModal }) => {
   const xpNeededForNextLevel = xpForLevel(pomodoroLevel + 1)
   const xpProgress = (pomodoroXP / xpNeededForNextLevel) * 100
 
-    const isBackgroundPicked = pomodoroBackgroundUrl || pomodoroBackground
+    // const isBackgroundPicked = pomodoroBackgroundUrl || pomodoroBackground
 
 
   return (
@@ -70,7 +73,7 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount, setShowInfoModal }) => {
 
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5">
-                <h2 className={`${isBackgroundPicked ? "text-slate-400" :""} transition duration-300 text-sm font-black tracking-tight`}>{fullName}</h2>
+                <h2 className={`${hasBackground ? "text-slate-400" :""} transition duration-300 text-sm font-black tracking-tight`}>{fullName}</h2>
                 <div className="flex items-center gap-1">
                   {isVerified && <img src="/verified2.png" className="size-3.5" alt="v" />}
                   {isGoldVerified && (

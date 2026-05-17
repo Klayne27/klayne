@@ -32,6 +32,7 @@ import { notificationKeys } from "../../notifications/notificationsHooks/notific
 import { conversationKeys } from "../../chat/common/hooks/conversationKeys"
 import { useNavigate } from "react-router-dom"
 import { INBOX_NOTES_KEY } from "./useUserQueries"
+import { usePomodoroBackgroundStore } from "../../../store/usePomodoroBackgroundStore"
 
 export const useUpdateUserProfile = () => {
   const queryClient = useQueryClient()
@@ -170,8 +171,6 @@ export const useFollow = () => {
       queryClient.invalidateQueries({ queryKey: ["userProfile", userIdToFollow] })
       queryClient.invalidateQueries({ queryKey: INBOX_NOTES_KEY })
       // queryClient.invalidateQueries({ queryKey: conversationKeys.list() })
-
-     
 
       if (data?.action === "requested" || data?.action === "cancelled") {
         queryClient.invalidateQueries({ queryKey: userKeys.followRequests() })
@@ -717,61 +716,51 @@ export const useRemoveUserPhoto = () => {
 }
 
 export const useSetPomodoroBackground = () => {
-  const queryClient = useQueryClient()
+  const setPreset = usePomodoroBackgroundStore((s) => s.setPreset)
+  const setCustom = usePomodoroBackgroundStore((s) => s.setCustom)
 
-  const { mutate: setBackground, isPending: isSettingBackground } = useMutation({
+  const { mutate: uploadCustom, isPending: isSettingBackground } = useMutation({
     mutationFn: setPomodoroBackgroundApi,
-    onMutate: async (vars) => {
-      await queryClient.cancelQueries({ queryKey: userKeys.auth() })
-      const prev = queryClient.getQueryData(userKeys.auth())
-      queryClient.setQueryData(userKeys.auth(), (old) =>
-        old
-          ? {
-              ...old,
-              pomodoroBackground: vars.presetKey ?? null,
-              pomodoroBackgroundUrl: vars.customImage ? "pending" : null,
-            }
-          : old,
-      )
-      return { prev }
-    },
     onSuccess: (data) => {
-      queryClient.setQueryData(userKeys.auth(), (old) => (old ? { ...old, ...data } : old))
+      // Persist the Cloudinary result to the store (also clears any preset)
+      setCustom({ url: data.pomodoroBackgroundUrl, publicId: data.pomodoroBackgroundPublicId })
     },
-    onError: (_e, _v, ctx) => {
-      if (ctx?.prev) queryClient.setQueryData(userKeys.auth(), ctx.prev)
-      showAppToast("Failed to set background", "error")
+    onError: () => {
+      showAppToast("Failed to upload background", "error")
     },
   })
+
+  // Unified entry point — preset path is synchronous and never touches the server
+  const setBackground = ({ presetKey, customImage } = {}, mutationOptions = {}) => {
+    if (presetKey) {
+      setPreset(presetKey) // instant, localStorage only
+    } else if (customImage) {
+      uploadCustom({ customImage }, mutationOptions)
+    }
+  }
 
   return { setBackground, isSettingBackground }
 }
 
 export const useRemovePomodoroBackground = () => {
-  const queryClient = useQueryClient()
+  const clearBackground = usePomodoroBackgroundStore((s) => s.clearBackground)
+  const customPublicId = usePomodoroBackgroundStore((s) => s.customPublicId)
 
-  const { mutate: removeBackground, isPending: isRemovingBackground } = useMutation({
+  const { mutate: deleteFromServer, isPending: isRemovingBackground } = useMutation({
     mutationFn: removePomodoroBackgroundApi,
-    onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: userKeys.auth() })
-      const prev = queryClient.getQueryData(userKeys.auth())
-      queryClient.setQueryData(userKeys.auth(), (old) =>
-        old
-          ? {
-              ...old,
-              pomodoroBackground: null,
-              pomodoroBackgroundUrl: null,
-              pomodoroBackgroundPublicId: null,
-            }
-          : old,
-      )
-      return { prev }
-    },
-    onError: (_e, _v, ctx) => {
-      if (ctx?.prev) queryClient.setQueryData(userKeys.auth(), ctx.prev)
-      showAppToast("Failed to remove background", "error")
-    },
+    onSuccess: () => clearBackground(),
+    onError: () => showAppToast("Failed to remove background", "error"),
   })
+
+  const removeBackground = () => {
+    if (customPublicId) {
+      // Custom upload — must delete from Cloudinary, then clear store
+      deleteFromServer()
+    } else {
+      // Preset — just wipe the store, no server call needed
+      clearBackground()
+    }
+  }
 
   return { removeBackground, isRemovingBackground }
 }

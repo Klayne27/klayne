@@ -6,7 +6,13 @@ import bcrypt from "bcryptjs";
 import Post from "../models/post.model.js";
 import Conversation from "../models/conversation.model.js";
 import Message from "../models/message.model.js";
-import { createAndSendNotification, emitFollowRequestCount, emitNoteDeleted, emitNoteUpdated, io } from "../lib/socket.js";
+import {
+  createAndSendNotification,
+  emitFollowRequestCount,
+  emitNoteDeleted,
+  emitNoteUpdated,
+  io,
+} from "../lib/socket.js";
 import mongoose from "mongoose";
 import PublicChatMessage from "../models/publicMessage.model.js";
 import { getBlockingUsers, getMutedUsers } from "../lib/utils/helpers.js";
@@ -1513,20 +1519,24 @@ export const getFollowingNotes = async (req, res) => {
   }
 };
 
-// PATCH /api/users/pomodoro-background
 export const setPomodoroBackground = async (req, res) => {
   try {
-    const { presetKey, customImage } = req.body;
+    const { customImage } = req.body;
     const userId = req.user._id;
 
-    if (!presetKey && !customImage) {
-      return res.status(400).json({ error: "Provide presetKey or customImage." });
-    }
-    if (presetKey && customImage) {
-      return res.status(400).json({ error: "Provide only one: presetKey or customImage." });
+    if (!customImage) {
+      return res.status(400).json({ error: "Provide customImage." });
     }
 
-    // Destroy existing custom asset before replacing
+    if (!customImage.match(/^data:image\/(jpeg|jpg|png|webp)/i)) {
+      return res.status(400).json({ error: "Only JPEG, PNG, and WebP are allowed." });
+    }
+
+    if (customImage.length * 0.75 > 5 * 1024 * 1024) {
+      return res.status(400).json({ error: "Image must be under 5 MB." });
+    }
+
+    // Destroy the previous custom upload before replacing
     const user = await User.findById(userId).select("pomodoroBackgroundPublicId");
     if (!user) return res.status(404).json({ error: "User not found." });
 
@@ -1536,38 +1546,24 @@ export const setPomodoroBackground = async (req, res) => {
         .catch((err) => console.warn("[background] Cloudinary destroy:", err.message));
     }
 
-    const updateFields = {
-      pomodoroBackground:         null,
-      pomodoroBackgroundUrl:      null,
-      pomodoroBackgroundPublicId: null,
-    };
+    const upload = await cloudinary.uploader.upload(customImage, {
+      upload_preset: "ml_backgrounds",
+      transformation: [
+        { width: 1920, height: 1080, crop: "fill", gravity: "auto" },
+        { quality: "auto:good", fetch_format: "webp" },
+      ],
+    });
 
-    if (presetKey) {
-      updateFields.pomodoroBackground = presetKey;
-    } else {
-      // Images only — no GIFs, no videos
-      if (!customImage.match(/^data:image\/(jpeg|jpg|png|webp)/i)) {
-        return res.status(400).json({ error: "Only JPEG, PNG, and WebP are allowed." });
-      }
-      // Size guard: base64 length × 0.75 ≈ bytes
-      if (customImage.length * 0.75 > 5 * 1024 * 1024) {
-        return res.status(400).json({ error: "Image must be under 5 MB." });
-      }
-
-      const uploadResponse = await cloudinary.uploader.upload(customImage, {
-        upload_preset: "ml_backgrounds", // ← create this unsigned preset in Cloudinary dashboard
-        transformation: [
-          { width: 1920, height: 1080, crop: "fill", gravity: "auto" },
-          { quality: "auto:good", fetch_format: "webp" },
-        ],
-      });
-
-      updateFields.pomodoroBackgroundUrl      = uploadResponse.secure_url;
-      updateFields.pomodoroBackgroundPublicId = uploadResponse.public_id; // stored, not extracted later
-    }
-
-    const updated = await User.findByIdAndUpdate(userId, { $set: updateFields }, { new: true })
-      .select("pomodoroBackground pomodoroBackgroundUrl pomodoroBackgroundPublicId");
+    const updated = await User.findByIdAndUpdate(
+      userId,
+      {
+        $set: {
+          pomodoroBackgroundUrl: upload.secure_url,
+          pomodoroBackgroundPublicId: upload.public_id,
+        },
+      },
+      { new: true },
+    ).select("pomodoroBackgroundUrl pomodoroBackgroundPublicId");
 
     return res.status(200).json(updated);
   } catch (error) {
@@ -1589,14 +1585,10 @@ export const removePomodoroBackground = async (req, res) => {
     }
 
     await User.findByIdAndUpdate(req.user._id, {
-      $set: {
-        pomodoroBackground:         null,
-        pomodoroBackgroundUrl:      null,
-        pomodoroBackgroundPublicId: null,
-      },
+      $set: { pomodoroBackgroundUrl: null, pomodoroBackgroundPublicId: null },
     });
 
-    return res.status(200).json({ message: "Background removed." });
+    return res.status(200).json({ message: "Custom background removed." });
   } catch (error) {
     console.error("Error in removePomodoroBackground:", error.message);
     res.status(500).json({ error: "Internal Server Error" });

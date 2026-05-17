@@ -1,5 +1,4 @@
 export const POMODORO_PRESETS = [
-  // { key: "galaxy", label: "Deep Space", path: "/backgrounds/galaxy.mp4" },
   { key: "aurora", label: "Aurora Borealis", path: "/backgrounds/aurora.mp4" },
   { key: "sky", label: "Endless Sky", path: "/backgrounds/sky_man.mp4" },
   { key: "camp", label: "Camping", path: "/backgrounds/camp.mp4" },
@@ -7,9 +6,7 @@ export const POMODORO_PRESETS = [
   { key: "dead-tree", label: "Lonely Tree", path: "/backgrounds/dead_tree.mp4" },
   { key: "ocean", label: "Ocean", path: "/backgrounds/ocean.mp4" },
   { key: "cat", label: "Cat Window", path: "/backgrounds/cat_window.mp4" },
-  // { key: "cat2", label: "Cat Window 2", path: "/backgrounds/cat_window2.mp4" },
   { key: "cat3", label: "Cat Window 2", path: "/backgrounds/cat_window3.mp4" },
-  // { key: "lofi_rainy", label: "Lofi Rainy", path: "/backgrounds/lofi_rainy.mp4" },
   { key: "lofi_snow", label: "Lofi Snow", path: "/backgrounds/lofi_snow.mp4" },
   { key: "stars", label: "Stars", path: "/backgrounds/stars.mp4" },
   { key: "piggy", label: "Piggy", path: "/backgrounds/piggy.mp4" },

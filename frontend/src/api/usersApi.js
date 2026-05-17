@@ -330,15 +330,16 @@ export const removeUserPhotoApi = async (photoType) => {
   return data
 }
 
-export const setPomodoroBackgroundApi = async ({ presetKey, customImage }) => {
+// Only called for custom uploads
+export const setPomodoroBackgroundApi = async ({ customImage }) => {
   const res = await fetch(`${BASE_URL}/pomodoro-background`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ presetKey, customImage }),
+    body: JSON.stringify({ customImage }),
   })
   const data = await res.json()
-  if (!res.ok) throw new Error(data.error || "Failed to set background")
-  return data
+  if (!res.ok) throw new Error(data.error || "Failed to upload background")
+  return data // { pomodoroBackgroundUrl, pomodoroBackgroundPublicId }
 }
 
 export const removePomodoroBackgroundApi = async () => {

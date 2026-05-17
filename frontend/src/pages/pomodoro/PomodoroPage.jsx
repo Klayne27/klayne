@@ -34,6 +34,7 @@ import { useSound } from "../../hooks/customHooks/useSound"
 import { FaCheckCircle } from "react-icons/fa"
 import { POMODORO_PRESETS } from "../../constants/pomodoroPresets"
 import PomodoroBackground from "../../features/pomodoro/components/PomodoroBackground"
+import { usePomodoroBackgroundStore } from "../../store/usePomodoroBackgroundStore"
 
 const getTimerState = (isGoalReached, isBreak, sessionCount, settings) => {
   if (isGoalReached) {
@@ -89,6 +90,10 @@ const PomodoroPage = () => {
   const persistPause = usePomodoroTimerStore((s) => s.persistPause)
   const persistReset = usePomodoroTimerStore((s) => s.persistReset)
 
+  const presetKey = usePomodoroBackgroundStore((s) => s.presetKey)
+  const customImageUrl = usePomodoroBackgroundStore((s) => s.customImageUrl)
+
+
   const { play: playPlay } = useSound("/sounds/click-001.mp3", 1)
   const { play: playClick } = useSound("/sounds/click-004.mp3", 1)
   const { play: playComplete } = useSound("/sounds/confirmation-003.mp3", 0.6)
@@ -120,16 +125,11 @@ const PomodoroPage = () => {
     setSelectedTaskId(null)
   }
 
-  const backgroundUrl = useMemo(() => {
-    if (authUser?.pomodoroBackgroundUrl && authUser.pomodoroBackgroundUrl !== "pending") {
-      return authUser.pomodoroBackgroundUrl
-    }
-    if (authUser?.pomodoroBackground) {
-      return POMODORO_PRESETS.find((p) => p.key === authUser.pomodoroBackground)?.path ?? null
-    }
-    return null
-  }, [authUser?.pomodoroBackground, authUser?.pomodoroBackgroundUrl])
-
+const backgroundUrl = useMemo(() => {
+  if (customImageUrl) return customImageUrl
+  if (presetKey) return POMODORO_PRESETS.find((p) => p.key === presetKey)?.path ?? null
+  return null
+}, [presetKey, customImageUrl])
 
   const { completeTodo } = useCompleteTodo()
 
@@ -271,7 +271,7 @@ const PomodoroPage = () => {
     setShowResetTimerModal(true)
   }
 
-    const isBackgroundPicked = authUser?.pomodoroBackgroundUrl || authUser.pomodoroBackground
+const hasBackground = !!(presetKey || customImageUrl)
 
 
   if (isSettingsLoading) {
@@ -365,7 +365,7 @@ const PomodoroPage = () => {
                       />
                     </div>
                     <p
-                      className={`duration transition-300 ${isBackgroundPicked ? "text-slate-400" : ""} truncate text-sm font-bold tracking-tight transition-all duration-300 ${completingId === selectedTask._id ? "line-through opacity-50" : ""}`}
+                      className={`duration transition-300 ${hasBackground ? "text-slate-400" : ""} truncate text-sm font-bold tracking-tight transition-all duration-300 ${completingId === selectedTask._id ? "line-through opacity-50" : ""}`}
                     >
                       {selectedTask.title}
                     </p>
