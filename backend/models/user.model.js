@@ -352,7 +352,7 @@ const userSchema = new mongoose.Schema(
       { type: mongoose.Schema.Types.ObjectId, ref: "Conversation", default: [] },
     ],
     isPublicChatMuted: { type: Boolean, default: false },
-    pomodoroBackground: { type: String, default: null }, // preset key
+    // pomodoroBackground: { type: String, default: null },
     pomodoroBackgroundUrl: { type: String, default: null }, // custom Cloudinary URL
     pomodoroBackgroundPublicId: { type: String, default: null }, // stored at upload for reliable deletion
   },
