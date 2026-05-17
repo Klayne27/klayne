@@ -1,10 +1,12 @@
-
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuthUser } from "../../../auth/authHooks/useAuthUser"
 import UserAvatar from "../../../../components/common/UserAvatar"
 import NoteModal from "../../../../components/common/NoteModal"
-import { useGetConversations, useGetOrCreateConversation } from "../../private/privateChatHooks/usePrivateChatQueries"
+import {
+  useGetConversations,
+  useGetOrCreateConversation,
+} from "../../private/privateChatHooks/usePrivateChatQueries"
 import { useGetInboxNotes } from "../../../users/usersHooks/useUserQueries"
 import UserFullName from "../../../../components/common/UserFullname"
 import { usePrivateChatStore } from "../../../../store/usePrivateChatStore"
@@ -89,7 +91,7 @@ const NoteCard = ({ user, isOwn, onAvatarClick, onBubbleClick }) => {
   const nameColor = user?.nameColor
 
   return (
-    <div className="flex w-16 flex-shrink-0 flex-col items-center ">
+    <div className="flex w-16 flex-shrink-0 flex-col items-center">
       {/* Avatar + bubble container — the layout anchor */}
       <div className="relative mt-8 w-20">
         <InboxNoteBubble note={note ?? null} isOwn={isOwn} onBubbleClick={onBubbleClick} />
@@ -100,9 +102,13 @@ const NoteCard = ({ user, isOwn, onAvatarClick, onBubbleClick }) => {
 
       {/* Label */}
       {isOwn ? (
-        <span className="text-slate-500 text-xs">Your Note</span>
+        <span className="text-xs font-semibold text-slate-500">Your Note</span>
       ) : (
-        <UserFullName className={"text-xs font-semibold"} user={user} style={nameColor ? { color: nameColor } : undefined} />
+        <UserFullName
+          className={"text-xs font-semibold"}
+          user={user}
+          style={nameColor ? { color: nameColor } : undefined}
+        />
       )}
     </div>
   )
@@ -111,12 +117,12 @@ const NoteCard = ({ user, isOwn, onAvatarClick, onBubbleClick }) => {
 // ── Strip ────────────────────────────────────────────────────────────────────
 const InboxNotes = () => {
   const { authUser } = useAuthUser()
-  const { notes, isLoading } = useGetInboxNotes()
+  const { notes, isLoadingNotes } = useGetInboxNotes()
   const navigate = useNavigate()
   const { getOrCreateConversation, isCreatingConversation } = useGetOrCreateConversation()
   const [noteModalOpen, setNoteModalOpen] = useState(false)
 
-  const {conversations} = useGetConversations()
+  const { conversations } = useGetConversations()
   const setReplyingToMessage = usePrivateChatStore((state) => state.setReplyingToMessage)
   const setAudioBlob = usePrivateChatStore((state) => state.setAudioBlob)
 
@@ -167,23 +173,9 @@ const InboxNotes = () => {
 
         {/* Followed users with active notes */}
         {/* Display skeletons during async loading lifecycle */}
-        {isLoading ? (
-          <>
-            <NoteCardSkeleton />
-            <NoteCardSkeleton />
-            <NoteCardSkeleton />
-          </>
-        ) : (
-          /* Render real incoming cards when loading resolves complete */
-          activeNotes.map((u) => (
-            <NoteCard
-              key={u._id}
-              user={u}
-              isOwn={false}
-              onAvatarClick={() => handleAvatarClick(u)}
-            />
-          ))
-        )}
+        {activeNotes.map((u) => (
+          <NoteCard key={u._id} user={u} isOwn={false} onAvatarClick={() => handleAvatarClick(u)} />
+        ))}
       </div>
 
       {noteModalOpen && (

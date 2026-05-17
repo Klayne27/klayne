@@ -1,13 +1,22 @@
-import { useEffect } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useParams } from "react-router-dom"
 import { useAppStore } from "../../store/useAppStore"
 import { usePrivateChatStore } from "../../store/usePrivateChatStore"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
 import ConversationListSkeleton from "../../components/skeletons/ConversationListSkeleton"
-import { useGetConversations } from "../../features/chat/private/privateChatHooks/usePrivateChatQueries"
+import {
+  useGetConversations,
+  useGetOrCreateConversation,
+  useSearchConversations,
+} from "../../features/chat/private/privateChatHooks/usePrivateChatQueries"
 import ConversationsList from "../../features/chat/private/components/ConversationsList"
 import PrivateChatWindow from "../../features/chat/private/components/PrivateChatWindow"
-
+import InboxNotes from "../../features/chat/common/components/InboxNotes"
+import ConversationsListHeader from "../../features/chat/private/components/ConversationsListHeader"
+import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
+import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
+import { useGetInboxNotes } from "../../features/users/usersHooks/useUserQueries"
+import PrivateChatSearchBar from "../../features/chat/private/components/PrivateChatSearchBar"
 
 const PrivateChatPage = () => {
   const setIsChatWindowOpen = useAppStore((state) => state.setIsChatWindowOpen)
@@ -19,6 +28,7 @@ const PrivateChatPage = () => {
   const isMobile = useIsMobile()
 
   const { conversations, isLoadingConversations, errorConversations } = useGetConversations()
+  const { isLoadingNotes } = useGetInboxNotes()
 
   useEffect(() => {
     if (isLoadingConversations) return
@@ -34,7 +44,7 @@ const PrivateChatPage = () => {
 
     return () => {
       setIsChatWindowOpen(false)
-      setSelectedConversation(null) 
+      setSelectedConversation(null)
     }
   }, [
     urlConversationId,
@@ -46,7 +56,7 @@ const PrivateChatPage = () => {
 
   const showConversationList = !isMobile || !urlConversationId
   const showChatWindow = !isMobile || !!urlConversationId
-  
+
   if (errorConversations) {
     return (
       <div className="flex-center h-screen text-red-500">Error: {errorConversations.message}</div>
@@ -55,13 +65,21 @@ const PrivateChatPage = () => {
 
   return (
     <>
-      <div className="flex min-h-screen max-w-7xl overflow-y-auto template">
+      <div className="template flex min-h-screen max-w-7xl overflow-y-auto">
         {showConversationList && (
           <div className="flex h-screen w-full flex-col md:w-[430px] md:flex-shrink-0 md:border-x md:border-accent">
-            {isLoadingConversations ? (
+            {isLoadingConversations || isLoadingNotes ? (
               <ConversationListSkeleton />
             ) : (
-              <ConversationsList conversations={conversations} />
+              <div>
+                <ConversationsListHeader />
+                <PrivateChatSearchBar />
+
+               
+
+                <InboxNotes />
+                <ConversationsList conversations={conversations} />
+              </div>
             )}
           </div>
         )}

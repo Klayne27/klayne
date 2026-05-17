@@ -59,7 +59,7 @@ const ConversationsList = ({ conversations }) => {
 
   return (
     <div className="template flex h-full flex-col border-accent">
-      <ConversationsListHeader />
+      {/* <ConversationsListHeader />
 
       <div className="px-5 py-2">
         <div ref={searchInputWrapperRef} className="relative w-full">
@@ -164,7 +164,7 @@ const ConversationsList = ({ conversations }) => {
         </div>
       </div>
 
-      <InboxNotes />
+      <InboxNotes /> */}
 
       <div className="scrollbar-on-hover flex-1 overflow-y-auto overflow-x-hidden pb-12">
         {conversations.length === 0 ? (
