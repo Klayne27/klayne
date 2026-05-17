@@ -8,6 +8,7 @@ import { useGetConversations, useGetOrCreateConversation } from "../../private/p
 import { useGetInboxNotes } from "../../../users/usersHooks/useUserQueries"
 import UserFullName from "../../../../components/common/UserFullname"
 import { usePrivateChatStore } from "../../../../store/usePrivateChatStore"
+import NoteCardSkeleton from "../../../../components/skeletons/NoteCardSkeleton"
 
 // ── Bubble ────────────────────────────────────────────────────────────────────
 const InboxNoteBubble = ({ note, isOwn, onBubbleClick }) => {
@@ -149,10 +150,10 @@ const InboxNotes = () => {
   return (
     <>
       <div
-        className="flex gap-10 px-4 py-3 overflow-y-hidden"
+        className="flex gap-10 overflow-y-hidden px-4 py-3"
         style={{
           overflowX: "auto",
-        //   overflowY: "visible",
+          //   overflowY: "visible",
           WebkitOverflowScrolling: "touch",
         }}
       >
@@ -165,17 +166,24 @@ const InboxNotes = () => {
         />
 
         {/* Followed users with active notes */}
-        {!isLoading &&
+        {/* Display skeletons during async loading lifecycle */}
+        {isLoading ? (
+          <>
+            <NoteCardSkeleton />
+            <NoteCardSkeleton />
+            <NoteCardSkeleton />
+          </>
+        ) : (
+          /* Render real incoming cards when loading resolves complete */
           activeNotes.map((u) => (
             <NoteCard
               key={u._id}
               user={u}
               isOwn={false}
-              onAvatarClick={() =>
-                handleAvatarClick(u)
-              }
+              onAvatarClick={() => handleAvatarClick(u)}
             />
-          ))}
+          ))
+        )}
       </div>
 
       {noteModalOpen && (

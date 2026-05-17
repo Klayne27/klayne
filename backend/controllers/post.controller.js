@@ -31,7 +31,7 @@ export const getPostThread = async (req, res) => {
       .populate({
         path: "user",
         select:
-          "username fullName isCha isVerified isGoldVerified  profileImg badges preferredBadge nameColor equipped",
+          "username fullName isCha isVerified isGoldVerified profileImg badges preferredBadge nameColor equipped",
         populate: { path: "profileImg", select: "imageUrl" },
       })
       .populate({ path: "image", select: "imageUrl" })
@@ -39,7 +39,6 @@ export const getPostThread = async (req, res) => {
 
     if (!post) return res.status(404).json({ error: "Post not found." });
 
-    // Walk up the ancestor chain
     const ancestors = [];
     let current = post;
 
@@ -48,21 +47,46 @@ export const getPostThread = async (req, res) => {
         .populate({
           path: "user",
           select:
-            "username fullName isCha isVerified isGoldVerified  profileImg badges preferredBadge nameColor equipped",
+            "username fullName isCha isVerified isGoldVerified profileImg badges preferredBadge nameColor equipped",
           populate: { path: "profileImg", select: "imageUrl" },
         })
         .populate({ path: "image", select: "imageUrl" })
         .lean();
 
       if (!parent) break;
-      ancestors.unshift(parent); // prepend so order is top → current
+      ancestors.unshift(parent);
       current = parent;
     }
 
-    res.status(200).json({ post, ancestors });
+    // ── Mask anonymous ancestor posts ─────────────────────────────────────────
+    // An ancestor is anonymous when it (or the root post whose context it
+    // lives in) was posted with isAnonymous: true. We never expose the real
+    // user details to the client in that case.
+    const ANON_USER = {
+      _id: null,
+      username: "Anonymous",
+      fullName: "Anonymous",
+      profileImg: { imageUrl: "/avatar-placeholder.png" },
+      isCha: false,
+      isVerified: false,
+      isGoldVerified: false,
+      badges: [],
+      preferredBadge: null,
+      nameColor: null,
+      equipped: null,
+    };
+
+    const maskedAncestors = ancestors.map((ancestor) =>
+      ancestor.isAnonymous ? { ...ancestor, user: ANON_USER } : ancestor,
+    );
+
+    // Also mask the focal post itself if anonymous
+    const maskedPost = post.isAnonymous ? { ...post, user: ANON_USER } : post;
+
+    res.status(200).json({ post: maskedPost, ancestors: maskedAncestors });
   } catch (error) {
-    res.status(500).json({ error: "Internal server error" });
     console.error("Error in getPostThread controller:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 

@@ -16,6 +16,7 @@ import { getNameplateClass } from "../utils/getNameplateClass.js"
 // Import the Live Dashboard component
 import LiveDashboard from "../features/pomodoro/components/LiveDashboard"
 import { RiRadioButtonLine, RiHistoryLine } from "react-icons/ri"
+import Pagination from "../components/common/Pagination.jsx"
 
 const formatDate = (dateString) => {
   const date = new Date(dateString)
@@ -29,12 +30,15 @@ const StudyActivityPage = () => {
   const { activityFeed, isLoading, totalPages } = useGetStudyActivityFeed(page)
   const { theme } = useTheme()
 
-  const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      setPage(newPage)
-      window.scrollTo({ top: 0, behavior: "smooth" })
-    }
-  }
+  // const handlePageChange = (newPage) => {
+  //   if (newPage >= 1 && newPage <= totalPages) {
+  //     setPage(newPage)
+  //     window.scrollTo({ top: 0, behavior: "smooth" })
+  //   }
+  // }
+
+  const handlePageChange = (newPage) => setPage(newPage)
+
 
   return (
     <div className="mx-auto min-h-screen max-w-2xl pb-20">
@@ -178,31 +182,7 @@ const StudyActivityPage = () => {
                   })}
                 </div>
 
-                {/* Pagination (Only in History Tab) */}
-                {totalPages > 1 && (
-                  <div className="mt-10 flex flex-col items-center gap-4">
-                    {/* ... your existing pagination UI ... */}
-                    <div className="flex items-center gap-1 rounded-2xl border border-accent/10 bg-base-200/50 p-1.5 shadow-xl backdrop-blur-md">
-                      <button
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => handlePageChange(page - 1)}
-                        disabled={page === 1}
-                      >
-                        ‹
-                      </button>
-                      <span className="px-4 text-xs font-bold text-primary">
-                        {page} / {totalPages}
-                      </span>
-                      <button
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => handlePageChange(page + 1)}
-                        disabled={page === totalPages}
-                      >
-                        ›
-                      </button>
-                    </div>
-                  </div>
-                )}
+                <Pagination page={page} totalPages={totalPages} onPageChange={handlePageChange} />
               </>
             )}
           </div>
