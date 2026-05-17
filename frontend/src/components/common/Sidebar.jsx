@@ -29,7 +29,7 @@ import { IoBookmark, IoBookmarkOutline, IoChatbubbles, IoChatbubblesOutline } fr
 import { HiOutlinePaintBrush, HiOutlineEllipsisHorizontalCircle, HiOutlineLightBulb } from "react-icons/hi2"
 import klayneLogo from "/klaynelogo2.png"
 
-import { MdOutlineLibraryBooks } from "react-icons/md"
+import { MdOutlineLibraryBooks, MdGridOn } from "react-icons/md"
 import { IoIosTimer } from "react-icons/io"
 import { LuListTodo } from "react-icons/lu"
 import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
@@ -794,6 +794,18 @@ const Sidebar = ({
                       >
                         <MdOutlineLibraryBooks className="size-6" />
                         <span>Devlog</span>
+                      </button>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          navigate("/wordle")
+                          setShowMorePopover(false)
+                        }}
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left font-semibold transition hover:bg-secondary/50"
+                      >
+                        <MdGridOn className="size-6" />
+                        <span>Wordle</span>
                       </button>
 
                       {authUser?.isAdmin && (

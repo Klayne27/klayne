@@ -47,6 +47,7 @@ const HashtagFeedPage = lazy(() => import("./pages/HashtagFeedPage"))
 const ConnectPage = lazy(() => import("./pages/ConnectPage"))
 const SuggestionForm = lazy(() => import("./features/suggestions/components/SuggestionForm"))
 const AdminSuggestionsPage = lazy(() => import("./pages/AdminSuggestionsPage"))
+const WordlePage = lazy(() => import("./pages/WordlePage"))
 
 
 
@@ -127,6 +128,7 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
 
               <Route path="/suggestions" element={<SuggestionForm />} />
               <Route path="/admin/suggestions" element={<AdminSuggestionsPage />} />
+              <Route path="/wordle" element={<WordlePage />} />
 
               <Route path="/pomodoro" element={<PomodoroPage />} />
               <Route path="/study-dashboard" element={<StudyDashboardPage />} />

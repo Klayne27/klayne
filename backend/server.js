@@ -24,6 +24,7 @@ import boardRoutes from "./routes/board.routes.js";
 import wardrobeRoutes from "./routes/wardrobe.routes.js";
 import hashtagRoutes from "./routes/hashtag.routes.js";
 import suggestionRoutes from "./routes/suggestion.routes.js";
+import wordleRoutes from "./routes/wordle.routes.js";
 
 import connectMongoDB from "./db/connectMongoDB.js";
 import { publishScheduledPosts } from "./cron/scheduledPostPublisher.js";
@@ -34,6 +35,7 @@ import { initPush } from "./lib/utils/sendPush.js";
 import { initFirebaseAdmin } from "./config/firebaseAdmin.js";
 import { startMonthlyCronJob } from "./cron/monthlyReset.js";
 import { startWeeklyCronJob } from "./cron/weeklyReset.js";
+import { ensureTodayWordlePuzzle, startWordleDailyCronJob } from "./cron/wordleDailyReset.js";
 
 initPush();
 initFirebaseAdmin();
@@ -70,6 +72,7 @@ app.use("/api/board", boardRoutes);
 app.use("/api/wardrobe", wardrobeRoutes);
 app.use("/api/hashtags", hashtagRoutes);
 app.use("/api/suggestions", suggestionRoutes);
+app.use("/api/wordle", wordleRoutes);
 
 
 if (process.env.NODE_ENV === "production") {
@@ -91,5 +94,7 @@ server.listen(PORT, async () => {
 
   startMonthlyCronJob();
   startWeeklyCronJob();
+  await ensureTodayWordlePuzzle();
+  startWordleDailyCronJob();
 });
 
