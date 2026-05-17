@@ -7,6 +7,7 @@ import CreatePostModal from "./features/posts/components/CreatePostModal"
 import LoadingSpinner from "./components/common/LoadingSpinner"
 import { PomodoroTimerEngine } from "./features/pomodoro/components/PomodoroTimerEngine"
 import StyleWrapper from "./features/wardrobe/StyleWrapper"
+import PomodoroBackgroundPicker from "./features/pomodoro/components/PomodoroBackgroundPicker"
 // import CreateTodoListModal from "./features/todos/components/CreateTodoListModal"
 
 const ImageViewerPage = lazy(() => import("./components/common/ImageViewerPage"))

@@ -1,3 +1,4 @@
+// src/features/pomodoro/components/PomodoroBackgroundPicker.jsx
 import { useRef, useEffect } from "react"
 import { IoCheckmark } from "react-icons/io5"
 import { LuImagePlus } from "react-icons/lu"
@@ -10,21 +11,22 @@ import {
 } from "../../users/usersHooks/useUserMutations"
 import { usePomodoroBackgroundStore } from "../../../store/usePomodoroBackgroundStore"
 import { POMODORO_PRESETS } from "../../../constants/pomodoroPresets"
+import { preloadBackground } from "../../../utils/backgroundPreloader"
 
 const PomodoroBackgroundPicker = ({ isOpen, onClose, anchorRef }) => {
   const { setBackground, isSettingBackground } = useSetPomodoroBackground()
   const { removeBackground, isRemovingBackground } = useRemovePomodoroBackground()
 
-  // Read directly from the store — zero network latency
   const activePreset = usePomodoroBackgroundStore((s) => s.presetKey)
   const activeCustomUrl = usePomodoroBackgroundStore((s) => s.customImageUrl)
   const hasBackground = !!(activePreset || activeCustomUrl)
-  
+
   const isBusy = isSettingBackground || isRemovingBackground
 
   const panelRef = useRef(null)
   const fileRef = useRef(null)
 
+  // Close on outside click
   useEffect(() => {
     if (!isOpen) return
     const handler = (e) => {
@@ -97,6 +99,10 @@ const PomodoroBackgroundPicker = ({ isOpen, onClose, anchorRef }) => {
             <button
               key={preset.key}
               onClick={() => handlePreset(preset.key)}
+              // ── Preload on hover so the asset is cache-warm before click ──
+              onMouseEnter={() => preloadBackground(preset.path)}
+              // Touch devices: preload on focus (keyboard / tap)
+              onFocus={() => preloadBackground(preset.path)}
               disabled={isBusy}
               className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-medium transition-colors disabled:opacity-40 ${
                 isActive ? "bg-primary/15 text-primary" : "hover:bg-secondary/50"

@@ -1,16 +1,8 @@
+// src/store/usePomodoroBackgroundStore.js
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
+import { preloadActiveBackground } from "../utils/backgroundPreloader"
 
-/**
- * Persisted to localStorage automatically.
- * Shape:
- *   presetKey         – one of the POMODORO_PRESETS keys, or null
- *   customImageUrl    – Cloudinary URL for a user-uploaded image, or null
- *   customPublicId    – Cloudinary public_id for deletion, or null
- *
- * Rule: presetKey and customImageUrl are mutually exclusive.
- * Whichever was set last "wins"; the other is cleared.
- */
 export const usePomodoroBackgroundStore = create(
   persist(
     (set) => ({
@@ -26,7 +18,17 @@ export const usePomodoroBackgroundStore = create(
       clearBackground: () => set({ presetKey: null, customImageUrl: null, customPublicId: null }),
     }),
     {
-      name: "pomodoro-background", // localStorage key
+      name: "pomodoro-background",
+
+      // Called once, synchronously, after localStorage is rehydrated.
+      // At this point we know which background the user had last session,
+      // so we kick off a low-priority fetch immediately — before the
+      // Pomodoro page even mounts.
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          preloadActiveBackground(state.presetKey, state.customImageUrl)
+        }
+      },
     },
   ),
 )

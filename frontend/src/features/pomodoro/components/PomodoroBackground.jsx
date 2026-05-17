@@ -1,81 +1,90 @@
+// src/features/pomodoro/components/PomodoroBackground.jsx
 import { useEffect, useRef, useState } from "react"
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
 
 /** True for any URL that should be rendered as a looping video. */
 export function isVideoUrl(url) {
   if (!url) return false
-  return (
-    /\.(mp4|webm|mov|ogg)$/i.test(url) || url.includes("/video/upload/") // Cloudinary video path
-  )
+  return /\.(mp4|webm|mov|ogg)$/i.test(url) || url.includes("/video/upload/")
 }
 
-
 const PomodoroBackground = ({ bgUrl, timerGlow }) => {
-  const [readySrc, setReadySrc] = useState(null)
+  const [displaySrc, setDisplaySrc] = useState(bgUrl ?? null)
   const [isLoaded, setIsLoaded] = useState(false)
   const videoRef = useRef(null)
 
   useEffect(() => {
-    setIsLoaded(false)
+    // Don't fade-out the current bg while the new one loads.
+    // Only reset isLoaded; keep displaySrc pointing at the old URL
+    // until the new asset is ready (for images). Videos swap immediately.
     if (!bgUrl) {
-      setReadySrc(null)
+      setDisplaySrc(null)
+      setIsLoaded(false)
       return
     }
-    // Defer one animation frame so the critical paint finishes first
-    const rafId = requestAnimationFrame(() => setReadySrc(bgUrl))
-    return () => cancelAnimationFrame(rafId)
+
+    if (isVideoUrl(bgUrl)) {
+      // Videos: swap src immediately — the browser fetch cache means it
+      // starts playing almost instantly if preloaded.
+      setDisplaySrc(bgUrl)
+      setIsLoaded(true)
+    } else {
+      // Images: preload off-screen, then swap only when ready.
+      setIsLoaded(false)
+      const img = new Image()
+      img.src = bgUrl
+      img.onload = () => {
+        setDisplaySrc(bgUrl)
+        setIsLoaded(true)
+      }
+      img.onerror = () => {
+        setDisplaySrc(bgUrl) // show anyway, browser will handle the error
+        setIsLoaded(true)
+      }
+      return () => {
+        img.onload = null
+        img.onerror = null
+      }
+    }
   }, [bgUrl])
 
-  // Ensure the video plays after src is committed (autoPlay alone is fragile)
+  // Ensure video plays after src swap (autoPlay alone is fragile on mobile)
   useEffect(() => {
-    if (videoRef.current && readySrc && isVideoUrl(readySrc)) {
+    if (videoRef.current && displaySrc && isVideoUrl(displaySrc)) {
       videoRef.current.play().catch(() => {})
     }
-  }, [readySrc])
+  }, [displaySrc])
 
-  if (!readySrc) return null
+  if (!displaySrc) return null
 
-  const isVideo = isVideoUrl(readySrc)
+  const isVideo = isVideoUrl(displaySrc)
 
   return (
-    /*
-     * `absolute inset-0` – fills the <main> that contains this element.
-     * No z-index needed: DOM order places this first, so all subsequent
-     * siblings (in normal flow) paint on top automatically.
-     */
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
       {isVideo ? (
         <video
           ref={videoRef}
-          key={readySrc}
-          src={readySrc}
+          key={displaySrc}
+          src={displaySrc}
           autoPlay
           loop
           muted
           playsInline
-          onCanPlay={() => setIsLoaded(true)}
-          className={`h-full w-full select-none object-cover `}
+          className="h-full w-full select-none object-cover"
         />
       ) : (
         <img
-          key={readySrc}
-          src={readySrc}
+          key={displaySrc}
+          src={displaySrc}
           alt=""
           role="presentation"
           decoding="async"
-          fetchPriority="low"
-          onLoad={() => setIsLoaded(true)}
-          className={`h-full w-full select-none object-cover transition-opacity duration-700 ${
+          fetchPriority="high"
+          className={`h-full w-full select-none object-cover transition-opacity duration-500 ${
             isLoaded ? "opacity-100" : "opacity-0"
           }`}
         />
       )}
 
-      {/* Dim layer — keeps text readable regardless of image brightness */}
-      <div className="absolute inset-0 " />
-
-      {/* Timer-state colour pulse, replicated from the no-background glow */}
       {timerGlow && (
         <div
           className="absolute inset-0"
