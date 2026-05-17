@@ -1,13 +1,17 @@
-import { useEffect, useMemo, useState } from "react"
+// frontend/src/pages/WordlePage.jsx
+import { useCallback, useEffect, useRef, useState } from "react"
 import { FaArrowLeft, FaChartSimple } from "react-icons/fa6"
+import { IoHelpCircleOutline } from "react-icons/io5" // Imported clean help outline icon
 import { useNavigate } from "react-router-dom"
 import LoadingSpinner from "../components/common/LoadingSpinner"
-import { WORDLE_WORDS } from "../constants/wordleWords"
 import WordleBoard from "../features/wordle/components/WordleBoard"
 import WordleKeyboard from "../features/wordle/components/WordleKeyboard"
 import WordleLeaderboard from "../features/wordle/components/WordleLeaderboard"
+import WordleStatsModal from "../features/wordle/components/WordleStatsModal"
+import WordleHelpModal from "../features/wordle/components/WordleHelpModal" // Imported Help Modal
 import {
   useGetTodayWordle,
+  useGetWordleStats,
   useGetWordleAllTimeLeaderboard,
   useGetWordleDailyLeaderboard,
 } from "../features/wordle/wordleHooks/useWordleQueries"
@@ -18,17 +22,18 @@ import { showAppToast } from "../utils/showAppToast"
 const WordlePage = () => {
   const navigate = useNavigate()
   const [leaderboardPage, setLeaderboardPage] = useState(1)
+  const [isStatsOpen, setIsStatsOpen] = useState(false)
+  const [isHelpOpen, setIsHelpOpen] = useState(false) // Added help overlay state anchor
+  const [shakeRowKey, setShakeRowKey] = useState(0)
+  const [revealingRowIndex, setRevealingRowIndex] = useState(null)
+  const [revealedTileCount, setRevealedTileCount] = useState(5)
+  const revealTimeoutsRef = useRef([])
 
-  const {
-    currentGuess,
-    addLetter,
-    removeLetter,
-    clearGuess,
-    leaderboardType,
-    setLeaderboardType,
-  } = useWordleStore()
+  const { currentGuess, addLetter, removeLetter, clearGuess, leaderboardType, setLeaderboardType } =
+    useWordleStore()
 
   const { wordle, isLoading } = useGetTodayWordle()
+  const { stats, isLoading: isStatsLoading } = useGetWordleStats({ enabled: isStatsOpen })
   const { submitGuess, isSubmittingGuess } = useSubmitWordleGuess()
 
   const dailyLeaderboard = useGetWordleDailyLeaderboard(leaderboardPage, {
@@ -38,32 +43,91 @@ const WordlePage = () => {
     enabled: leaderboardType === "all-time",
   })
 
-  const activeLeaderboard =
-    leaderboardType === "daily" ? dailyLeaderboard : allTimeLeaderboard
+  const activeLeaderboard = leaderboardType === "daily" ? dailyLeaderboard : allTimeLeaderboard
 
   const guesses = wordle?.attempt?.guesses || []
   const isFinished = wordle?.attempt?.status && wordle.attempt.status !== "in_progress"
-  const wordSet = useMemo(() => new Set(WORDLE_WORDS), [])
+  const isRevealing = revealingRowIndex !== null
 
-  const handleSubmit = () => {
-    if (isFinished || isSubmittingGuess) return
-    if (currentGuess.length !== 5) {
-      showAppToast("Not enough letters", "error")
-      return
-    }
-    if (!wordSet.has(currentGuess)) {
-      showAppToast("Not in word list", "error")
-      return
-    }
+  const formatWordleDate = (dateString) => {
+    if (!dateString) return ""
 
-    submitGuess(currentGuess)
-    clearGuess()
+    const dateObj = new Date(`${dateString}T00:00:00`)
+
+    // Check for invalid date objects
+    if (isNaN(dateObj.getTime())) return dateString
+
+    return new Intl.DateTimeFormat("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    }).format(dateObj)
   }
+
+  const triggerShake = useCallback(() => {
+    setShakeRowKey((key) => key + 1)
+  }, [])
+
+  const clearRevealTimers = () => {
+    revealTimeoutsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId))
+    revealTimeoutsRef.current = []
+  }
+
+  const startRevealAnimation = useCallback((rowIndex) => {
+    clearRevealTimers()
+    setRevealingRowIndex(rowIndex)
+    setRevealedTileCount(0)
+
+    revealTimeoutsRef.current = [
+      ...Array.from({ length: 5 }, (_, index) =>
+        window.setTimeout(
+          () => {
+            setRevealedTileCount(index + 1)
+          },
+          index * 350 + 350,
+        ),
+      ),
+      window.setTimeout(() => {
+        setRevealingRowIndex(null)
+        setRevealedTileCount(5)
+      }, 2200),
+    ]
+  }, [])
+
+  const handleSubmit = useCallback(() => {
+    if (isFinished || isSubmittingGuess || isRevealing) return
+    if (currentGuess.length !== 5) {
+      showAppToast("Not enough letters")
+      triggerShake()
+      return
+    }
+
+    const submittedRowIndex = guesses.length
+    submitGuess(currentGuess, {
+      onSuccess: () => {
+        clearGuess()
+        startRevealAnimation(submittedRowIndex)
+      },
+      onError: () => {
+        triggerShake()
+      },
+    })
+  }, [
+    isFinished,
+    isSubmittingGuess,
+    isRevealing,
+    currentGuess,
+    guesses.length,
+    submitGuess,
+    clearGuess,
+    startRevealAnimation,
+    triggerShake,
+  ])
 
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.ctrlKey || event.metaKey || event.altKey) return
-      if (isFinished || isSubmittingGuess) return
+      if (isFinished || isSubmittingGuess || isRevealing || isHelpOpen || isStatsOpen) return
 
       if (event.key === "Enter") {
         handleSubmit()
@@ -82,7 +146,19 @@ const WordlePage = () => {
 
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [addLetter, currentGuess, isFinished, isSubmittingGuess, removeLetter])
+  }, [
+    addLetter,
+    currentGuess,
+    isFinished,
+    isRevealing,
+    isSubmittingGuess,
+    removeLetter,
+    isHelpOpen,
+    isStatsOpen,
+    handleSubmit,
+  ])
+
+  useEffect(() => () => clearRevealTimers(), [])
 
   const switchLeaderboard = (type) => {
     setLeaderboardType(type)
@@ -98,27 +174,54 @@ const WordlePage = () => {
   }
 
   return (
-    <div className="template mx-auto min-h-screen max-w-3xl px-4 pb-24 pt-4 md:pb-8">
-      <div className="mb-4 flex items-center border-b border-base-300 pb-3">
+    <div className="template min-h-screen max-w-3xl border-accent pb-24 pt-3 md:border-x md:pb-8">
+      <div className="mb-4 flex items-center border-b border-accent px-4 pb-3">
         <button
           onClick={() => navigate(-1)}
           className="rounded-full p-2.5 transition hover:bg-secondary"
         >
           <FaArrowLeft className="text-xl" />
         </button>
+
         <div className="flex-1 text-center">
-          <h1 className="text-2xl font-black tracking-normal">Wordle</h1>
+          <h1 className="font-serif text-3xl font-bold tracking-tight">Wordle</h1>
           <p className="text-xs font-semibold text-base-content/60">
-            #{wordle?.puzzleNumber} • {wordle?.date}
+            {formatWordleDate(wordle?.date)}
           </p>
         </div>
-        <FaChartSimple className="mr-3 text-xl text-primary" />
+
+        {/* Action Button Controls Wrapper */}
+        <div className="flex items-center gap-1">
+          {/* NYT Style Info Trigger Button */}
+          <button
+            onClick={() => setIsHelpOpen(true)}
+            className="rounded-full p-2 text-base-content/70 transition hover:bg-secondary hover:text-base-content"
+            title="How to Play"
+          >
+            <IoHelpCircleOutline className="text-2xl" />
+          </button>
+
+          <button
+            onClick={() => setIsStatsOpen(true)}
+            className="rounded-full p-2.5 text-primary transition hover:bg-secondary"
+            title="Statistics"
+          >
+            <FaChartSimple className="text-xl" />
+          </button>
+        </div>
       </div>
 
       <section className="py-3">
-        <WordleBoard guesses={guesses} currentGuess={currentGuess} />
+        <WordleBoard
+          guesses={guesses}
+          currentGuess={currentGuess}
+          shakeRowIndex={guesses.length}
+          shakeRowKey={shakeRowKey}
+          revealingRowIndex={revealingRowIndex}
+          revealedTileCount={revealedTileCount}
+        />
 
-        {isFinished && (
+        {isFinished && !isRevealing && (
           <div className="mx-auto mt-4 max-w-[330px] rounded-lg border border-base-300 bg-base-200 p-3 text-center">
             <p className="font-black">
               {wordle.attempt.status === "won"
@@ -131,7 +234,8 @@ const WordlePage = () => {
 
         <WordleKeyboard
           guesses={guesses}
-          disabled={isFinished || isSubmittingGuess}
+          disabled={isFinished || isSubmittingGuess || isRevealing}
+          isRevealing={isRevealing}
           onLetter={addLetter}
           onBackspace={removeLetter}
           onEnter={handleSubmit}
@@ -175,6 +279,17 @@ const WordlePage = () => {
           isLoading={activeLeaderboard.isLoading}
         />
       </section>
+
+      {/* Global Statistics Modal */}
+      <WordleStatsModal
+        isOpen={isStatsOpen}
+        onClose={() => setIsStatsOpen(false)}
+        stats={stats}
+        isLoading={isStatsLoading}
+      />
+
+      {/* How To Play Help Modal Overlays */}
+      <WordleHelpModal isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
     </div>
   )
 }

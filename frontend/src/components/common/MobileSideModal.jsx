@@ -16,6 +16,7 @@ import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
 import { useUpdateStatusPreference } from "../../features/users/usersHooks/useUserMutations"
 import { PiCoatHanger, PiSquaresFourFill, PiSquaresFourLight } from "react-icons/pi"
 import UserFullName from "./UserFullname"
+import { BsGrid3X3 } from "react-icons/bs"
 
 function MobileSideModal({
   showSideModal,
@@ -263,6 +264,23 @@ function MobileSideModal({
                 )}
                 <span className={`text-xl ${pathname === "/bookmarks" ? "font-bold" : ""}`}>
                   Bookmarks
+                </span>
+              </li>
+              <li
+                onClick={() => {
+                  if (pathname === "/wordle") return
+                  navigate("/wordle")
+                  setShowSideModal(false)
+                }}
+                className={`flex cursor-pointer items-center px-4 py-2 hover:bg-secondary ${
+                  isTouchDevice && activeButtonId === "modal-wordle"
+                    ? "bg-secondary bg-opacity-50 transition duration-150"
+                    : "transition duration-150"
+                }`}
+              >
+                <BsGrid3X3 className="ml-0.5 mr-[18px] size-6"  />
+                <span className={`text-xl ${pathname === "/wordle" ? "font-bold" : ""}`}>
+                  Wordle
                 </span>
               </li>
               <li

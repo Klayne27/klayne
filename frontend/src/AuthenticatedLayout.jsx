@@ -58,6 +58,9 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
   const isPublicChatPage = pathname.includes("/public-chat")
   const isWardrobePage = pathname.includes("/wardrobe")
   const isPomodoroPage = pathname.includes("/pomodoro")
+  const isWordlePage = pathname.includes("/wordle")
+
+
 
   const {
     showCreatePostModal,
@@ -69,7 +72,7 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
   const [feedType, setFeedType] = useState("posts")
 
   const shouldHideSidePanels =
-    pathname.includes("/study") || pathname.includes("/pomodoro") || pathname.includes("/todos")
+    pathname.includes("/study") || pathname.includes("/pomodoro") || pathname.includes("/todos") 
 
   return (
     <>
@@ -154,7 +157,7 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
           !isPublicChatPage &&
           !shouldHideSidePanels &&
           !isBoardPage &&
-          !isWardrobePage && <RightPanel />}
+          !isWardrobePage &&  <RightPanel />}
       </div>
 
       {showCreatePostModal && <CreatePostModal onClose={() => setShowCreatePostModal(false)} />}

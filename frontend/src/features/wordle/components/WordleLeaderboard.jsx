@@ -4,6 +4,7 @@ import Pagination from "../../../components/common/Pagination"
 import UserAvatar from "../../../components/common/UserAvatar"
 import UserFullName from "../../../components/common/UserFullname"
 import WordleProgressGrid from "./WordleProgressGrid"
+import { getNameplateClass } from "../../../utils/getNameplateClass"
 
 const tierClasses = {
   Diamond: "bg-cyan-400/15 text-cyan-300 border-cyan-300/30",
@@ -16,12 +17,27 @@ const tierClasses = {
 const RankNumber = ({ rank }) => (
   <span
     className={`w-8 shrink-0 text-center text-lg font-black italic ${
-      rank === 1 ? "text-amber-400" : rank === 2 ? "text-slate-300" : rank === 3 ? "text-orange-400" : "text-base-content/35"
+      rank === 1 ? "text-amber-400" : rank === 2 ? "text-slate-400" : rank === 3 ? "text-yellow-800" : "opacity-30"
     }`}
   >
     {rank}
   </span>
 )
+
+const getTrophyColor = (rank) => {
+  switch (rank) {
+    case 1:
+      return "text-amber-400"
+    case 2: 
+      return "text-slate-400"
+    case 3:
+      return "text-yellow-800"
+    default:
+      return ""
+  }
+}
+
+
 
 const WordleLeaderboard = ({
   type,
@@ -41,11 +57,11 @@ const WordleLeaderboard = ({
 
   return (
     <div>
-      <ul className="space-y-3">
+      <ul className="space-y-3 px-4">
         {leaderboard.map((entry) => (
           <li
             key={`${type}-${entry.rank}-${entry.user?._id}`}
-            className="flex items-center gap-3 rounded-lg border border-base-300 bg-base-100 p-3"
+            className={`${getNameplateClass(entry?.user?.equipped.nameplate)} overflow-hidden flex items-center gap-3 rounded-lg border border-base-300 bg-base-100 p-3`}
           >
             <RankNumber rank={entry.rank} />
 
@@ -66,10 +82,9 @@ const WordleLeaderboard = ({
 
             {type === "daily" ? (
               <div className="flex items-center gap-3">
-                <WordleProgressGrid guesses={entry.guesses} />
+                <WordleProgressGrid guesses={entry.guesses} size={"xs"} />
                 <div className="min-w-[44px] text-right">
                   <p className="text-sm font-black">{entry.status === "won" ? entry.score : "X"}/6</p>
-                  {entry.rank <= 3 && <FaTrophy className="ml-auto text-amber-400" />}
                 </div>
               </div>
             ) : (

@@ -35,7 +35,7 @@ const BadgeDisplay = ({ badges }) => {
     if (a.tier !== b.tier) {
       return a.tier - b.tier
     }
-    const categoryOrder = ["trophy", "hour", "session", "streak"]
+    const categoryOrder = ["trophy", "wordle", "hour", "session", "streak"]
     return categoryOrder.indexOf(a.category) - categoryOrder.indexOf(b.category)
   })
 

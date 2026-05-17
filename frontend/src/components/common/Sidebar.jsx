@@ -8,7 +8,7 @@ import { BiLogOut } from "react-icons/bi"
 import FollowListModal from "./FollowListModal"
 import React from "react"
 import { showAppToast } from "../../utils/showAppToast"
-import { BsThreeDots } from "react-icons/bs"
+import { BsGrid3X3, BsGrid3X3GapFill, BsThreeDots } from "react-icons/bs"
 import ConfirmationModal from "./ConfirmationModal"
 import FeatherIcon from "../svgs/FeatherIcon"
 import { useAppStore } from "../../store/useAppStore"
@@ -445,7 +445,7 @@ const Sidebar = ({
   const iconWrapperStyle =
     "relative flex w-12 items-center justify-center rounded-full  py-2 transition duration-200 group-hover:bg-secondary md:group-hover:bg-transparent"
   const shouldCollapseSidebar =
-    pathname.includes("/messages") || pathname.includes("/board") || pathname.includes("/wardrobe")
+    pathname.includes("/messages") || pathname.includes("/board") || pathname.includes("/wardrobe") 
 
   if (!shouldRenderMobileSidebar) {
     return null
@@ -474,9 +474,9 @@ const Sidebar = ({
           <div
             to="/"
             onClick={handleHomeClick}
-            className={`hidden h-12 w-auto cursor-pointer transition duration-300 justify-start rounded-full fill-primary p-1.5 ${shouldCollapseSidebar ? "mr-1.5" : ""} hover:bg-secondary/50 md:flex ${
+            className={`hidden h-12 w-auto cursor-pointer justify-start rounded-full fill-primary p-1.5 transition duration-300 ${shouldCollapseSidebar ? "mr-1.5" : ""} hover:bg-secondary/50 md:flex ${
               isTouchDevice && activeButtonId === "k-logo"
-                ? "bg-secondary/50  transition duration-150"
+                ? "bg-secondary/50 transition duration-150"
                 : ""
             }`}
             onTouchStart={() => handleTouchStart("k-logo")}
@@ -610,14 +610,14 @@ const Sidebar = ({
             </li>
 
             <li
-              onClick={() => navigate("/board")}
+              onClick={() => navigate("/wordle")}
               className={`hidden cursor-pointer items-center justify-start rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary/50`}
             >
               <div className={iconWrapperStyle}>
-                {pathname === "/board" ? (
-                  <PiSquaresFourFill className="size-8" />
+                {pathname === "/wordle" ? (
+                  <BsGrid3X3GapFill className="size-6" />
                 ) : (
-                  <PiSquaresFourLight className="size-8" />
+                  <BsGrid3X3 className="size-6" stroke={0.1} />
                 )}
                 {showNewBoardPostsButton && newBoardPostCount > 0 && (
                   <div
@@ -630,9 +630,9 @@ const Sidebar = ({
               </div>
               {!shouldCollapseSidebar && (
                 <span
-                  className={`ml-2.5 hidden text-lg md:block ${pathname === "/board" ? "font-bold" : ""}`}
+                  className={`ml-2.5 hidden text-lg md:block ${pathname === "/wordle" ? "font-bold" : ""}`}
                 >
-                  Board
+                  Wordle
                 </span>
               )}
             </li>
@@ -799,13 +799,13 @@ const Sidebar = ({
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
-                          navigate("/wordle")
+                          navigate("/board")
                           setShowMorePopover(false)
                         }}
                         className="flex w-full items-center gap-3 px-4 py-3 text-left font-semibold transition hover:bg-secondary/50"
                       >
-                        <MdGridOn className="size-6" />
-                        <span>Wordle</span>
+                        <PiSquaresFourLight className="size-6" />
+                        <span>Board</span>
                       </button>
 
                       {authUser?.isAdmin && (
@@ -1113,7 +1113,7 @@ const Sidebar = ({
         danger={true}
         confirmButtonText={isDeletingAccount ? "Deleting..." : "Yes, Delete Account"}
         isLoading={isDeletingAccount}
-       />
+      />
     </>
   )
 }

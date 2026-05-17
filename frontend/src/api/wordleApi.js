@@ -11,6 +11,11 @@ export const getTodayWordleApi = async () => {
   return parseResponse(res, "Failed to fetch today's Wordle")
 }
 
+export const getWordleStatsApi = async () => {
+  const res = await fetch(`${BASE_URL}/stats`, { credentials: "include" })
+  return parseResponse(res, "Failed to fetch Wordle statistics")
+}
+
 export const submitWordleGuessApi = async (guess) => {
   const res = await fetch(`${BASE_URL}/guess`, {
     method: "POST",

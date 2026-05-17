@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query"
 import {
   getTodayWordleApi,
+  getWordleStatsApi,
   getWordleAllTimeLeaderboardApi,
   getWordleDailyLeaderboardApi,
 } from "../../../api/wordleApi"
@@ -33,6 +34,19 @@ export const useGetWordleDailyLeaderboard = (page, options = {}) => {
     totalPages: data?.totalPages || 1,
     currentPage: data?.currentPage || page,
     date: data?.date,
+    isLoading,
+  }
+}
+
+export const useGetWordleStats = (options = {}) => {
+  const { data, isLoading } = useQuery({
+    queryKey: wordleKeys.stats(),
+    queryFn: getWordleStatsApi,
+    ...options,
+  })
+
+  return {
+    stats: data,
     isLoading,
   }
 }

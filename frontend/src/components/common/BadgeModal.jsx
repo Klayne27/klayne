@@ -1,6 +1,7 @@
 import { FaTimes } from "react-icons/fa"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { useUpdatePreferredBadge } from "../../features/users/usersHooks/useUserMutations"
+import { getBadgeIconDisplay } from "../../utils/badgeUtils.jsx"
 
 const BadgeModal = ({ badge, onClose }) => {
   const { authUser } = useAuthUser()
@@ -43,7 +44,7 @@ const BadgeModal = ({ badge, onClose }) => {
       case "august-2025-3rd":
         return <img src="/badge-august2025-3rd.png" alt="August 2025 3rd" className="size-24" />
       default:
-        return null
+        return <span className="block size-24">{getBadgeIconDisplay(badgeName)}</span>
     }
   }
 
@@ -73,6 +74,26 @@ const BadgeModal = ({ badge, onClose }) => {
         return "You've earned the August Silver Trophy! Your commitment this month was exceptional. This badge is a symbol of your impressive hard work and discipline."
       case "august-2025-3rd":
         return "You've earned the August Bronze Trophy! This is a testament to your consistent effort and dedication throughout the month. Keep up the great work!"
+      case "wordle-first-try":
+        return "Solved a Wordle on the first guess. That is a clean strike."
+      case "wordle-sixth-sense":
+        return "Solved a Wordle on the final guess. Pressure handled."
+      case "wordle-clean-solve":
+        return "Solved a Wordle using only green and gray tiles."
+      case "wordle-3-streak":
+        return "Solved Wordle three days in a row."
+      case "wordle-7-streak":
+        return "Solved Wordle for a full week straight."
+      case "wordle-14-streak":
+        return "Solved Wordle for fourteen consecutive days."
+      case "wordle-10-solves":
+        return "Solved ten total Wordle puzzles."
+      case "wordle-25-solves":
+        return "Solved twenty-five total Wordle puzzles."
+      case "wordle-50-solves":
+        return "Solved fifty total Wordle puzzles."
+      case "wordle-100-solves":
+        return "Solved one hundred total Wordle puzzles."
       default:
         return "A well-deserved badge for your hard work."
     }

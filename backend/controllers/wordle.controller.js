@@ -6,9 +6,12 @@ import {
   WORDLE_WORD_SET,
   evaluateWordleGuess,
   getOrCreateWordlePuzzle,
+  getWordleBadgeMeta,
   getWordleDateKey,
   getWordleRank,
+  getWordleStats,
   sanitizeWordleAttempt,
+  unlockWordleBadges,
 } from "../lib/utils/wordleUtils.js";
 
 const USER_SELECT = "username fullName profileImg nameColor equipped preferredBadge";
@@ -83,10 +86,6 @@ export const submitWordleGuess = async (req, res) => {
       });
     }
 
-    if (attempt.guesses.some((entry) => entry.word === guess)) {
-      return res.status(400).json({ error: "You already tried that word" });
-    }
-
     if (attempt.guesses.length >= WORDLE_MAX_GUESSES) {
       return res.status(409).json({ error: "No guesses remaining" });
     }
@@ -105,15 +104,40 @@ export const submitWordleGuess = async (req, res) => {
 
     await attempt.save();
 
+    const stats = attempt.status !== "in_progress" ? await getWordleStats(req.user._id, WordleAttempt) : null;
+    const unlockedBadges =
+      attempt.status === "won"
+        ? await unlockWordleBadges({ user: req.user, attempt, stats })
+        : [];
+
     res.status(200).json({
       date: puzzle.date,
       puzzleNumber: puzzle.puzzleNumber,
       maxGuesses: WORDLE_MAX_GUESSES,
       attempt: sanitizeWordleAttempt(attempt),
       answer: attempt.status !== "in_progress" ? puzzleWithAnswer.answer : undefined,
+      stats,
+      unlockedBadges,
     });
   } catch (error) {
     console.error("Error in submitWordleGuess:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const getWordleUserStats = async (req, res) => {
+  try {
+    const stats = await getWordleStats(req.user._id, WordleAttempt);
+    const earnedWordleBadges = (req.user.badges || [])
+      .map((badgeId) => getWordleBadgeMeta(badgeId))
+      .filter(Boolean);
+
+    res.status(200).json({
+      ...stats,
+      earnedBadges: earnedWordleBadges,
+    });
+  } catch (error) {
+    console.error("Error in getWordleUserStats:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
