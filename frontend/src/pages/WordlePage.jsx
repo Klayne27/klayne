@@ -18,6 +18,9 @@ import {
 import { useSubmitWordleGuess } from "../features/wordle/wordleHooks/useWordleMutations"
 import { useWordleStore } from "../store/useWordleStore"
 import { showAppToast } from "../utils/showAppToast"
+import { useWordleReveal } from "../hooks/customHooks/useWordleReveal"
+
+const REVEAL_DURATION_MS = 4 * 350 + 2 * 350 + 150 
 
 const WordlePage = () => {
   const navigate = useNavigate()
@@ -27,14 +30,20 @@ const WordlePage = () => {
   const [shakeRowKey, setShakeRowKey] = useState(0)
   const [revealingRowIndex, setRevealingRowIndex] = useState(null)
   const [revealedTileCount, setRevealedTileCount] = useState(5)
-  const revealTimeoutsRef = useRef([])
 
-  const { currentGuess, addLetter, removeLetter, clearGuess, leaderboardType, setLeaderboardType } =
+    const [shakeRowIndex, setShakeRowIndex] = useState(null)
+  const revealTimeoutsRef = useRef([])
+    const cleanupTimerRef = useRef(null)
+
+
+  const { setCurrentGuess, currentGuess, addLetter, removeLetter, clearGuess, leaderboardType, setLeaderboardType } =
     useWordleStore()
 
   const { wordle, isLoading } = useGetTodayWordle()
   const { stats, isLoading: isStatsLoading } = useGetWordleStats({ enabled: isStatsOpen })
   const { submitGuess, isSubmittingGuess } = useSubmitWordleGuess()
+    const { reveal, beginReveal, commitResult, clearReveal } = useWordleReveal()
+
 
   const dailyLeaderboard = useGetWordleDailyLeaderboard(leaderboardPage, {
     enabled: leaderboardType === "daily",
@@ -64,8 +73,10 @@ const WordlePage = () => {
     }).format(dateObj)
   }
 
-  const triggerShake = useCallback(() => {
-    setShakeRowKey((key) => key + 1)
+  const triggerShake = useCallback((rowIndex) => {
+    setShakeRowIndex(rowIndex)
+    setShakeRowKey((k) => k + 1)
+    setTimeout(() => setShakeRowIndex(null), 600)
   }, [])
 
   const clearRevealTimers = () => {
@@ -94,35 +105,90 @@ const WordlePage = () => {
     ]
   }, [])
 
-  const handleSubmit = useCallback(() => {
-    if (isFinished || isSubmittingGuess || isRevealing) return
-    if (currentGuess.length !== 5) {
-      showAppToast("Not enough letters")
-      triggerShake()
-      return
-    }
+  // const handleSubmit = useCallback(() => {
+  //   if (isFinished || isSubmittingGuess || isRevealing) return
+  //   if (currentGuess.length !== 5) {
+  //     showAppToast("Not enough letters")
+  //     triggerShake()
+  //     return
+  //   }
 
-    const submittedRowIndex = guesses.length
-    submitGuess(currentGuess, {
-      onSuccess: () => {
-        clearGuess()
-        startRevealAnimation(submittedRowIndex)
-      },
-      onError: () => {
-        triggerShake()
-      },
-    })
-  }, [
-    isFinished,
-    isSubmittingGuess,
-    isRevealing,
-    currentGuess,
-    guesses.length,
-    submitGuess,
-    clearGuess,
-    startRevealAnimation,
-    triggerShake,
-  ])
+  //   const submittedRowIndex = guesses.length
+  //   submitGuess(currentGuess, {
+  //     onSuccess: () => {
+  //       clearGuess()
+  //       startRevealAnimation(submittedRowIndex)
+  //     },
+  //     onError: () => {
+  //       triggerShake()
+  //     },
+  //   })
+  // }, [
+  //   isFinished,
+  //   isSubmittingGuess,
+  //   isRevealing,
+  //   currentGuess,
+  //   guesses.length,
+  //   submitGuess,
+  //   clearGuess,
+  //   startRevealAnimation,
+  //   triggerShake,
+  // ])
+
+   const handleSubmit = useCallback(() => {
+     if (isRevealing || isFinished) return
+
+     const guess = currentGuess.toLowerCase()
+
+     if (guess.length < 5) {
+       triggerShake(guesses.length)
+       showAppToast("Not enough letters", "error")
+       return
+     }
+
+     const rowIndex = guesses.length
+
+     // ── 1. Clear input and start flip animation IMMEDIATELY ──────────────
+     clearGuess()
+     beginReveal(rowIndex, guess)
+
+     // Schedule reveal cleanup
+     clearTimeout(cleanupTimerRef.current)
+     cleanupTimerRef.current = setTimeout(clearReveal, REVEAL_DURATION_MS)
+     // ── 2. Fire server request in the background ─────────────────────────
+     submitGuess(
+        guess ,
+       {
+         onSuccess: (data) => {
+           // As soon as server data arrives, unblock any waiting tiles.
+           // Tiles whose midpoint hasn't fired yet will pick up the result
+           // from the ref on their own schedule.
+           const newGuess = data.attempt.guesses.at(-1)
+           commitResult(newGuess.result, rowIndex)
+         },
+         onError: () => {
+           // Server rejected the guess (not in word list, already finished, etc.)
+           // Cancel the animation and restore the user's input so they can retry.
+           clearTimeout(cleanupTimerRef.current)
+           clearReveal()
+           setCurrentGuess(guess)
+           triggerShake(rowIndex)
+         },
+       },
+     )
+   }, [
+     isRevealing,
+     isFinished,
+     currentGuess,
+     guesses.length,
+     clearGuess,
+     beginReveal,
+     commitResult,
+     clearReveal,
+     submitGuess,
+     setCurrentGuess,
+     triggerShake,
+   ])
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -215,10 +281,9 @@ const WordlePage = () => {
         <WordleBoard
           guesses={guesses}
           currentGuess={currentGuess}
-          shakeRowIndex={guesses.length}
+          shakeRowIndex={shakeRowIndex}
           shakeRowKey={shakeRowKey}
-          revealingRowIndex={revealingRowIndex}
-          revealedTileCount={revealedTileCount}
+          reveal={reveal}
         />
 
         {isFinished && !isRevealing && (
@@ -234,11 +299,11 @@ const WordlePage = () => {
 
         <WordleKeyboard
           guesses={guesses}
-          disabled={isFinished || isSubmittingGuess || isRevealing}
-          isRevealing={isRevealing}
+          isRevealing={isRevealing} // prevents keyboard colors updating mid-animation
+          disabled={isRevealing || isFinished}
           onLetter={addLetter}
-          onBackspace={removeLetter}
           onEnter={handleSubmit}
+          onBackspace={removeLetter}
         />
       </section>
 
