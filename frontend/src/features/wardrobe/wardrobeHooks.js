@@ -17,7 +17,7 @@ export const useInventory = () => {
   })
 
   return {
-    inventory: data?.inventory || { fonts: [], rings: [], overlays: [] },
+    inventory: data?.inventory || { fonts: [], rings: [], nameplates: [] },
     equipped: data?.equipped || {},
     isLoading,
   }

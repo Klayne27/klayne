@@ -18,6 +18,7 @@ import {
 import { useSubmitWordleGuess } from "../features/wordle/wordleHooks/useWordleMutations"
 import { useWordleStore } from "../store/useWordleStore"
 import { showAppToast } from "../utils/showAppToast"
+import WordleResultModal from "../features/wordle/components/WordleResultModal"
 
 const WordlePage = () => {
   const navigate = useNavigate()
@@ -27,6 +28,10 @@ const WordlePage = () => {
   const [shakeRowKey, setShakeRowKey] = useState(0)
   const [revealingRowIndex, setRevealingRowIndex] = useState(null)
   const [revealedTileCount, setRevealedTileCount] = useState(5)
+
+  const [isResultModalOpen, setIsResultModalOpen] = useState(false)
+  const [resultData, setResultData] = useState(null)
+
   const revealTimeoutsRef = useRef([])
 
   const { currentGuess, addLetter, removeLetter, clearGuess, leaderboardType, setLeaderboardType } =
@@ -73,27 +78,25 @@ const WordlePage = () => {
     revealTimeoutsRef.current = []
   }
 
-  const startRevealAnimation = useCallback((rowIndex) => {
+  // ── Replace startRevealAnimation — adds optional onComplete callback ──────────
+  const startRevealAnimation = useCallback((rowIndex, onComplete) => {
     clearRevealTimers()
     setRevealingRowIndex(rowIndex)
     setRevealedTileCount(0)
 
     revealTimeoutsRef.current = [
       ...Array.from({ length: 5 }, (_, index) =>
-        window.setTimeout(
-          () => {
-            setRevealedTileCount(index + 1)
-          },
-          index * 350 + 350,
-        ),
+        window.setTimeout(() => setRevealedTileCount(index + 1), index * 350 + 350),
       ),
       window.setTimeout(() => {
         setRevealingRowIndex(null)
         setRevealedTileCount(5)
+        onComplete?.() // ← fires after the last tile flips
       }, 2200),
     ]
   }, [])
 
+  // ── Replace handleSubmit — captures mutation data and opens modal on finish ───
   const handleSubmit = useCallback(() => {
     if (isFinished || isSubmittingGuess || isRevealing) return
     if (currentGuess.length !== 5) {
@@ -104,9 +107,17 @@ const WordlePage = () => {
 
     const submittedRowIndex = guesses.length
     submitGuess(currentGuess, {
-      onSuccess: () => {
+      onSuccess: (data) => {
         clearGuess()
-        startRevealAnimation(submittedRowIndex)
+        const gameEnded = data.attempt?.status !== "in_progress"
+
+        startRevealAnimation(submittedRowIndex, () => {
+          // Open result modal once the tile flip sequence is fully done
+          if (gameEnded && data.stats) {
+            setResultData(data)
+            setIsResultModalOpen(true)
+          }
+        })
       },
       onError: () => {
         triggerShake()
@@ -290,6 +301,11 @@ const WordlePage = () => {
 
       {/* How To Play Help Modal Overlays */}
       <WordleHelpModal isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
+      <WordleResultModal
+        isOpen={isResultModalOpen}
+        onClose={() => setIsResultModalOpen(false)}
+        data={resultData}
+      />
     </div>
   )
 }

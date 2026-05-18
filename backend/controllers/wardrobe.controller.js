@@ -6,7 +6,7 @@ const VALID_CATEGORIES = ["font", "ring", "overlay", "nameplate"];
 const CATEGORY_MAP = {
   font: "fonts",
   ring: "rings",
-  overlay: "overlays",
+  // overlay: "overlays",
   nameplate: "nameplates",
 };
 

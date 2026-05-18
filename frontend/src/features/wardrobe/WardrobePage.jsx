@@ -14,7 +14,7 @@ import { useTheme } from "../../context/ThemeContext"
 import { loadGoogleFont } from "./StyleWrapper"
 import { useInView } from "react-intersection-observer"
 
-const TABS = ["rings", "fonts", "nameplates", "overlays"]
+const TABS = ["rings", "fonts", "nameplates"]
 
 // ── Live Preview Panel ──────────────────────────────────────────────────────
 const LivePreview = ({ authUser, previewEquipped }) => {
@@ -271,7 +271,7 @@ const WardrobePage = () => {
   const [previewKey, setPreviewKey] = useState(null)
   const [filterMode, setFilterMode] = useState("all") // "all" | "owned" | "progress" | "sprint"
 
-  const SINGULAR = { fonts: "font", rings: "ring", overlays: "overlay", nameplates: "nameplate" }
+  const SINGULAR = { fonts: "font", rings: "ring", nameplates: "nameplate" }
   const equippedKey = SINGULAR[activeTab]
 
   const previewEquipped = {
@@ -336,7 +336,7 @@ const WardrobePage = () => {
             <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400">
               Equipped
             </p>
-            {["ring", "overlay", "font", "nameplate"].map((cat) => (
+            {["ring", "font", "nameplate"].map((cat) => (
               <div key={cat} className="flex items-center justify-between py-0.5">
                 <span className="text-xs capitalize text-slate-500">{cat}</span>
                 <span className="text-xs font-semibold">

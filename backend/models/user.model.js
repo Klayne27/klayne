@@ -142,7 +142,7 @@ const userSchema = new mongoose.Schema(
       themes: [{ type: String }],
       fonts: [{ type: String }],
       rings: [{ type: String }],
-      overlays: [{ type: String }],
+      // overlays: [{ type: String }],
       nameplates: [{ type: String }], // NEW
     },
     equipped: {

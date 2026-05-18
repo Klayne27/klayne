@@ -1489,114 +1489,6 @@ export const WARDROBE_CONFIG = {
   },
 
   // ══════════════════════════════════════
-  // OVERLAYS
-  // ══════════════════════════════════════
-
-  // Progress (Level-gated)
-  snowfall: {
-    label: "Snowfall",
-    category: "overlays",
-    rewardType: "progress",
-    unlockHint: "Level 15",
-    overlayClass: "snowfall-overlay",
-  },
-  fireflies: {
-    label: "Fireflies",
-    category: "overlays",
-    rewardType: "progress",
-    unlockHint: "Level 22",
-    overlayClass: "fireflies-overlay",
-  },
-  northern_lights: {
-    label: "Northern Lights",
-    category: "overlays",
-    rewardType: "progress",
-    unlockHint: "Level 45",
-    overlayClass: "northern-lights-overlay",
-  },
-  star_rain: {
-    label: "Star Rain",
-    category: "overlays",
-    rewardType: "progress",
-    unlockHint: "Level 70",
-    overlayClass: "star-rain-overlay",
-  },
-
-  // Progress (Hour-gated)
-  dust_particles: {
-    label: "Dust Particles",
-    category: "overlays",
-    rewardType: "progress",
-    unlockHint: "50 total hours",
-    overlayClass: "dust-particles-overlay",
-  },
-  nebula_mist: {
-    label: "Nebula Mist",
-    category: "overlays",
-    rewardType: "progress",
-    unlockHint: "100 total hours",
-    overlayClass: "nebula-mist-overlay",
-  },
-  rainy_window: {
-    label: "Rainy Window",
-    category: "overlays",
-    rewardType: "progress",
-    unlockHint: "150 total hours",
-    overlayClass: "rainy-window-overlay",
-  },
-  falling_leaves: {
-    label: "Falling Leaves",
-    category: "overlays",
-    rewardType: "progress",
-    unlockHint: "200 total hours",
-    overlayClass: "falling-leaves-overlay",
-  },
-  sakura_breeze: {
-    label: "Sakura Breeze",
-    category: "overlays",
-    rewardType: "progress",
-    unlockHint: "300 total hours",
-    overlayClass: "sakura-breeze-overlay",
-  },
-  fog_drift: {
-    label: "Fog Drift",
-    category: "overlays",
-    rewardType: "progress",
-    unlockHint: "400 total hours",
-    overlayClass: "fog-drift-overlay",
-  },
-  confetti_burst: {
-    label: "Confetti Burst",
-    category: "overlays",
-    rewardType: "progress",
-    unlockHint: "1000 total hours",
-    overlayClass: "confetti-burst-overlay",
-  },
-
-  // Sprints
-  matrix_code: {
-    label: "Matrix Code",
-    category: "overlays",
-    rewardType: "sprint",
-    unlockHint: "20 hrs/week",
-    overlayClass: "matrix-code-overlay",
-  },
-  ember_storm: {
-    label: "Ember Storm",
-    category: "overlays",
-    rewardType: "sprint",
-    unlockHint: "30 hrs/week",
-    overlayClass: "ember-storm-overlay",
-  },
-  crystal_frost: {
-    label: "Crystal Frost",
-    category: "overlays",
-    rewardType: "marathon",
-    unlockHint: "80 hrs/month",
-    overlayClass: "crystal-frost-overlay",
-  },
-
-  // ══════════════════════════════════════
   // NAMEPLATES
   // ══════════════════════════════════════
 
@@ -2276,6 +2168,6 @@ export const WARDROBE_CONFIG = {
 export const CATEGORY_LABELS = {
   fonts: "Fonts",
   rings: "Rings",
-  overlays: "Overlays",
+  // overlays: "Overlays",
   nameplates: "Nameplates",
 }

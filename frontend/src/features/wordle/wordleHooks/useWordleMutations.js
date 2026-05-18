@@ -17,19 +17,13 @@ export const useSubmitWordleGuess = () => {
 
       // 2. Delay the Toast alerts to align with the completion of the tile flip sequence (~2200ms)
       setTimeout(() => {
-        if (data.attempt?.status === "won") {
-          showAppToast(`Solved in ${data.attempt.guesses.length}!`, "success")
-        } else if (data.attempt?.status === "lost") {
-          showAppToast(`The word was ${data.answer?.toUpperCase()}`, "error")
-        }
+        // ← remove the "won" / "lost" toasts — the result modal covers these
 
         if (data.unlockedBadges?.length) {
           queryClient.invalidateQueries({ queryKey: userKeys.auth() })
-          data.unlockedBadges.forEach((badge) => {
-            showAppToast(`Wordle badge unlocked: ${badge.label}`, "success")
-          })
+          // badge toasts can stay if you want them alongside the modal badge section
         }
-      }, 2200) // Matches your WordlePage.jsx final transition wrap-up timer!
+      }, 2200)
     },
     onError: (error) => {
       showAppToast(error.message)

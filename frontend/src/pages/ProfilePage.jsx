@@ -131,7 +131,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
   // 2. Map them to your config values
   const fontVars = WARDROBE_CONFIG[equippedFont]?.cssVars || {}
 
-  const activeOverlayClass = getOverlayClass(WARDROBE_CONFIG, userProfile?.equipped?.overlay)
+  // const activeOverlayClass = getOverlayClass(WARDROBE_CONFIG, userProfile?.equipped?.overlay)
 
   const getDatesInRange = (startDate, endDate) => {
     const dates = []
@@ -427,7 +427,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               </div>
             </div>
             <div className="group/cover relative">
-              <div className={`group/cover relative overflow-hidden ${activeOverlayClass}`}>
+              <div className={`group/cover relative overflow-hidden`}>
                 {" "}
                 <img
                   src={getOptimizedImageUrl(
