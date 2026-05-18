@@ -128,65 +128,63 @@ aside { -ms-overflow-style: none; scrollbar-width: none; }
   overflow-wrap: anywhere;
 }
 
-@keyframes wordle-tile-pop {
-  0% {
-    transform: scale(0.86);
-  }
-  45% {
-    transform: scale(1.08);
-  }
-  100% {
-    transform: scale(1);
-  }
+/* ── Tile reveal: phase 1 — squish to flat ───────────────────────────────── */
+@keyframes flip-out {
+  from { transform: scaleY(1); }
+  to   { transform: scaleY(0); }
 }
-
-@keyframes wordle-row-shake {
-  10%,
-  90% {
-    transform: translateX(-1px);
-  }
-  20%,
-  80% {
-    transform: translateX(2px);
-  }
-  30%,
-  50%,
-  70% {
-    transform: translateX(-4px);
-  }
-  40%,
-  60% {
-    transform: translateX(4px);
-  }
+ 
+/* ── Tile reveal: phase 2 — unsquish with new color already applied ─────── */
+@keyframes flip-in {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
 }
-
-@keyframes wordle-tile-reveal {
-  0% {
-    transform: rotateX(0deg);
-  }
-  45% {
-    transform: rotateX(90deg);
-  }
-  55% {
-    transform: rotateX(90deg);
-  }
-  100% {
-    transform: rotateX(0deg);
-  }
+ 
+.tile-flip-out {
+  animation: flip-out 250ms ease-in forwards;
+  /* forwards: stay flat at scaleY(0) until flip-in fires */
 }
-
-.wordle-tile-pop {
-  animation: wordle-tile-pop 120ms ease-out;
+ 
+.tile-flip-in {
+  animation: flip-in 250ms ease-out forwards;
 }
-
-.wordle-row-shake {
-  animation: wordle-row-shake 520ms ease-in-out;
+ 
+/* ── Letter typed — brief pop ───────────────────────────────────────────── */
+@keyframes tile-pop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.1); }
+  100% { transform: scale(1); }
 }
-
-.wordle-tile-reveal {
-  animation: wordle-tile-reveal 700ms ease-in-out both;
-  backface-visibility: hidden;
-  transform-style: preserve-3d;
+ 
+/* 
+ * Pop needs a unique key per letter-add so React recreates the node and the
+ * animation restarts. Handle this in WordleBoard by keying on letter content.
+ */
+.tile-pop {
+  animation: tile-pop 100ms ease-out;
+}
+ 
+/* ── Invalid word — shake the row ───────────────────────────────────────── */
+@keyframes row-shake {
+  0%, 100%        { transform: translateX(0); }
+  15%, 45%, 75%   { transform: translateX(-5px); }
+  30%, 60%, 90%   { transform: translateX(5px); }
+}
+ 
+.row-shake {
+  animation: row-shake 500ms ease-in-out;
+}
+ 
+/* ── Win celebration — bounce each tile ─────────────────────────────────── */
+@keyframes tile-bounce {
+  0%, 100% { transform: translateY(0); }
+  40%      { transform: translateY(-18px); }
+  60%      { transform: translateY(3px); }
+  80%      { transform: translateY(-8px); }
+}
+ 
+.tile-bounce {
+  animation: tile-bounce 700ms ease-in-out forwards;
 }
 
 .modal-open {

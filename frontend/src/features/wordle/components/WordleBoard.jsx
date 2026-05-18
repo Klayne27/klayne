@@ -1,6 +1,15 @@
-import { motion } from "framer-motion"
+// features/wordle/components/WordleBoard.jsx
+//
+// No Framer Motion. Animation is driven by CSS classes:
+//   "tile-flip-out"  → scaleY 1→0  (tile squishes flat)
+//   "tile-flip-in"   → scaleY 0→1  (tile unsquishes, color already set)
+//   "tile-pop"       → brief scale-up when a letter is typed
+//   "row-shake"      → horizontal shake on invalid word
+//
+// The tile's `key` includes the letter so React remounts the node on each
+// keypress, which restarts the pop animation correctly.
 
-const stateClasses = {
+const STATE_CLASSES = {
   correct: "border-[#538d4e] bg-[#538d4e] text-white",
   present: "border-[#b59f3b] bg-[#b59f3b] text-white",
   absent: "border-[#3a3a3c] bg-[#3a3a3c] text-white",
@@ -8,46 +17,29 @@ const stateClasses = {
   filled: "border-base-content/70 bg-transparent text-base-content",
 }
 
-// Explicit variants guarantee Framer Motion registers the step transitions cleanly
-const tileVariants = {
-  static: { rotateX: 0 },
-  out: { rotateX: 90 },
-  in: { rotateX: 0 },
-}
-
-/**
- * Single tile.
- */
-const WordleTile = ({ letter, displayState, flipPhase, isTyped }) => {
-  // Determine which explicit animation state string to pass downstream
-  const currentVariant = flipPhase === "out" ? "out" : flipPhase === "in" ? "in" : "static"
+// ── Single tile ───────────────────────────────────────────────────────────────
+const WordleTile = ({ letter, colorState, flipPhase, isTyped }) => {
+  // Which CSS animation class to apply
+  let animClass = ""
+  if (flipPhase === "out") animClass = "tile-flip-out"
+  else if (flipPhase === "in") animClass = "tile-flip-in"
+  else if (isTyped) animClass = "tile-pop"
 
   return (
-    <div className="aspect-square" style={{ perspective: "1000px" }}>
-      <motion.div
-        variants={tileVariants}
-        animate={currentVariant}
-        initial="static"
-        className={`flex h-full w-full items-center justify-center border-2 text-2xl font-black uppercase sm:text-3xl ${
-          stateClasses[displayState]
-        } ${isTyped && !flipPhase ? "wordle-tile-pop" : ""}`}
-        style={{
-          transformStyle: "preserve-3d", // Required for hardware accelerated 3D graphics
-          backfaceVisibility: "hidden",
-          WebkitBackfaceVisibility: "hidden",
-          willChange: "transform",
-        }}
-        transition={{
-          duration: 0.25, // Snappier NYT accurate flip rate
-          ease: flipPhase === "out" ? [0.4, 0, 1, 1] : [0, 0, 0.2, 1],
-        }}
-      >
-        {letter}
-      </motion.div>
+    <div
+      className={[
+        "flex aspect-square items-center justify-center border-2",
+        "text-2xl font-black uppercase sm:text-3xl",
+        STATE_CLASSES[colorState] ?? STATE_CLASSES.empty,
+        animClass,
+      ].join(" ")}
+    >
+      {letter}
     </div>
   )
 }
 
+// ── Board ─────────────────────────────────────────────────────────────────────
 const WordleBoard = ({
   guesses = [],
   currentGuess = "",
@@ -55,57 +47,63 @@ const WordleBoard = ({
   shakeRowKey = 0,
   reveal = null,
 }) => (
-  <div className="mx-auto grid w-full max-w-[330px] grid-rows-6 gap-1.5">
+  <div className="mx-auto grid w-full max-w-[280px] grid-rows-6 gap-1.5 md:max-w-[330px]">
     {Array.from({ length: 6 }).map((_, rowIndex) => {
       const submitted = guesses[rowIndex]
       const isRevealRow = reveal?.rowIndex === rowIndex
 
-      const tiles = Array.from({ length: 5 }).map((__, colIndex) => {
-        // ── Active reveal row — driven entirely by the hook ──────────────
+      const tiles = Array.from({ length: 5 }).map((_, colIndex) => {
+        // ── Reveal row: driven entirely by the hook ───────────────────────
         if (isRevealRow) {
           const letter = reveal.word[colIndex] ?? ""
-          const flipPhase = reveal.phases[colIndex]
-          const flipColor = reveal.colors[colIndex]
+          const flipPhase = reveal.phases[colIndex] // "idle" | "out" | "in"
+          const flipColor = reveal.colors[colIndex] // null | "correct" | "present" | "absent"
 
-          // Show the result color once the tile is flipping back in
-          const displayState =
+          // Color is visible only once the tile is flipping back in
+          const colorState =
             flipPhase === "in" && flipColor ? flipColor : letter ? "filled" : "empty"
 
-          return { letter, displayState, flipPhase, isTyped: false }
+          return { letter, colorState, flipPhase, isTyped: false }
         }
 
-        // ── Completed guess (from cache) ─────────────────────────────────
+        // ── Completed row (from server cache) ─────────────────────────────
         if (submitted) {
           return {
             letter: submitted.word[colIndex] ?? "",
-            displayState: submitted.result[colIndex],
+            colorState: submitted.result[colIndex],
             flipPhase: null,
             isTyped: false,
           }
         }
 
-        // ── Current input row or empty row ───────────────────────────────
-        const isInputRow = rowIndex === guesses.length && !reveal
-        const letter = isInputRow ? (currentGuess[colIndex] ?? "") : ""
-        return {
-          letter,
-          displayState: letter ? "filled" : "empty",
-          flipPhase: null,
-          isTyped: !!letter,
+        // ── Active input row ──────────────────────────────────────────────
+        if (rowIndex === guesses.length && !reveal) {
+          const letter = currentGuess[colIndex] ?? ""
+          return {
+            letter,
+            colorState: letter ? "filled" : "empty",
+            flipPhase: null,
+            isTyped: !!letter,
+          }
         }
+
+        // ── Empty future row ──────────────────────────────────────────────
+        return { letter: "", colorState: "empty", flipPhase: null, isTyped: false }
       })
+
+      const isShaking = rowIndex === shakeRowIndex && shakeRowKey > 0
 
       return (
         <div
-          // FIXED: Kept the key completely stable using only rowIndex.
-          // This stops React from destroying the DOM node and cancelling animations.
-          key={rowIndex}
-          className={`grid grid-cols-5 gap-1.5 ${
-            rowIndex === shakeRowIndex && shakeRowKey > 0 ? "wordle-row-shake" : ""
-          }`}
+          key={rowIndex} // stable key — never remount rows mid-animation
+          className={`grid grid-cols-5 gap-1.5 ${isShaking ? "row-shake" : ""}`}
         >
           {tiles.map((tile, colIndex) => (
-            <WordleTile key={`${rowIndex}-${colIndex}`} {...tile} />
+            <WordleTile
+              // Include letter in key so pop animation restarts on each keypress
+              key={`${rowIndex}-${colIndex}-${tile.isTyped ? tile.letter : ""}`}
+              {...tile}
+            />
           ))}
         </div>
       )
