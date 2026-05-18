@@ -1,15 +1,14 @@
-// features/wordle/components/WordleBoard.jsx
-//
-// No Framer Motion. Animation is driven by CSS classes:
-//   "tile-flip-out"  → scaleY 1→0  (tile squishes flat)
-//   "tile-flip-in"   → scaleY 0→1  (tile unsquishes, color already set)
-//   "tile-pop"       → brief scale-up when a letter is typed
-//   "row-shake"      → horizontal shake on invalid word
-//
-// The tile's `key` includes the letter so React remounts the node on each
-// keypress, which restarts the pop animation correctly.
+import React from "react"
 
-const STATE_CLASSES = {
+const STAGGER_MS = 300
+
+const RESULT_COLORS = {
+  correct: "#538d4e",
+  present: "#b59f3b",
+  absent: "#3a3a3c",
+}
+
+const stateClasses = {
   correct: "border-[#538d4e] bg-[#538d4e] text-white",
   present: "border-[#b59f3b] bg-[#b59f3b] text-white",
   absent: "border-[#3a3a3c] bg-[#3a3a3c] text-white",
@@ -17,29 +16,42 @@ const STATE_CLASSES = {
   filled: "border-base-content/70 bg-transparent text-base-content",
 }
 
-// ── Single tile ───────────────────────────────────────────────────────────────
-const WordleTile = ({ letter, colorState, flipPhase, isTyped }) => {
-  // Which CSS animation class to apply
-  let animClass = ""
-  if (flipPhase === "out") animClass = "tile-flip-out"
-  else if (flipPhase === "in") animClass = "tile-flip-in"
-  else if (isTyped) animClass = "tile-pop"
+const WordleTile = ({
+  letter = "",
+  state = "empty",
+  isRevealing = false,
+  revealDelay = 0,
+  revealResult = null,
+  isTyped = false,
+}) => {
+  // CSS custom property carries the dynamic result color into the keyframe
+  const revealStyle =
+    isRevealing && revealResult
+      ? {
+          "--wordle-reveal-color": RESULT_COLORS[revealResult] ?? RESULT_COLORS.absent,
+          animation: `wordleReveal 500ms ease-in-out ${revealDelay}ms both`,
+        }
+      : undefined
 
   return (
-    <div
-      className={[
-        "flex aspect-square items-center justify-center border-2",
-        "text-2xl font-black uppercase sm:text-3xl",
-        STATE_CLASSES[colorState] ?? STATE_CLASSES.empty,
-        animClass,
-      ].join(" ")}
-    >
-      {letter}
+    <div className="aspect-square" style={{ perspective: "300px" }}>
+      <div
+        className={[
+          "flex h-full w-full select-none items-center justify-center border-2",
+          "text-2xl font-black uppercase sm:text-3xl",
+          isRevealing ? stateClasses.filled : stateClasses[state],
+          isTyped && state === "filled" && !isRevealing ? "wordle-tile-pop" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        style={revealStyle}
+      >
+        {letter}
+      </div>
     </div>
   )
 }
 
-// ── Board ─────────────────────────────────────────────────────────────────────
 const WordleBoard = ({
   guesses = [],
   currentGuess = "",
@@ -47,64 +59,58 @@ const WordleBoard = ({
   shakeRowKey = 0,
   reveal = null,
 }) => (
-  <div className="mx-auto grid w-full max-w-[280px] grid-rows-6 gap-1.5 md:max-w-[330px]">
+  <div className="mx-auto grid w-full max-w-[330px] grid-rows-6 gap-1.5">
     {Array.from({ length: 6 }).map((_, rowIndex) => {
       const submitted = guesses[rowIndex]
       const isRevealRow = reveal?.rowIndex === rowIndex
-
-      const tiles = Array.from({ length: 5 }).map((_, colIndex) => {
-        // ── Reveal row: driven entirely by the hook ───────────────────────
-        if (isRevealRow) {
-          const letter = reveal.word[colIndex] ?? ""
-          const flipPhase = reveal.phases[colIndex] // "idle" | "out" | "in"
-          const flipColor = reveal.colors[colIndex] // null | "correct" | "present" | "absent"
-
-          // Color is visible only once the tile is flipping back in
-          const colorState =
-            flipPhase === "in" && flipColor ? flipColor : letter ? "filled" : "empty"
-
-          return { letter, colorState, flipPhase, isTyped: false }
-        }
-
-        // ── Completed row (from server cache) ─────────────────────────────
-        if (submitted) {
-          return {
-            letter: submitted.word[colIndex] ?? "",
-            colorState: submitted.result[colIndex],
-            flipPhase: null,
-            isTyped: false,
-          }
-        }
-
-        // ── Active input row ──────────────────────────────────────────────
-        if (rowIndex === guesses.length && !reveal) {
-          const letter = currentGuess[colIndex] ?? ""
-          return {
-            letter,
-            colorState: letter ? "filled" : "empty",
-            flipPhase: null,
-            isTyped: !!letter,
-          }
-        }
-
-        // ── Empty future row ──────────────────────────────────────────────
-        return { letter: "", colorState: "empty", flipPhase: null, isTyped: false }
-      })
-
-      const isShaking = rowIndex === shakeRowIndex && shakeRowKey > 0
+      // Two sub-states: waiting for API vs actively flipping
+      const isAnimating = isRevealRow && reveal.results !== null
+      const isCurrentInput = !isRevealRow && rowIndex === guesses.length
 
       return (
         <div
-          key={rowIndex} // stable key — never remount rows mid-animation
-          className={`grid grid-cols-5 gap-1.5 ${isShaking ? "row-shake" : ""}`}
+          key={rowIndex}
+          className={`grid grid-cols-5 gap-1.5 ${
+            rowIndex === shakeRowIndex && shakeRowKey > 0 ? "wordle-row-shake" : ""
+          }`}
         >
-          {tiles.map((tile, colIndex) => (
-            <WordleTile
-              // Include letter in key so pop animation restarts on each keypress
-              key={`${rowIndex}-${colIndex}-${tile.isTyped ? tile.letter : ""}`}
-              {...tile}
-            />
-          ))}
+          {Array.from({ length: 5 }).map((_, colIndex) => {
+            // ── Reveal row: pending (filled, no animation) or animating ───
+            if (isRevealRow) {
+              return (
+                <WordleTile
+                  key={`${rowIndex}-${colIndex}`}
+                  letter={reveal.word[colIndex] ?? ""}
+                  state="filled"
+                  isRevealing={isAnimating}
+                  revealDelay={isAnimating ? colIndex * STAGGER_MS : 0}
+                  revealResult={isAnimating ? reveal.results[colIndex] : null}
+                />
+              )
+            }
+
+            // ── Submitted guess from cache ─────────────────────────────────
+            if (submitted) {
+              return (
+                <WordleTile
+                  key={`${rowIndex}-${colIndex}`}
+                  letter={submitted.word[colIndex] ?? ""}
+                  state={submitted.result[colIndex]}
+                />
+              )
+            }
+
+            // ── Active input row or empty row ─────────────────────────────
+            const letter = isCurrentInput ? (currentGuess[colIndex] ?? "") : ""
+            return (
+              <WordleTile
+                key={`${rowIndex}-${colIndex}`}
+                letter={letter}
+                state={letter ? "filled" : "empty"}
+                isTyped={!!letter}
+              />
+            )
+          })}
         </div>
       )
     })}

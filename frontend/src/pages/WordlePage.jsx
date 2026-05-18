@@ -19,6 +19,14 @@ import { useSubmitWordleGuess } from "../features/wordle/wordleHooks/useWordleMu
 import { useWordleStore } from "../store/useWordleStore"
 import { showAppToast } from "../utils/showAppToast"
 import { useWordleReveal } from "../hooks/customHooks/useWordleReveal"
+import { useQueryClient } from "@tanstack/react-query"
+import { userKeys } from "../features/users/usersHooks/userKeys"
+import { wordleKeys } from "../features/wordle/wordleHooks/wordleKeys"
+
+const FLIP_DURATION_MS = 500
+const STAGGER_MS       = 300
+const TOTAL_REVEAL_MS  = 4 * STAGGER_MS + FLIP_DURATION_MS + 150 // 1750ms + safety buffer
+
 
 const WordlePage = () => {
   const navigate = useNavigate()
@@ -39,10 +47,16 @@ const WordlePage = () => {
   } = useWordleStore()
 
   // ── Hook Synchronization ──────────────────────────────────────────────────
-  const { reveal, beginReveal, commitResult, clearReveal } = useWordleReveal()
+  const { reveal, beginPending, commitResult, clearReveal } = useWordleReveal()
 
   // Pass the clearReveal cleanup utility directly into your mutation layout setup
   const { submitGuess, isSubmittingGuess } = useSubmitWordleGuess(clearReveal)
+
+  const queryClient = useQueryClient()
+  // const { reveal, beginPending, commitResult, clearReveal } = useWordleReveal()
+  // const { submitGuess, isSubmittingGuess } = useSubmitWordleGuess()
+  // const isRevealing = !!reveal
+
 
   const { wordle, isLoading } = useGetTodayWordle()
   const { stats, isLoading: isStatsLoading } = useGetWordleStats({ enabled: isStatsOpen })
@@ -80,51 +94,78 @@ const WordlePage = () => {
   }, [])
 
   // ── Guess Submission Flow ─────────────────────────────────────────────────
-  const handleSubmit = useCallback(() => {
-    if (isRevealing || isFinished) return
+const handleSubmit = useCallback(() => {
+  if (isRevealing || isFinished || isSubmittingGuess) return
 
-    const guess = currentGuess.toLowerCase()
+  const guess = currentGuess.toLowerCase()
 
-    if (guess.length < 5) {
-      triggerShake(guesses.length)
-      showAppToast("Not enough letters", "error")
-      return
-    }
+  if (guess.length < 5) {
+    triggerShake(guesses.length)
+    showAppToast("Not enough letters", "error")
+    return
+  }
 
-    const rowIndex = guesses.length
+  const rowIndex = guesses.length
 
-    // 1. Wipe text box input indicators and flip client-side grid instantly
-    clearGuess()
-    beginReveal(rowIndex, guess)
+  // 1. Clear input and show guess immediately as "filled" tiles
+  clearGuess()
+  beginPending(rowIndex, guess)
 
-    // 2. Dispatch API action payload tracking in background context
-    submitGuess(guess, {
-      onSuccess: (data) => {
-        // Resolve current solution evaluations arrays seamlessly into the flipping row matrices
-        const newGuess = data.attempt.guesses.at(-1)
-        commitResult(newGuess.result, rowIndex)
-      },
-      onError: () => {
-        // Revert component configurations cleanly if validation crashes or fails
+  submitGuess(guess, {
+    onSuccess: (data) => {
+      const lastGuess = data.attempt.guesses.at(-1)
+
+      // 2. Commit result to cache NOW — the reveal row still takes visual priority
+      queryClient.setQueryData(wordleKeys.today(), data)
+
+      // 3. Kick off the CSS flip animation
+      commitResult(lastGuess.result)
+
+      // 4. After all 5 tiles finish flipping, clear reveal + show toasts
+      setTimeout(() => {
         clearReveal()
-        setCurrentGuess(guess)
-        triggerShake(rowIndex)
-      },
-    })
-  }, [
-    isRevealing,
-    isFinished,
-    currentGuess,
-    guesses.length,
-    clearGuess,
-    beginReveal,
-    commitResult,
-    clearReveal,
-    submitGuess,
-    setCurrentGuess,
-    triggerShake,
-  ])
 
+        if (data.attempt?.status === "won") {
+          showAppToast(`Solved in ${data.attempt.guesses.length}!`, "success")
+        } else if (data.attempt?.status === "lost") {
+          showAppToast(`The word was ${data.answer?.toUpperCase()}`, "error")
+        }
+
+        if (data.unlockedBadges?.length) {
+          queryClient.invalidateQueries({ queryKey: userKeys.auth() })
+          data.unlockedBadges.forEach((badge) =>
+            showAppToast(`Wordle badge unlocked: ${badge.label}`, "success"),
+          )
+        }
+
+        queryClient.invalidateQueries({ queryKey: wordleKeys.stats() })
+        queryClient.invalidateQueries({ queryKey: wordleKeys.leaderboard() })
+      }, TOTAL_REVEAL_MS)
+    },
+
+    onError: (error) => {
+      // Restore everything so the user can try again
+      clearReveal()
+      setCurrentGuess(guess)
+      triggerShake(rowIndex)
+      showAppToast(error.message || "Invalid guess", "error")
+    },
+  })
+}, [
+  isRevealing,
+  isFinished,
+  isSubmittingGuess,
+  currentGuess,
+  guesses.length,
+  clearGuess,
+  beginPending,
+  commitResult,
+  clearReveal,
+  submitGuess,
+  setCurrentGuess,
+  triggerShake,
+  queryClient,
+])
   // ── Keyboard / Shortcuts Listeners ────────────────────────────────────────
   useEffect(() => {
     const handleKeyDown = (event) => {
