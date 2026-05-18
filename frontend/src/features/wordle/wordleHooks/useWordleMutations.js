@@ -4,19 +4,23 @@ import { showAppToast } from "../../../utils/showAppToast"
 import { userKeys } from "../../users/usersHooks/userKeys"
 import { wordleKeys } from "./wordleKeys"
 
-export const useSubmitWordleGuess = () => {
+export const useSubmitWordleGuess = (onAnimationComplete) => {
   const queryClient = useQueryClient()
 
   const { mutate: submitGuess, isPending } = useMutation({
     mutationFn: submitWordleGuessApi,
     onSuccess: (data) => {
-      // 1. Instantly update the cache data for structural state tracking
-      queryClient.setQueryData(wordleKeys.today(), data)
-      queryClient.invalidateQueries({ queryKey: wordleKeys.stats() })
-      queryClient.invalidateQueries({ queryKey: wordleKeys.leaderboard() })
+      // NOTE: Do NOT update wordleKeys.today() cache here!
+      // Instead, pass the data directly down to the commit callback to handle the flip updates
 
-      // 2. Delay the Toast alerts to align with the completion of the tile flip sequence (~2200ms)
+      const totalAnimationDuration = 2000 // Total layout time window for 5 tiles
+
       setTimeout(() => {
+        // Commit the payload data to the layout cache ONLY after transitions finish
+        queryClient.setQueryData(wordleKeys.today(), data)
+        queryClient.invalidateQueries({ queryKey: wordleKeys.stats() })
+        queryClient.invalidateQueries({ queryKey: wordleKeys.leaderboard() })
+
         if (data.attempt?.status === "won") {
           showAppToast(`Solved in ${data.attempt.guesses.length}!`, "success")
         } else if (data.attempt?.status === "lost") {
@@ -29,10 +33,13 @@ export const useSubmitWordleGuess = () => {
             showAppToast(`Wordle badge unlocked: ${badge.label}`, "success")
           })
         }
-      }, 2200) // Matches your WordlePage.jsx final transition wrap-up timer!
+
+        // Clean up external triggers inside WordlePage.jsx
+        if (onAnimationComplete) onAnimationComplete()
+      }, totalAnimationDuration)
     },
     onError: (error) => {
-      showAppToast(error.message)
+      showAppToast(error.message || "Invalid guess selection")
     },
   })
 

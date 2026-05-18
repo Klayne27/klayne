@@ -8,41 +8,52 @@ const stateClasses = {
   filled: "border-base-content/70 bg-transparent text-base-content",
 }
 
+// Explicit variants guarantee Framer Motion registers the step transitions cleanly
+const tileVariants = {
+  static: { rotateX: 0 },
+  out: { rotateX: 90 },
+  in: { rotateX: 0 },
+}
+
 /**
  * Single tile.
- * flipPhase null        → static tile (input row or completed past row)
- * flipPhase 'idle'      → pre-flip, letter visible at rest
- * flipPhase 'out'       → rotating to 90° (face disappearing)
- * flipPhase 'in'        → rotating from 90° back to 0° (new color revealed)
- *
- * The color class changes when flipPhase transitions 'out' → 'in'.
- * Because the tile is edge-on at that exact moment the change is invisible.
  */
-const WordleTile = ({ letter, displayState, flipPhase, isTyped }) => (
-  // Parent div provides the perspective context for the 3D rotation
-  <div className="aspect-square" style={{ perspective: "250px" }}>
-    <motion.div
-      className={`flex h-full w-full items-center justify-center border-2 text-2xl font-black uppercase sm:text-3xl ${stateClasses[displayState]} ${isTyped && !flipPhase ? "wordle-tile-pop" : ""}`}
-      // 'out' → rotate to edge-on; anything else → return to face-up
-      animate={{ rotateX: flipPhase === "out" ? 90 : 0 }}
-      initial={false} // no animation on first mount
-      transition={{
-        duration: 0.32,
-        // easeIn going away, easeOut coming back — feels like a real card flip
-        ease: flipPhase === "out" ? [0.55, 0, 1, 0.45] : [0, 0.55, 0.45, 1],
-      }}
-    >
-      {letter}
-    </motion.div>
-  </div>
-)
+const WordleTile = ({ letter, displayState, flipPhase, isTyped }) => {
+  // Determine which explicit animation state string to pass downstream
+  const currentVariant = flipPhase === "out" ? "out" : flipPhase === "in" ? "in" : "static"
+
+  return (
+    <div className="aspect-square" style={{ perspective: "1000px" }}>
+      <motion.div
+        variants={tileVariants}
+        animate={currentVariant}
+        initial="static"
+        className={`flex h-full w-full items-center justify-center border-2 text-2xl font-black uppercase sm:text-3xl ${
+          stateClasses[displayState]
+        } ${isTyped && !flipPhase ? "wordle-tile-pop" : ""}`}
+        style={{
+          transformStyle: "preserve-3d", // Required for hardware accelerated 3D graphics
+          backfaceVisibility: "hidden",
+          WebkitBackfaceVisibility: "hidden",
+          willChange: "transform",
+        }}
+        transition={{
+          duration: 0.25, // Snappier NYT accurate flip rate
+          ease: flipPhase === "out" ? [0.4, 0, 1, 1] : [0, 0, 0.2, 1],
+        }}
+      >
+        {letter}
+      </motion.div>
+    </div>
+  )
+}
 
 const WordleBoard = ({
   guesses = [],
   currentGuess = "",
   shakeRowIndex = null,
   shakeRowKey = 0,
-  reveal = null, // from useWordleReveal
+  reveal = null,
 }) => (
   <div className="mx-auto grid w-full max-w-[330px] grid-rows-6 gap-1.5">
     {Array.from({ length: 6 }).map((_, rowIndex) => {
@@ -55,10 +66,11 @@ const WordleBoard = ({
           const letter = reveal.word[colIndex] ?? ""
           const flipPhase = reveal.phases[colIndex]
           const flipColor = reveal.colors[colIndex]
-          // Show the result color once the tile is flipping back in;
-          // until then display "filled" so the front face looks normal
+
+          // Show the result color once the tile is flipping back in
           const displayState =
             flipPhase === "in" && flipColor ? flipColor : letter ? "filled" : "empty"
+
           return { letter, displayState, flipPhase, isTyped: false }
         }
 
@@ -85,7 +97,9 @@ const WordleBoard = ({
 
       return (
         <div
-          key={`${rowIndex}-${rowIndex === shakeRowIndex ? shakeRowKey : "stable"}`}
+          // FIXED: Kept the key completely stable using only rowIndex.
+          // This stops React from destroying the DOM node and cancelling animations.
+          key={rowIndex}
           className={`grid grid-cols-5 gap-1.5 ${
             rowIndex === shakeRowIndex && shakeRowKey > 0 ? "wordle-row-shake" : ""
           }`}
