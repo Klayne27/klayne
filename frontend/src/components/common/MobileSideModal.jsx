@@ -266,7 +266,7 @@ function MobileSideModal({
                   Bookmarks
                 </span>
               </li>
-              {/* <li
+              <li
                 onClick={() => {
                   if (pathname === "/wordle") return
                   navigate("/wordle")
@@ -282,7 +282,7 @@ function MobileSideModal({
                 <span className={`text-xl ${pathname === "/wordle" ? "font-bold" : ""}`}>
                   Wordle
                 </span>
-              </li> */}
+              </li>
               <li
                 onClick={() => {
                   if (pathname === "/pomodoro") return

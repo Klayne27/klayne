@@ -609,7 +609,7 @@ const Sidebar = ({
               )}
             </li>
 
-            {/* <li
+            <li
               onClick={() => navigate("/wordle")}
               className={`hidden cursor-pointer items-center justify-start rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary/50`}
             >
@@ -635,7 +635,7 @@ const Sidebar = ({
                   Wordle
                 </span>
               )}
-            </li> */}
+            </li>
 
             {/* SEARCH (Mobile Only) */}
             <li
