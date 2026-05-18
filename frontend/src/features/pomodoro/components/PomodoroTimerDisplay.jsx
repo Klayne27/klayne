@@ -24,11 +24,11 @@ function PomodoroTimerDisplay({
   const activePreset = usePomodoroBackgroundStore((s) => s.presetKey)
   const activeCustomUrl = usePomodoroBackgroundStore((s) => s.customImageUrl)
 
-  const { play: playClick } = useSound("/sounds/click-004.mp3", 1)
-  const { play: playClickAlarm } = useSound("/sounds/toggle-001.mp3", 1)
+  // const { play: playClick } = useSound("/sounds/click-004.mp3", 1)
+  // const { play: playClickAlarm } = useSound("/sounds/toggle-001.mp3", 1)
 
   const toggleMute = () => {
-    playClickAlarm()
+    // playClickAlarm()
     updateSettings({ ...settings, isMuted: !settings.isMuted })
     showAppToast(settings.isMuted ? "Alarm unmuted" : "Alarm muted")
   }
@@ -63,7 +63,7 @@ function PomodoroTimerDisplay({
   }
 
   const handleResetSessionClick = () => {
-    playClick()
+    // playClick()
     setShowResetCurrentSessionModal(true)
   }
 

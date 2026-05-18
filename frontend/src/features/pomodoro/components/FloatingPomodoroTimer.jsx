@@ -26,7 +26,7 @@ const FloatingPomodoroTimer = () => {
   const setIsActive = usePomodoroTimerStore((s) => s.setIsActive)
   const persistPause = usePomodoroTimerStore((s) => s.persistPause)
 
-  const { play: playPlay } = useSound("/sounds/click-001.mp3", 1)
+  // const { play: playPlay } = useSound("/sounds/click-001.mp3", 1)
 
 
   const { settings, isSettingsLoading } = useGetPomodoroSettings()
@@ -51,7 +51,7 @@ const FloatingPomodoroTimer = () => {
 
   const handleToggle = (event) => {
     event.preventDefault()
-    playPlay()
+    // playPlay()
     if (timer <= 0 || isGoalReached) return
     if (isActive) {
       setIsActive(false)

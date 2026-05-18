@@ -94,9 +94,9 @@ const PomodoroPage = () => {
   const customImageUrl = usePomodoroBackgroundStore((s) => s.customImageUrl)
 
 
-  const { play: playPlay } = useSound("/sounds/click-001.mp3", 1)
-  const { play: playClick } = useSound("/sounds/click-004.mp3", 1)
-  const { play: playComplete } = useSound("/sounds/confirmation-003.mp3", 0.6)
+  // const { play: playPlay } = useSound("/sounds/click-001.mp3", 1)
+  // const { play: playClick } = useSound("/sounds/click-004.mp3", 1)
+  // const { play: playComplete } = useSound("/sounds/confirmation-003.mp3", 0.6)
 
   const timerState = getTimerState(isGoalReached, isBreak, sessionCount, settings)
 
@@ -148,7 +148,7 @@ const backgroundUrl = useMemo(() => {
       })
       .catch(() => {})
 
-      playPlay()
+      // playPlay()
 
     if (typeof Notification !== "undefined" && Notification.permission === "default") {
       Notification.requestPermission()
@@ -170,16 +170,16 @@ const backgroundUrl = useMemo(() => {
     settings,
     startSession,
     timer,
-    playPlay
+    // playPlay
   ])
 
   const handlePause = useCallback(() => {
     if (!isActive) return
     setIsActive(false)
-    playPlay()
+    // playPlay()
     persistPause(timer)
     pauseServerSession({ remainingSeconds: timer })
-  }, [isActive, pauseServerSession, persistPause, setIsActive, timer, playPlay])
+  }, [isActive, pauseServerSession, persistPause, setIsActive, timer])
 
   const handleReset = useCallback(() => {
     if (!settings) return
@@ -232,7 +232,7 @@ const backgroundUrl = useMemo(() => {
       event.stopPropagation()
 
       // 1. Play Sound
-      playComplete()
+      // playComplete()
 
       // 2. Trigger local animation state
       setCompletingId(todoId)
@@ -256,18 +256,18 @@ const backgroundUrl = useMemo(() => {
         setCompletingId(null)
       }, 400) // Match this with the CSS duration
     },
-    [allTodos, authUser, completeTodo, selectTask, selectedTaskId, playComplete],
+    [allTodos, authUser, completeTodo, selectTask, selectedTaskId],
   )
 
   const handleOpenSettingsPage = () => {
-    playClick()
+    // playClick()
     if (isMobile) navigate("/pomodoro-settings")
     else setIsSettingsOpen(true)
     
   }
 
   const handleResetTimerClick = () => {
-    playClick()
+    // playClick()
     setShowResetTimerModal(true)
   }
 

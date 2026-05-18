@@ -131,7 +131,7 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
 
               <Route path="/suggestions" element={<SuggestionForm />} />
               <Route path="/admin/suggestions" element={<AdminSuggestionsPage />} />
-              <Route path="/wordle" element={<WordlePage />} />
+              {/* <Route path="/wordle" element={<WordlePage />} /> */}
 
               <Route path="/pomodoro" element={<PomodoroPage />} />
               <Route path="/study-dashboard" element={<StudyDashboardPage />} />

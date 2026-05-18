@@ -32,8 +32,8 @@ const QuickTaskPanel = () => {
   const [hasTime, setHasTime] = useState(false)
   const inputRef = useRef(null)
   const [completingId, setCompletingId] = useState(null) // Add this state
-  const { play: playComplete } = useSound("/sounds/confirmation-003.mp3", 0.6) // Add this hook
-  const { play: playClickTask } = useSound("/sounds/drop-002.mp3", 1) // Add this hook
+  // const { play: playComplete } = useSound("/sounds/confirmation-003.mp3", 0.6) // Add this hook
+  // const { play: playClickTask } = useSound("/sounds/drop-002.mp3", 1) // Add this hook
 
   const [removeDateFromTitle, setRemoveDateFromTitle] = useState(() => {
     const saved = localStorage.getItem("todo_clear_title_pref")
@@ -126,7 +126,7 @@ const QuickTaskPanel = () => {
       if (!task || task.user !== authUser._id) return
 
       // 1. Play sound and trigger animation state
-      playComplete()
+      // playComplete()
       setCompletingId(todoId)
 
       // 2. Wait for animation to finish before updating cache
@@ -142,11 +142,11 @@ const QuickTaskPanel = () => {
         setCompletingId(null)
       }, 400) // Duration matches the transition-all duration
     },
-    [allTodos, authUser, completeTodo, selectTask, selectedTaskId, playComplete],
+    [allTodos, authUser, completeTodo, selectTask, selectedTaskId],
   )
 
   const handleClickTask = (taskId) => {
-    playClickTask()
+    // playClickTask()
     selectTask(taskId)
   }
 

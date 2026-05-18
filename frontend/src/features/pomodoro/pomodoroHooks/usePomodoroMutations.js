@@ -225,27 +225,35 @@ export const useStartSession = () => {
 export const usePauseSession = () => {
   const queryClient = useQueryClient()
 
-  const { mutate: pauseServerSession } = useMutation({
-    mutationFn: pauseSessionApi,
-    onSuccess: (data) => {
-      if (data?.alreadyGone) {
-        queryClient.removeQueries({ queryKey: pomodoroKeys.active() })
-        return
-      }
-
-      queryClient.setQueryData(pomodoroKeys.active(), data)
-    },
-    onError: () => {},
-  })
-
   const { mutate: cancelServerSession } = useMutation({
     mutationFn: cancelSessionApi,
-    onSettled: () => {
+    onSuccess: () => {
       queryClient.removeQueries({ queryKey: pomodoroKeys.active() })
+    },
+    onError: () => {
+      // Non-fatal — TTL cleans up stale sessions automatically.
     },
   })
 
-  return { pauseServerSession, cancelServerSession }
+  // FIX: pauseServerSession was missing from the returned object.
+  //
+  // PomodoroPage destructures BOTH pauseServerSession and cancelServerSession:
+  //   const { pauseServerSession, cancelServerSession } = usePauseSession()
+  //
+  // Without this export, pauseServerSession was `undefined`. Calling it in
+  // handlePause threw a TypeError AFTER setIsActive(false) and persistPause()
+  // had already run — so the client paused correctly but the server's
+  // ActiveSession was never cancelled.  The stale session then sat in the DB
+  // until MongoDB's TTL index deleted it (scheduledEndTime + 5 min).  If the
+  // user resumed and finished after that window, endSession found no
+  // ActiveSession, the legacy fallback had no `duration` in the body, and
+  // the session was silently lost.
+  //
+  // Both pause and cancel call the same cancelSessionApi — pause deletes the
+  // record so a fresh one is created on resume with the correct remaining time.
+  const pauseServerSession = cancelServerSession
+
+  return { cancelServerSession, pauseServerSession }
 }
 
 export const useUpdatePomodoroSettings = () => {
