@@ -655,14 +655,6 @@ const Sidebar = ({
                 ) : (
                   <BsGrid3X3 className="size-6" stroke={0.1} />
                 )}
-                {showNewBoardPostsButton && newBoardPostCount > 0 && (
-                  <div
-                    className="absolute right-2 top-2 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-base-100 bg-primary px-1 text-[11px] font-bold text-white"
-                    style={{ transform: "translate(40%, -40%)" }}
-                  >
-                    {formatCount(newBoardPostCount)}
-                  </div>
-                )}
               </div>
               {!shouldCollapseSidebar && (
                 <span
