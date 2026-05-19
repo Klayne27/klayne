@@ -14,12 +14,7 @@ export const useGetTodayWordle = () => {
     staleTime: 30 * 1000,
   })
 
-  return {
-    wordle: data,
-    isLoading,
-    isError,
-    error,
-  }
+  return { wordle: data, isLoading, isError, error }
 }
 
 export const useGetWordleDailyLeaderboard = (page, options = {}) => {
@@ -38,17 +33,16 @@ export const useGetWordleDailyLeaderboard = (page, options = {}) => {
   }
 }
 
+// ── Stats: accepts an options object so callers can control enabled/staleTime ─
 export const useGetWordleStats = (options = {}) => {
   const { data, isLoading } = useQuery({
     queryKey: wordleKeys.stats(),
     queryFn: getWordleStatsApi,
+    staleTime: 60 * 1000,
     ...options,
   })
 
-  return {
-    stats: data,
-    isLoading,
-  }
+  return { stats: data, isLoading }
 }
 
 export const useGetWordleAllTimeLeaderboard = (page, options = {}) => {
@@ -62,6 +56,7 @@ export const useGetWordleAllTimeLeaderboard = (page, options = {}) => {
     leaderboard: data?.leaderboard || [],
     totalPages: data?.totalPages || 1,
     currentPage: data?.currentPage || page,
+    minGamesRequired: data?.minGamesRequired ?? 5,
     isLoading,
   }
 }

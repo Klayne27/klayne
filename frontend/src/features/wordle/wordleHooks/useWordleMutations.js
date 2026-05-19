@@ -3,9 +3,14 @@ import { submitWordleGuessApi } from "../../../api/wordleApi"
 import { showAppToast } from "../../../utils/showAppToast"
 import { userKeys } from "../../users/usersHooks/userKeys"
 import { wordleKeys } from "./wordleKeys"
+import { useCallback } from "react"
 
 export const useSubmitWordleGuess = () => {
   const queryClient = useQueryClient()
+
+  const invalidateLeaderboard = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: wordleKeys.leaderboard() })
+  }, [queryClient])
 
   const { mutate: submitGuess, isPending } = useMutation({
     mutationFn: submitWordleGuessApi,
@@ -13,7 +18,13 @@ export const useSubmitWordleGuess = () => {
       // 1. Instantly update the cache data for structural state tracking
       queryClient.setQueryData(wordleKeys.today(), data)
       queryClient.invalidateQueries({ queryKey: wordleKeys.stats() })
-      queryClient.invalidateQueries({ queryKey: wordleKeys.leaderboard() })
+      // queryClient.invalidateQueries({ queryKey: wordleKeys.leaderboard() })
+
+      setTimeout(() => {
+        if (data.unlockedBadges?.length) {
+          queryClient.invalidateQueries({ queryKey: userKeys.auth() })
+        }
+      }, 2200)
 
       // 2. Delay the Toast alerts to align with the completion of the tile flip sequence (~2200ms)
       setTimeout(() => {
@@ -30,5 +41,5 @@ export const useSubmitWordleGuess = () => {
     },
   })
 
-  return { submitGuess, isSubmittingGuess: isPending }
+  return { submitGuess, isSubmittingGuess: isPending, invalidateLeaderboard}
 }

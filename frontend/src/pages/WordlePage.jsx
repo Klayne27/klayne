@@ -19,13 +19,17 @@ import { useSubmitWordleGuess } from "../features/wordle/wordleHooks/useWordleMu
 import { useWordleStore } from "../store/useWordleStore"
 import { showAppToast } from "../utils/showAppToast"
 import WordleResultModal from "../features/wordle/components/WordleResultModal"
+import { useAuthUser } from "../features/auth/authHooks/useAuthUser"
 
 const WordlePage = () => {
   const navigate = useNavigate()
+  const { authUser } = useAuthUser()
   const [leaderboardPage, setLeaderboardPage] = useState(1)
   const [isStatsOpen, setIsStatsOpen] = useState(false)
-  const [isHelpOpen, setIsHelpOpen] = useState(false) // Added help overlay state anchor
-  const [shakeRowKey, setShakeRowKey] = useState(0)
+  const [isHelpOpen, setIsHelpOpen] = useState(false)
+const [shakeRowKey, setShakeRowKey] = useState(0)
+  const [shakeRowIndex, setShakeRowIndex] = useState(null)
+
   const [revealingRowIndex, setRevealingRowIndex] = useState(null)
   const [revealedTileCount, setRevealedTileCount] = useState(5)
 
@@ -38,8 +42,10 @@ const WordlePage = () => {
     useWordleStore()
 
   const { wordle, isLoading } = useGetTodayWordle()
-  const { stats, isLoading: isStatsLoading } = useGetWordleStats({ enabled: isStatsOpen })
-  const { submitGuess, isSubmittingGuess } = useSubmitWordleGuess()
+  const { stats, isLoading: isStatsLoading } = useGetWordleStats({
+    enabled: isStatsOpen || leaderboardType === "all-time",
+  })
+  const { submitGuess, isSubmittingGuess, invalidateLeaderboard } = useSubmitWordleGuess()
 
   const dailyLeaderboard = useGetWordleDailyLeaderboard(leaderboardPage, {
     enabled: leaderboardType === "daily",
@@ -69,9 +75,14 @@ const WordlePage = () => {
     }).format(dateObj)
   }
 
-  const triggerShake = useCallback(() => {
-    setShakeRowKey((key) => key + 1)
-  }, [])
+const triggerShake = useCallback(() => {
+  const rowToShake = guesses.length 
+  setShakeRowIndex(rowToShake)
+  setShakeRowKey((k) => k + 1) 
+  setTimeout(() => {
+    setShakeRowIndex(null) 
+  }, 600) 
+}, [guesses.length])
 
   const clearRevealTimers = () => {
     revealTimeoutsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId))
@@ -114,6 +125,8 @@ const WordlePage = () => {
         startRevealAnimation(submittedRowIndex, () => {
           // Open result modal once the tile flip sequence is fully done
           if (gameEnded && data.stats) {
+            invalidateLeaderboard()
+
             setResultData(data)
             setIsResultModalOpen(true)
           }
@@ -133,6 +146,7 @@ const WordlePage = () => {
     clearGuess,
     startRevealAnimation,
     triggerShake,
+    invalidateLeaderboard,
   ])
 
   useEffect(() => {
@@ -175,6 +189,8 @@ const WordlePage = () => {
     setLeaderboardType(type)
     setLeaderboardPage(1)
   }
+
+const userTotalGames = resultData?.stats?.gamesPlayed ?? stats?.gamesPlayed ?? undefined
 
   if (isLoading) {
     return (
@@ -226,7 +242,7 @@ const WordlePage = () => {
         <WordleBoard
           guesses={guesses}
           currentGuess={currentGuess}
-          shakeRowIndex={guesses.length}
+          shakeRowIndex={shakeRowIndex} //   Switched to the state variable
           shakeRowKey={shakeRowKey}
           revealingRowIndex={revealingRowIndex}
           revealedTileCount={revealedTileCount}
@@ -275,9 +291,63 @@ const WordlePage = () => {
         </div>
 
         {leaderboardType === "all-time" && (
-          <div className="mb-3 rounded-lg bg-base-200 p-3 text-xs font-semibold text-base-content/70">
-            Diamond 1.00-2.99 • Platinum 3.00-3.49 • Gold 3.50-3.99 • Silver 4.00-4.49 • Bronze
-            4.50+
+          <div className="mx-3 mb-4 rounded-xl border border-base-300 bg-base-200/40 p-4 shadow-inner">
+            {/* Subtitle / Context Header */}
+            <div className="mb-3 flex flex-col items-center justify-between gap-1 border-b border-base-300 pb-2 sm:flex-row">
+              <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40">
+                Rank Tier Thresholds
+              </span>
+              <span className="text-[10px] font-bold text-base-content/50">
+                Based on overall average guesses (Lower is better)
+              </span>
+            </div>
+
+            {/* Responsive Rank Grid */}
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+              {[
+                {
+                  tier: "Diamond",
+                  range: "1.00 - 3.00",
+                  bg: "bg-gradient-to-br from-cyan-100 via-white to-cyan-400 text-cyan-800 shadow-[0_2px_6px_rgba(34,211,238,0.2)]",
+                },
+                {
+                  tier: "Platinum",
+                  range: "3.01 - 3.50",
+                  bg: "bg-gradient-to-br from-blue-50 via-white to-slate-300 text-slate-500 border-blue-100 shadow-[0_2px_8px_rgba(148,163,184,0.2)]",
+                },
+                {
+                  tier: "Gold",
+                  range: "3.51 - 4.00",
+                  bg: "bg-gradient-to-br from-amber-100 via-yellow-400 to-amber-500 text-amber-900 shadow-[0_2px_6px_rgba(245,158,11,0.2)]",
+                },
+                {
+                  tier: "Silver",
+                  range: "4.01 - 4.50",
+                  bg: "bg-gradient-to-br from-zinc-300 via-zinc-100 to-zinc-500 text-zinc-600 border-zinc-400 shadow-[0_2px_6px_rgba(113,113,122,0.15)]",
+                },
+                {
+                  tier: "Bronze",
+                  range: "4.51+",
+                  bg: "bg-gradient-to-br from-orange-300 via-orange-400 to-amber-700 text-orange-800 shadow-[0_2px_6px_rgba(249,115,22,0.15)]",
+                },
+              ].map((item) => (
+                <div
+                  key={item.tier}
+                  className="flex flex-col items-center justify-center rounded-lg border border-base-300/60 bg-base-100 p-2 text-center shadow-sm transition-all"
+                >
+                  {/* Mini-badge item */}
+                  <span
+                    className={`w-full rounded-md border border-white/20 px-1 py-0.5 text-[9px] font-black uppercase tracking-widest ${item.bg}`}
+                  >
+                    {item.tier}
+                  </span>
+                  {/* Range metric display */}
+                  <span className="mt-1.5 font-mono text-xs font-bold tracking-tight">
+                    {item.range}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -288,6 +358,11 @@ const WordlePage = () => {
           totalPages={activeLeaderboard.totalPages}
           onPageChange={setLeaderboardPage}
           isLoading={activeLeaderboard.isLoading}
+          currentUserId={authUser?._id}
+          minGamesRequired={
+            leaderboardType === "all-time" ? allTimeLeaderboard.minGamesRequired : undefined
+          }
+          userGamesPlayed={leaderboardType === "all-time" ? userTotalGames : undefined}
         />
       </section>
 

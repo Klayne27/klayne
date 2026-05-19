@@ -15,6 +15,8 @@ import {
 } from "../lib/utils/wordleUtils.js";
 
 const USER_SELECT = "username fullName profileImg nameColor equipped preferredBadge";
+const ALL_TIME_MIN_GAMES = 5; // qualification threshold
+
 
 const serializeDailyEntry = (attempt, rank) => ({
   rank,
@@ -196,6 +198,8 @@ export const getWordleAllTimeLeaderboard = async (req, res) => {
           bestScore: { $min: "$score" },
         },
       },
+      // ── Only include players who have completed at least 5 different days ──
+      { $match: { gamesPlayed: { $gte: ALL_TIME_MIN_GAMES } } },
       {
         $addFields: {
           averageScore: { $divide: ["$totalScore", "$gamesPlayed"] },
@@ -213,13 +217,14 @@ export const getWordleAllTimeLeaderboard = async (req, res) => {
 
     const leaderboard = rows[0]?.leaderboard || [];
     const totalCount = rows[0]?.metadata?.[0]?.total || 0;
+
     const users = await User.find({ _id: { $in: leaderboard.map((row) => row._id) } })
       .select(USER_SELECT)
       .populate({ path: "profileImg", select: "imageUrl" });
 
     const userMap = new Map(users.map((user) => [String(user._id), user]));
 
-    res.status(200).json({
+    return res.status(200).json({
       leaderboard: leaderboard.map((row, index) => ({
         rank: skipIndex + index + 1,
         user: userMap.get(String(row._id)),
@@ -233,6 +238,7 @@ export const getWordleAllTimeLeaderboard = async (req, res) => {
       })),
       totalPages: Math.ceil(totalCount / limit),
       currentPage: page,
+      minGamesRequired: ALL_TIME_MIN_GAMES, // send to client so UI stays in sync
     });
   } catch (error) {
     console.error("Error in getWordleAllTimeLeaderboard:", error);

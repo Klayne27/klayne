@@ -26,41 +26,55 @@ const WordleBoard = ({
 
   return (
     <div className="mx-auto grid w-full max-w-[330px] grid-rows-6 gap-1.5">
-      {rows.map((row, rowIndex) => (
-        <div
-          key={`${rowIndex}-${rowIndex === shakeRowIndex ? shakeRowKey : "stable"}`}
-          className={`grid grid-cols-5 gap-1.5 ${
-            rowIndex === shakeRowIndex && shakeRowKey > 0 ? "wordle-row-shake" : ""
-          }`}
-        >
-          {row.map((tile, colIndex) => {
-            const isRevealingTile = rowIndex === revealingRowIndex
-            const displayState =
-              isRevealingTile && colIndex >= revealedTileCount ? "filled" : tile.state
+      {rows.map((row, rowIndex) => {
+        const isShaking = rowIndex === shakeRowIndex && shakeRowKey > 0
+        const isRevealing = rowIndex === revealingRowIndex
 
-            return (
-              <div
-                key={`${rowIndex}-${colIndex}`}
-                className={`flex aspect-square items-center justify-center border-2 text-2xl font-black uppercase transition-colors sm:text-3xl ${
-                  stateClasses[displayState]
-                } ${isRevealingTile ? "wordle-tile-reveal" : ""} ${
-                  tile.state === "filled" ? "wordle-tile-pop" : ""
-                }`}
-                style={
-                  isRevealingTile
-                    ? {
-                        // Increased from 160ms to 350ms for a distinct one-by-one cadence
-                        animationDelay: `${colIndex * 350}ms`,
-                      }
-                    : undefined
-                }
-              >
-                {tile.letter}
-              </div>
-            )
-          })}
-        </div>
-      ))}
+        return (
+          <div
+            key={`${rowIndex}-${isShaking ? shakeRowKey : "stable"}`}
+            className={`grid grid-cols-5 gap-1.5 ${isShaking ? "wordle-row-shake" : ""}`}
+            // The style prop with perspective and transformStyle has been removed
+          >
+            {row.map((tile, colIndex) => {
+              const isTileRevealing = isRevealing
+              const displayState =
+                isTileRevealing && colIndex >= revealedTileCount ? "filled" : tile.state
+
+              return (
+                <div
+                  key={`${rowIndex}-${colIndex}`}
+                  className={[
+                    "flex items-center justify-center border-2",
+                    "w-full",
+                    "text-2xl font-black uppercase sm:text-3xl",
+                    "h-[62px] sm:h-[66px]",
+                    "transition-colors",
+                    "will-change-transform",
+                    "backface-visibility-hidden",
+                    stateClasses[displayState],
+                    isTileRevealing ? "wordle-tile-reveal" : "",
+                    tile.state === "filled" && !isTileRevealing ? "wordle-tile-pop" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  style={
+                    isTileRevealing
+                      ? {
+                          animationDelay: `${colIndex * 350}ms`,
+                          WebkitFontSmoothing: "antialiased",
+                          transform: "translateZ(0)",
+                        }
+                      : undefined
+                  }
+                >
+                  {tile.letter}
+                </div>
+              )
+            })}
+          </div>
+        )
+      })}
     </div>
   )
 }

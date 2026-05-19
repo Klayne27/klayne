@@ -38,10 +38,10 @@ export const getWordlePuzzleNumber = (dateKey = getWordleDateKey()) => {
 };
 
 export const getWordleRank = (averageScore) => {
-  if (averageScore < 3) return "Diamond";
-  if (averageScore < 3.5) return "Platinum";
-  if (averageScore < 4) return "Gold";
-  if (averageScore < 4.5) return "Silver";
+  if (averageScore <= 3) return "Diamond";
+  if (averageScore <= 3.5) return "Platinum";
+  if (averageScore <= 4) return "Gold";
+  if (averageScore <= 4.5) return "Silver";
   return "Bronze";
 };
 
