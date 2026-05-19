@@ -20,6 +20,7 @@ import { useWordleStore } from "../store/useWordleStore"
 import { showAppToast } from "../utils/showAppToast"
 import WordleResultModal from "../features/wordle/components/WordleResultModal"
 import { useAuthUser } from "../features/auth/authHooks/useAuthUser"
+import { useWordleValidation } from "../hooks/customHooks/useWordleValidation"
 
 const WordlePage = () => {
   const navigate = useNavigate()
@@ -27,7 +28,7 @@ const WordlePage = () => {
   const [leaderboardPage, setLeaderboardPage] = useState(1)
   const [isStatsOpen, setIsStatsOpen] = useState(false)
   const [isHelpOpen, setIsHelpOpen] = useState(false)
-const [shakeRowKey, setShakeRowKey] = useState(0)
+  const [shakeRowKey, setShakeRowKey] = useState(0)
   const [shakeRowIndex, setShakeRowIndex] = useState(null)
 
   const [revealingRowIndex, setRevealingRowIndex] = useState(null)
@@ -40,6 +41,8 @@ const [shakeRowKey, setShakeRowKey] = useState(0)
 
   const { currentGuess, addLetter, removeLetter, clearGuess, leaderboardType, setLeaderboardType } =
     useWordleStore()
+
+  const { isValidWord } = useWordleValidation()
 
   const { wordle, isLoading } = useGetTodayWordle()
   const { stats, isLoading: isStatsLoading } = useGetWordleStats({
@@ -75,14 +78,14 @@ const [shakeRowKey, setShakeRowKey] = useState(0)
     }).format(dateObj)
   }
 
-const triggerShake = useCallback(() => {
-  const rowToShake = guesses.length 
-  setShakeRowIndex(rowToShake)
-  setShakeRowKey((k) => k + 1) 
-  setTimeout(() => {
-    setShakeRowIndex(null) 
-  }, 600) 
-}, [guesses.length])
+  const triggerShake = useCallback(() => {
+    const rowToShake = guesses.length
+    setShakeRowIndex(rowToShake)
+    setShakeRowKey((k) => k + 1)
+    setTimeout(() => {
+      setShakeRowIndex(null)
+    }, 600)
+  }, [guesses.length])
 
   const clearRevealTimers = () => {
     revealTimeoutsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId))
@@ -108,12 +111,21 @@ const triggerShake = useCallback(() => {
   }, [])
 
   // ── Replace handleSubmit — captures mutation data and opens modal on finish ───
+  // In WordlePage.jsx — replace handleSubmit
   const handleSubmit = useCallback(() => {
     if (isFinished || isSubmittingGuess || isRevealing) return
+
     if (currentGuess.length !== 5) {
       showAppToast("Not enough letters")
       triggerShake()
       return
+    }
+
+    // ✅ Validate client-side BEFORE hitting the API
+    if (!isValidWord(currentGuess)) {
+      showAppToast("Not in word list")
+      triggerShake() // instant — no network wait
+      return // keyboard stays fully enabled
     }
 
     const submittedRowIndex = guesses.length
@@ -121,18 +133,16 @@ const triggerShake = useCallback(() => {
       onSuccess: (data) => {
         clearGuess()
         const gameEnded = data.attempt?.status !== "in_progress"
-
         startRevealAnimation(submittedRowIndex, () => {
-          // Open result modal once the tile flip sequence is fully done
           if (gameEnded && data.stats) {
             invalidateLeaderboard()
-
             setResultData(data)
             setIsResultModalOpen(true)
           }
         })
       },
-      onError: () => {
+      onError: (error) => {
+        // Only non-word-list errors reach here now (server errors, already finished, etc.)
         triggerShake()
       },
     })
@@ -142,6 +152,7 @@ const triggerShake = useCallback(() => {
     isRevealing,
     currentGuess,
     guesses.length,
+    isValidWord, // add this
     submitGuess,
     clearGuess,
     startRevealAnimation,
@@ -190,7 +201,7 @@ const triggerShake = useCallback(() => {
     setLeaderboardPage(1)
   }
 
-const userTotalGames = resultData?.stats?.gamesPlayed ?? stats?.gamesPlayed ?? undefined
+  const userTotalGames = resultData?.stats?.gamesPlayed ?? stats?.gamesPlayed ?? undefined
 
   if (isLoading) {
     return (
@@ -209,10 +220,7 @@ const userTotalGames = resultData?.stats?.gamesPlayed ?? stats?.gamesPlayed ?? u
         >
           <FaArrowLeft className="text-xl" />
         </button>
-        <span
-          className="rounded-full p-[22px] transition hover:bg-secondary"
-        >
-        </span>
+        <span className="rounded-full p-[22px] transition hover:bg-secondary"></span>
 
         <div className="flex-1 text-center">
           <h1 className="font-serif text-3xl font-bold tracking-tight">Wordle</h1>
