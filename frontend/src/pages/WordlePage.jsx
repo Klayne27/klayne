@@ -209,6 +209,10 @@ const userTotalGames = resultData?.stats?.gamesPlayed ?? stats?.gamesPlayed ?? u
         >
           <FaArrowLeft className="text-xl" />
         </button>
+        <span
+          className="rounded-full p-[22px] transition hover:bg-secondary"
+        >
+        </span>
 
         <div className="flex-1 text-center">
           <h1 className="font-serif text-3xl font-bold tracking-tight">Wordle</h1>

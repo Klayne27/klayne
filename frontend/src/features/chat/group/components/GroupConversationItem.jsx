@@ -16,7 +16,10 @@ import useMobileConversationLongPress from "../../../../hooks/customHooks/useMob
 import SlideUpMenu from "../../../../components/common/SlideUpMenu"
 import { TbUser, TbUserMinus } from "react-icons/tb"
 import { useDeleteGroup, useLeaveGroup } from "../groupChatHooks/useGroupMutations"
-import { useMuteConversation, useToggleConversationVisibility } from "../../private/privateChatHooks/usePrivateChatMutations"
+import {
+  useMuteConversation,
+  useToggleConversationVisibility,
+} from "../../private/privateChatHooks/usePrivateChatMutations"
 import { buildNicknameMap, resolveDisplayName } from "../../../../utils/nicknameUtils"
 import { useMemo } from "react"
 
@@ -250,6 +253,26 @@ function GroupConversationItem({ conv }) {
               >
                 <TbUser />
                 Group settings
+              </button>
+              <div className="h-[1px] bg-accent" />
+              <button
+                className="flex w-full items-center gap-2 text-left font-semibold transition duration-200"
+                onClick={handleToggleHide}
+              >
+                <TbUserMinus />
+                Hide conversation
+              </button>
+              <div className="h-[1px] bg-accent" />
+              <button
+                className="flex w-full items-center gap-2 text-left font-semibold transition duration-200"
+                disabled={isMutingConversation}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  muteConversation(conv._id)
+                }}
+              >
+                {isConvMuted ? <BsBell /> : <BsBellSlash />}
+                {isConvMuted ? "Unmute" : "Mute notifications"}
               </button>
               <div className="h-[1px] bg-accent" />
               {!isOwner && (

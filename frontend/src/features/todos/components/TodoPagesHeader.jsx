@@ -69,7 +69,7 @@ function TodoPagesHeader({ pageTitle }) {
   }
 
   return (
-    <div className="sticky top-0 z-40 bg-base-100">
+    <div className="sticky top-0 z-40 bg-base-100 p-3">
       <div className="flex items-center justify-between gap-4 px-1 py-1 pb-2">
         <div className="flex items-center gap-4">
           <button

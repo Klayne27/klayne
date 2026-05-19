@@ -26,7 +26,11 @@ import {
 } from "react-icons/tb"
 import { GoBell, GoBellFill, GoHome, GoHomeFill } from "react-icons/go"
 import { IoBookmark, IoBookmarkOutline, IoChatbubbles, IoChatbubblesOutline } from "react-icons/io5"
-import { HiOutlinePaintBrush, HiOutlineEllipsisHorizontalCircle, HiOutlineLightBulb } from "react-icons/hi2"
+import {
+  HiOutlinePaintBrush,
+  HiOutlineEllipsisHorizontalCircle,
+  HiOutlineLightBulb,
+} from "react-icons/hi2"
 import klayneLogo from "/klaynelogo2.png"
 
 import { MdOutlineLibraryBooks, MdGridOn } from "react-icons/md"
@@ -89,8 +93,6 @@ const Sidebar = ({
 
   const { pathname } = useLocation()
   const navigate = useNavigate()
-
-
 
   const [showPopover, setShowPopover] = useState(false)
   const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false)
@@ -155,7 +157,7 @@ const Sidebar = ({
     unreadNotificationsCount +
     unreadPublicChatCount +
     newPostCount +
-    newVentPostCount + 
+    newVentPostCount +
     followRequestCount
 
   useTabNotificationBadge(totalNotifications)
@@ -247,6 +249,10 @@ const Sidebar = ({
     }
     setShowNewFeedPostsButton(true)
   }, [setShowNewFeedPostsButton, navigate, pathname])
+
+  const handlePomodoroClick = useCallback(() => {
+    navigate("/pomodoro")
+  }, [navigate])
 
   const handleBookmarksClick = () => {
     if (pathname === "/bookmarks") return
@@ -445,7 +451,7 @@ const Sidebar = ({
   const iconWrapperStyle =
     "relative flex w-12 items-center justify-center rounded-full  py-2 transition duration-200 group-hover:bg-secondary md:group-hover:bg-transparent"
   const shouldCollapseSidebar =
-    pathname.includes("/messages") || pathname.includes("/board") || pathname.includes("/wardrobe") 
+    pathname.includes("/messages") || pathname.includes("/board") || pathname.includes("/wardrobe")
 
   if (!shouldRenderMobileSidebar) {
     return null
@@ -609,34 +615,6 @@ const Sidebar = ({
               )}
             </li>
 
-            <li
-              onClick={() => navigate("/wordle")}
-              className={`hidden cursor-pointer items-center justify-start rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary/50`}
-            >
-              <div className={iconWrapperStyle}>
-                {pathname === "/wordle" ? (
-                  <BsGrid3X3GapFill className="size-6" />
-                ) : (
-                  <BsGrid3X3 className="size-6" stroke={0.1} />
-                )}
-                {showNewBoardPostsButton && newBoardPostCount > 0 && (
-                  <div
-                    className="absolute right-2 top-2 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-base-100 bg-primary px-1 text-[11px] font-bold text-white"
-                    style={{ transform: "translate(40%, -40%)" }}
-                  >
-                    {formatCount(newBoardPostCount)}
-                  </div>
-                )}
-              </div>
-              {!shouldCollapseSidebar && (
-                <span
-                  className={`ml-2.5 hidden text-lg md:block ${pathname === "/wordle" ? "font-bold" : ""}`}
-                >
-                  Wordle
-                </span>
-              )}
-            </li>
-
             {/* SEARCH (Mobile Only) */}
             <li
               onClick={handleMobileSearchClick}
@@ -667,10 +645,37 @@ const Sidebar = ({
                 </span>
               )}
             </li>
+            <li
+              onClick={() => navigate("/wordle")}
+              className={`hidden cursor-pointer items-center justify-start rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary/50`}
+            >
+              <div className={iconWrapperStyle}>
+                {pathname === "/wordle" ? (
+                  <BsGrid3X3GapFill className="size-6" />
+                ) : (
+                  <BsGrid3X3 className="size-6" stroke={0.1} />
+                )}
+                {showNewBoardPostsButton && newBoardPostCount > 0 && (
+                  <div
+                    className="absolute right-2 top-2 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-base-100 bg-primary px-1 text-[11px] font-bold text-white"
+                    style={{ transform: "translate(40%, -40%)" }}
+                  >
+                    {formatCount(newBoardPostCount)}
+                  </div>
+                )}
+              </div>
+              {!shouldCollapseSidebar && (
+                <span
+                  className={`ml-2.5 hidden text-lg md:block ${pathname === "/wordle" ? "font-bold" : ""}`}
+                >
+                  Wordle
+                </span>
+              )}
+            </li>
 
             {/* POMODORO */}
             <li
-              onClick={() => navigate("/pomodoro")}
+              onClick={handlePomodoroClick}
               className={`hidden cursor-pointer items-center justify-start rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary/50`}
             >
               <div className={iconWrapperStyle}>

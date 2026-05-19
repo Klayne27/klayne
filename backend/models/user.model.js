@@ -100,10 +100,10 @@ const userSchema = new mongoose.Schema(
         _id: false,
       },
     ],
-    forceBlackTheme: {
-      type: Boolean,
-      default: false,
-    },
+    // forceBlackTheme: {
+    //   type: Boolean,
+    //   default: false,
+    // },
     profileImg: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Image",

@@ -21,7 +21,7 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
     useTodoStore()
   const ellipsisRef = useRef(null)
 
-  // const { play: playComplete } = useSound("/sounds/confirmation-003.mp3", 0.6)
+  const { play: playComplete } = useSound("/sounds/confirmation-003.mp3", 0.6)
   const [isAnimatingOut, setIsAnimatingOut] = useState(false)
 
   const [visuallyCompleted, setVisuallyCompleted] = useState({})
@@ -77,7 +77,7 @@ const handleComplete = (todoId, e) => {
   e.stopPropagation()
 
   // Trigger Sound
-  // playComplete()
+  playComplete()
   // Trigger local animation
   setIsAnimatingOut(true)
 

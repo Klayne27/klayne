@@ -388,8 +388,36 @@ function DMConversationItem({ conv }) {
               <TbUserMinus />
               Hide conversation
             </button>
+            <div className="h-[1px] bg-accent"></div>
+            <button
+              className="flex w-full items-center gap-2 text-left font-semibold transition duration-200"
+              disabled={isMuting}
+              onClick={(e) => {
+                e.stopPropagation()
+                muteConversation(conv._id)
+              }}
+            >
+              {isConvMuted ? <BsBell /> : <BsBellSlash />}
+              {isConvMuted ? "Unmute" : "Mute notifications"}
+            </button>
           </div>
           <div className="mb-2 flex flex-col gap-3 rounded-xl bg-secondary p-3">
+            <button
+              className="flex w-full items-center gap-2 text-left font-semibold transition duration-200"
+              onClick={(e) => {
+                e.stopPropagation()
+                if (isMuted) {
+                  unmuteUser()
+                } else {
+                  setIsMuteModalOpen(true)
+                }
+              }}
+            >
+              {isMuted ? <BsVolumeUp /> : <BsVolumeMute />}
+              {isMuted ? "Unmute User" : "Mute User"}
+            </button>
+            <div className="h-[1px] bg-accent"></div>
+
             <button
               className="flex w-full items-center gap-2 text-left font-semibold transition duration-200"
               onClick={openBlockConfirmationModal}

@@ -3,6 +3,7 @@ import { showAppToast } from "../../../utils/showAppToast"
 import { usePauseSession, useUpdatePomodoroSettings } from "../pomodoroHooks/usePomodoroMutations"
 import { usePomodoroTimerStore } from "../../../store/usePomodoroTimerStore"
 import ConfirmationModal from "../../../components/common/ConfirmationModal"
+import { useSoundStore } from "../../../store/useSoundStore"
 
 const PomodoroSettingsModal = ({ isOpen, onClose, initialSettings }) => {
 const [settings, setSettings] = useState(initialSettings)
@@ -21,6 +22,8 @@ const setSessionCount = usePomodoroTimerStore((s) => s.setSessionCount)
 const setIsGoalReached = usePomodoroTimerStore((s) => s.setIsGoalReached)
 const persistReset = usePomodoroTimerStore((s) => s.persistReset)
 const timer = usePomodoroTimerStore((s) => s.timer)
+
+const { soundMuted, toggleSoundMuted } = useSoundStore()
 
 useEffect(() => {
   setSettings(initialSettings)
@@ -232,6 +235,17 @@ const handleCancelReset = () => {
                   name="isMuted"
                   checked={settings.isMuted}
                   onChange={handleChange}
+                  className="checkbox"
+                />
+              </label>
+            </div>
+            <div className="form-control mb-4">
+              <label className="label cursor-pointer">
+                <span className="label-text">Mute Button Sounds</span>
+                <input
+                  type="checkbox"
+                  checked={soundMuted}
+                  onChange={toggleSoundMuted}
                   className="checkbox"
                 />
               </label>

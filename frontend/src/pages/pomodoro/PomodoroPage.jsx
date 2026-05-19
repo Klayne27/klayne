@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useRef, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useLocation, useNavigate } from "react-router-dom"
 import { IoClose } from "react-icons/io5"
 
 import ConfirmationModal from "../../components/common/ConfirmationModal"
@@ -64,6 +64,7 @@ const getCurrentPhaseDurationMinutes = (settings, isBreak, sessionCount) => {
 
 const PomodoroPage = () => {
   const navigate = useNavigate()
+  const { pathname } = useLocation()
   const { authUser } = useAuthUser()
   const { settings, isSettingsLoading } = useGetPomodoroSettings()
   const { startSession } = useStartSession()
@@ -94,9 +95,9 @@ const PomodoroPage = () => {
   const customImageUrl = usePomodoroBackgroundStore((s) => s.customImageUrl)
 
 
-  // const { play: playPlay } = useSound("/sounds/click-001.mp3", 1)
-  // const { play: playClick } = useSound("/sounds/click-004.mp3", 1)
-  // const { play: playComplete } = useSound("/sounds/confirmation-003.mp3", 0.6)
+  const { play: playPlay } = useSound("/sounds/click-001.mp3", 1)
+  const { play: playClick } = useSound("/sounds/click-004.mp3", 1)
+  const { play: playComplete } = useSound("/sounds/confirmation-003.mp3", 0.6)
 
   const timerState = getTimerState(isGoalReached, isBreak, sessionCount, settings)
 
@@ -148,7 +149,7 @@ const backgroundUrl = useMemo(() => {
       })
       .catch(() => {})
 
-      // playPlay()
+      playPlay()
 
     if (typeof Notification !== "undefined" && Notification.permission === "default") {
       Notification.requestPermission()
@@ -170,16 +171,16 @@ const backgroundUrl = useMemo(() => {
     settings,
     startSession,
     timer,
-    // playPlay
+    playPlay
   ])
 
   const handlePause = useCallback(() => {
     if (!isActive) return
     setIsActive(false)
-    // playPlay()
+    playPlay()
     persistPause(timer)
     pauseServerSession({ remainingSeconds: timer })
-  }, [isActive, pauseServerSession, persistPause, setIsActive, timer])
+  }, [isActive, pauseServerSession, persistPause, setIsActive, timer, playPlay])
 
   const handleReset = useCallback(() => {
     if (!settings) return
@@ -232,7 +233,7 @@ const backgroundUrl = useMemo(() => {
       event.stopPropagation()
 
       // 1. Play Sound
-      // playComplete()
+      playComplete()
 
       // 2. Trigger local animation state
       setCompletingId(todoId)
@@ -260,16 +261,25 @@ const backgroundUrl = useMemo(() => {
   )
 
   const handleOpenSettingsPage = () => {
-    // playClick()
+    playClick()
     if (isMobile) navigate("/pomodoro-settings")
     else setIsSettingsOpen(true)
     
   }
 
   const handleResetTimerClick = () => {
-    // playClick()
+    playClick()
     setShowResetTimerModal(true)
   }
+
+  useEffect(() => {
+    // This will scroll to top whenever the component mounts
+    // or whenever the user navigates here
+    window.scrollTo({
+      top: 0,
+      behavior: "instant",
+    })
+  }, [pathname])
 
 const hasBackground = !!(presetKey || customImageUrl)
 
