@@ -140,9 +140,6 @@ const WordleHistoryModal = ({ isOpen, onClose }) => {
                 {history.map((entry) => (
                   <>
                     <HistoryCard key={String(entry.id ?? entry.date)} entry={entry} />
-                    <HistoryCard key={String(entry.id ?? entry.date)} entry={entry} />
-                    <HistoryCard key={String(entry.id ?? entry.date)} entry={entry} />
-                    <HistoryCard key={String(entry.id ?? entry.date)} entry={entry} />
                   </>
                 ))}
               </div>
