@@ -18,6 +18,8 @@ export const useSubmitWordleGuess = () => {
       // 1. Instantly update the cache data for structural state tracking
       queryClient.setQueryData(wordleKeys.today(), data)
       queryClient.invalidateQueries({ queryKey: wordleKeys.stats() })
+      queryClient.invalidateQueries({ queryKey: wordleKeys.history() })
+
       // queryClient.invalidateQueries({ queryKey: wordleKeys.leaderboard() })
 
       setTimeout(() => {

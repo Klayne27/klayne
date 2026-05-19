@@ -88,11 +88,11 @@ const WordleHistoryModal = ({ isOpen, onClose }) => {
 
   return (
     <div
-      className="fixed inset-0 z-[1001] flex items-end justify-center bg-black/75 px-2 sm:items-center"
+      className="fixed inset-0 z-[1001] flex items-center justify-center bg-black/75 px-2"
       onClick={handleClose}
     >
       <div
-        className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-t-2xl border border-base-300 bg-base-100 shadow-2xl sm:rounded-2xl"
+        className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-base-300 bg-base-100 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Fixed header ──────────────────────────────────────────────── */}
@@ -139,6 +139,9 @@ const WordleHistoryModal = ({ isOpen, onClose }) => {
               >
                 {history.map((entry) => (
                   <>
+                    <HistoryCard key={String(entry.id ?? entry.date)} entry={entry} />
+                    <HistoryCard key={String(entry.id ?? entry.date)} entry={entry} />
+                    <HistoryCard key={String(entry.id ?? entry.date)} entry={entry} />
                     <HistoryCard key={String(entry.id ?? entry.date)} entry={entry} />
                   </>
                 ))}
