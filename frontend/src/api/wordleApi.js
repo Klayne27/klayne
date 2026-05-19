@@ -39,3 +39,11 @@ export const getWordleAllTimeLeaderboardApi = async (page = 1) => {
   })
   return parseResponse(res, "Failed to fetch all-time Wordle leaderboard")
 }
+
+// ── NEW ───────────────────────────────────────────────────────────────────────
+export const getWordleHistoryApi = async (page = 1, limit = 20) => {
+  const res = await fetch(`${BASE_URL}/history?page=${page}&limit=${limit}`, {
+    credentials: "include",
+  })
+  return parseResponse(res, "Failed to fetch Wordle history")
+}

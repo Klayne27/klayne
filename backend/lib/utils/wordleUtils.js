@@ -171,12 +171,13 @@ export const getWordleBadgeMeta = (badgeId) =>
   WORDLE_BADGES.find((badge) => badge.id === badgeId) || null;
 
 export const getWordleStats = async (userId, WordleAttemptModel) => {
+  // 1. Fetch ALL completed attempts sorted chronologically by date
   const completedAttempts = await WordleAttemptModel.find({
     user: userId,
     status: { $in: ["won", "lost"] },
   })
     .select("date status score")
-    .sort({ date: 1 })
+    .sort({ date: 1 }) // Crucial: Keeps dates linear
     .lean();
 
   const gamesPlayed = completedAttempts.length;
@@ -184,33 +185,58 @@ export const getWordleStats = async (userId, WordleAttemptModel) => {
   const losses = gamesPlayed - wins;
   const winPercentage = gamesPlayed === 0 ? 0 : Math.round((wins / gamesPlayed) * 100);
 
+  // 2. Calculate Max Streak safely by walking through EVERY game played
+  let maxStreak = 0;
+  let runningStreak = 0;
+  let previousDate = null;
+
+  for (const attempt of completedAttempts) {
+    if (attempt.status === "lost") {
+      runningStreak = 0; // A loss kills the streak instantly
+      previousDate = attempt.date;
+      continue;
+    }
+
+    // It's a win! Check if it continues the chain
+    if (!previousDate || shiftWordleDateKey(previousDate, 1) === attempt.date) {
+      runningStreak += 1;
+    } else if (previousDate === attempt.date) {
+      // Edge case: Safety check if duplicate dates somehow exist in DB
+      // Do not increment, do not break the streak
+    } else {
+      runningStreak = 1; // Gap detected, reset chain
+    }
+
+    maxStreak = Math.max(maxStreak, runningStreak);
+    previousDate = attempt.date;
+  }
+
+  // 3. Create a quick lookup Set for current streak checks
   const winDates = new Set(
     completedAttempts
       .filter((attempt) => attempt.status === "won")
       .map((attempt) => attempt.date),
   );
-  const sortedWinDates = [...winDates].sort();
 
-  let maxStreak = 0;
-  let runningStreak = 0;
-  let previousDate = null;
+  const today = getWordleDateKey(); // Note: Ideally pass this from req.headers['user-timezone']
+  const todayAttempt = completedAttempts.find((a) => a.date === today);
+  const lostToday = todayAttempt?.status === "lost";
 
-  for (const dateKey of sortedWinDates) {
-    runningStreak = previousDate && shiftWordleDateKey(previousDate, 1) === dateKey ? runningStreak + 1 : 1;
-    maxStreak = Math.max(maxStreak, runningStreak);
-    previousDate = dateKey;
-  }
-
-  const today = getWordleDateKey();
-  const latestCurrentStreakDate = winDates.has(today) ? today : shiftWordleDateKey(today, -1);
   let currentStreak = 0;
-  let cursor = latestCurrentStreakDate;
 
-  while (winDates.has(cursor)) {
-    currentStreak += 1;
-    cursor = shiftWordleDateKey(cursor, -1);
+  if (!lostToday) {
+    // Your beautiful logic preserved:
+    // If won today -> start today. If not played yet -> check if they won yesterday.
+    const startDate = winDates.has(today) ? today : shiftWordleDateKey(today, -1);
+    let cursor = startDate;
+
+    while (winDates.has(cursor)) {
+      currentStreak += 1;
+      cursor = shiftWordleDateKey(cursor, -1);
+    }
   }
 
+  // 4. Distribution map stays the same
   const guessDistribution = [1, 2, 3, 4, 5, 6].map((guessCount) => ({
     guessCount,
     count: completedAttempts.filter(

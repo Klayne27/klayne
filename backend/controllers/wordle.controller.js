@@ -245,3 +245,49 @@ export const getWordleAllTimeLeaderboard = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+// GET /api/wordle/history?page=1&limit=20
+export const getWordleHistory = async (req, res) => {
+  try {
+    const page  = Math.max(1, parseInt(req.query.page,  10) || 1);
+    const limit = Math.min(50, parseInt(req.query.limit, 10) || 20); // hard-cap at 50
+    const skip  = (page - 1) * limit;
+ 
+    const filter = {
+      user:   req.user._id,
+      status: { $in: ["won", "lost"] },
+    };
+ 
+    const [totalCount, attempts] = await Promise.all([
+      WordleAttempt.countDocuments(filter),
+      WordleAttempt.find(filter)
+        .sort({ date: -1 })          // newest first
+        .skip(skip)
+        .limit(limit)
+        .populate({
+          path:   "puzzle",
+          // '+answer' overrides the schema-level `select: false`
+          select: "+answer puzzleNumber date",
+        }),
+    ]);
+ 
+    res.status(200).json({
+      history: attempts.map((a) => ({
+        id:           a._id,
+        date:         a.date,
+        puzzleNumber: a.puzzle?.puzzleNumber ?? null,
+        answer:       a.puzzle?.answer       ?? null, // null only if puzzle was deleted
+        guesses:      a.guesses,
+        status:       a.status,
+        score:        a.score,
+        completedAt:  a.completedAt,
+      })),
+      totalPages:  Math.ceil(totalCount / limit),
+      currentPage: page,
+      totalCount,
+    });
+  } catch (error) {
+    console.error("Error in getWordleHistory:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};

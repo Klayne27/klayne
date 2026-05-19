@@ -1,7 +1,9 @@
+import { useState } from "react"
 import { FaBullseye, FaFire, FaMedal, FaRegStar, FaStar, FaTrophy, FaXmark } from "react-icons/fa6"
 import { GiLaurelsTrophy, GiSevenPointedStar } from "react-icons/gi"
-import { MdGridOn } from "react-icons/md"
+import { MdGridOn, MdOutlineHistory } from "react-icons/md"
 import useLockBodyScroll from "../../../hooks/customHooks/useLockBodyScroll"
+import WordleHistoryModal from "./WordleHistoryModal"
 
 const WORDLE_BADGES = [
   {
@@ -94,7 +96,10 @@ const StatTile = ({ label, value }) => (
 )
 
 const WordleStatsModal = ({ isOpen, onClose, stats, isLoading }) => {
-  useLockBodyScroll(isOpen)
+  // History modal state lives here — no prop-drilling required
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false)
+
+  useLockBodyScroll(isOpen && !isHistoryOpen)
 
   if (!isOpen) return null
 
@@ -105,103 +110,124 @@ const WordleStatsModal = ({ isOpen, onClose, stats, isLoading }) => {
   )
 
   return (
-    <div
-      className="fixed inset-0 z-[1000] flex items-end justify-center bg-black/70 px-3  sm:items-center"
-      onClick={onClose}
-    >
+    <>
       <div
-        className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-base-300 bg-base-100 p-5 shadow-2xl sm:rounded-2xl"
-        onClick={(event) => event.stopPropagation()}
+        className="fixed inset-0 z-[1000] flex items-end justify-center bg-black/70 px-3 sm:items-center"
+        onClick={onClose}
       >
-        <div className="mb-5 flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-black">Statistics</h2>
-            <p className="text-sm text-base-content/60">Your Wordle record</p>
+        <div
+          className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-base-300 bg-base-100 p-5 shadow-2xl sm:rounded-2xl"
+          onClick={(event) => event.stopPropagation()}
+        >
+          {/* ── Header ────────────────────────────────────────────────────── */}
+          <div className="mb-5 flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-black">Statistics</h2>
+              <p className="text-sm text-base-content/60">Your Wordle record</p>
+            </div>
+            <button onClick={onClose} className="rounded-full p-2 transition hover:bg-base-200">
+              <FaXmark className="text-xl" />
+            </button>
           </div>
-          <button onClick={onClose} className="rounded-full p-2 transition hover:bg-base-200">
-            <FaXmark className="text-xl" />
-          </button>
-        </div>
 
-        {isLoading ? (
-          <div className="py-10 text-center text-base-content/60">Loading stats...</div>
-        ) : (
-          <>
-            <div className="grid grid-cols-4 gap-2">
-              <StatTile label="Played" value={stats?.gamesPlayed || 0} />
-              <StatTile label="Win %" value={stats?.winPercentage || 0} />
-              <StatTile label="Current" value={stats?.currentStreak || 0} />
-              <StatTile label="Max" value={stats?.maxStreak || 0} />
-            </div>
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              <StatTile label="Wins" value={stats?.wins || 0} />
-              <StatTile label="Losses" value={stats?.losses || 0} />
-            </div>
+          {isLoading ? (
+            <div className="py-10 text-center text-base-content/60">Loading stats...</div>
+          ) : (
+            <>
+              {/* ── Summary tiles ──────────────────────────────────────────── */}
+              <div className="grid grid-cols-4 gap-2">
+                <StatTile label="Played" value={stats?.gamesPlayed || 0} />
+                <StatTile label="Win %" value={stats?.winPercentage || 0} />
+                <StatTile label="Current" value={stats?.currentStreak || 0} />
+                <StatTile label="Max" value={stats?.maxStreak || 0} />
+              </div>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <StatTile label="Wins" value={stats?.wins || 0} />
+                <StatTile label="Losses" value={stats?.losses || 0} />
+              </div>
 
-            <div className="mt-6">
-              <h3 className="mb-3 text-sm font-black uppercase text-base-content/60">
-                Guess Distribution
-              </h3>
-              <div className="space-y-2">
-                {(stats?.guessDistribution || []).map((entry) => {
-                  const width = `${Math.max(8, (entry.count / maxDistributionCount) * 100)}%`
-                  return (
-                    <div key={entry.guessCount} className="grid grid-cols-[20px_1fr] items-center gap-2">
-                      <span className="text-sm font-black">{entry.guessCount}</span>
-                      <div className="h-6 rounded bg-base-200">
-                        <div
-                          className="flex h-full items-center justify-end rounded bg-[#538d4e] px-2 text-xs font-black text-white"
-                          style={{ width }}
-                        >
-                          {entry.count}
+              {/* ── View History button ────────────────────────────────────── */}
+              <button
+                onClick={() => setIsHistoryOpen(true)}
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-base-300 bg-base-200/60 py-2.5 text-sm font-bold transition hover:bg-base-300/60 active:scale-[0.98]"
+              >
+                <MdOutlineHistory className="text-lg text-base-content/70" />
+                View Solve History
+              </button>
+
+              {/* ── Guess distribution ─────────────────────────────────────── */}
+              <div className="mt-6">
+                <h3 className="mb-3 text-sm font-black uppercase text-base-content/60">
+                  Guess Distribution
+                </h3>
+                <div className="space-y-2">
+                  {(stats?.guessDistribution || []).map((entry) => {
+                    const width = `${Math.max(8, (entry.count / maxDistributionCount) * 100)}%`
+                    return (
+                      <div
+                        key={entry.guessCount}
+                        className="grid grid-cols-[20px_1fr] items-center gap-2"
+                      >
+                        <span className="text-sm font-black">{entry.guessCount}</span>
+                        <div className="h-6 rounded bg-base-200">
+                          <div
+                            className="flex h-full items-center justify-end rounded bg-[#538d4e] px-2 text-xs font-black text-white"
+                            style={{ width }}
+                          >
+                            {entry.count}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )
-                })}
+                    )
+                  })}
+                </div>
               </div>
-            </div>
 
-            <div className="mt-6">
-              <h3 className="mb-3 text-sm font-black uppercase text-base-content/60">
-                Award Badges
-              </h3>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {WORDLE_BADGES.map((badge) => {
-                  const Icon = badge.icon
-                  const isEarned = earnedBadgeIds.has(badge.id)
+              {/* ── Award badges ───────────────────────────────────────────── */}
+              <div className="mt-6">
+                <h3 className="mb-3 text-sm font-black uppercase text-base-content/60">
+                  Award Badges
+                </h3>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {WORDLE_BADGES.map((badge) => {
+                    const Icon = badge.icon
+                    const isEarned = earnedBadgeIds.has(badge.id)
 
-                  return (
-                    <div
-                      key={badge.id}
-                      className={`flex items-center gap-3 rounded-lg border p-3 ${
-                        isEarned
-                          ? "border-base-300 bg-base-100"
-                          : "border-base-300/60 bg-base-200/50 opacity-55"
-                      }`}
-                    >
+                    return (
                       <div
-                        className={`flex size-10 shrink-0 items-center justify-center rounded-full ${badge.bg}`}
+                        key={badge.id}
+                        className={`flex items-center gap-3 rounded-lg border p-3 ${
+                          isEarned
+                            ? "border-base-300 bg-base-100"
+                            : "border-base-300/60 bg-base-200/50 opacity-55"
+                        }`}
                       >
-                        {isEarned ? (
-                          <Icon className={`text-xl ${badge.color}`} />
-                        ) : (
-                          <Icon className="text-xl text-base-content/35" />
-                        )}
+                        <div
+                          className={`flex size-10 shrink-0 items-center justify-center rounded-full ${badge.bg}`}
+                        >
+                          {isEarned ? (
+                            <Icon className={`text-xl ${badge.color}`} />
+                          ) : (
+                            <Icon className="text-xl text-base-content/35" />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-black">{badge.label}</p>
+                          <p className="text-xs text-base-content/55">{badge.description}</p>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-black">{badge.label}</p>
-                        <p className="text-xs text-base-content/55">{badge.description}</p>
-                      </div>
-                    </div>
-                  )
-                })}
+                    )
+                  })}
+                </div>
               </div>
-            </div>
-          </>
-        )}
+            </>
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* History modal — z-[1001] so it stacks above the stats modal */}
+      <WordleHistoryModal isOpen={isHistoryOpen} onClose={() => setIsHistoryOpen(false)} />
+    </>
   )
 }
 

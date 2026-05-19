@@ -4,6 +4,7 @@ import {
   getWordleStatsApi,
   getWordleAllTimeLeaderboardApi,
   getWordleDailyLeaderboardApi,
+  getWordleHistoryApi,
 } from "../../../api/wordleApi"
 import { wordleKeys } from "./wordleKeys"
 
@@ -58,5 +59,23 @@ export const useGetWordleAllTimeLeaderboard = (page, options = {}) => {
     currentPage: data?.currentPage || page,
     minGamesRequired: data?.minGamesRequired ?? 5,
     isLoading,
+  }
+}
+
+export const useGetWordleHistory = (page = 1, options = {}) => {
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: wordleKeys.history(page),
+    queryFn: () => getWordleHistoryApi(page, 20),
+    staleTime: 60 * 1000,
+    ...options,
+  })
+
+  return {
+    history: data?.history || [],
+    totalPages: data?.totalPages || 1,
+    currentPage: data?.currentPage || page,
+    totalCount: data?.totalCount || 0,
+    isLoading,
+    isFetching,
   }
 }

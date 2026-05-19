@@ -5,4 +5,5 @@ export const wordleKeys = {
   leaderboard: () => [...wordleKeys.all, "leaderboard"],
   dailyLeaderboard: (page) => [...wordleKeys.leaderboard(), "daily", page],
   allTimeLeaderboard: (page) => [...wordleKeys.leaderboard(), "all-time", page],
+  history: (page) => [...wordleKeys.all, "history", page],
 }
