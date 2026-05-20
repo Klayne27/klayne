@@ -48,12 +48,11 @@ const WordleLeaderboard = ({
   onPageChange,
   isLoading,
   currentUserId,
-  minGamesRequired, // number | undefined — only passed on all-time tab
-  userGamesPlayed, // number | undefined — current viewer's total completed games
+  minGamesRequired,
+  userGamesPlayed,
 }) => {
   const MIN = minGamesRequired ?? 5
 
-  // Show the banner only on the all-time tab when we know the user hasn't qualified yet
   const showProgressBanner =
     type === "all-time" && userGamesPlayed !== undefined && userGamesPlayed < MIN
 
@@ -157,10 +156,10 @@ const WordleLeaderboard = ({
 
                 {type === "daily" ? (
                   <div className="flex shrink-0 items-center gap-3">
-                    <div className="hidden opacity-90 sm:block">
+                    <div className="opacity-90">
                       <WordleProgressGrid guesses={entry.guesses} size="xs" />
                     </div>
-                    <div className="min-w-[50px] text-right">
+                    <div className="min-w-[50px] text-right hidden sm:block">
                       <p className="text-sm font-black tracking-tight text-base-content">
                         {entry.status === "won" ? entry.score : "X"}/6
                       </p>
