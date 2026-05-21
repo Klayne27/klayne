@@ -327,7 +327,7 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
                 {isMyOriginalPost ? (
                   <>
                     <button
-                      className="z-50 flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-white transition duration-200 hover:bg-gray-700/30"
+                      className="z-50 flex w-full items-center gap-2 px-4 py-2 text-left font-semibold  transition duration-200 hover:bg-gray-700/30"
                       onClick={(e) => {
                         stopProp(e)
                         setShowEditModal(true)
@@ -338,7 +338,7 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
                     </button>
                     {hasEditHistory && (
                       <button
-                        className="z-50 flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-white transition duration-200 hover:bg-gray-700/30"
+                        className="z-50 flex w-full items-center gap-2 px-4 py-2 text-left font-semibold  transition duration-200 hover:bg-gray-700/30"
                         onClick={(e) => {
                           e.stopPropagation()
                           setIsHistoryModalOpen(true)
@@ -365,7 +365,7 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
                   <>
                     {!sourcePost.isAnonymous && (
                       <button
-                        className="flex w-full items-center gap-2 px-4 py-2 text-left text-white transition duration-200 hover:bg-gray-700/30"
+                        className="flex w-full items-center gap-2 px-4 py-2 text-left  transition duration-200 hover:bg-gray-700/30"
                         onClick={handleFollowClick}
                       >
                         {isFollowingOriginalPostOwner ? (
@@ -383,7 +383,7 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
                     )}
                     {hasEditHistory && (
                       <button
-                        className="z-50 flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-white transition duration-200 hover:bg-gray-700/30"
+                        className="z-50 flex w-full items-center gap-2 px-4 py-2 text-left font-semibold  transition duration-200 hover:bg-gray-700/30"
                         onClick={(e) => {
                           e.stopPropagation()
                           setIsHistoryModalOpen(true)
@@ -480,21 +480,21 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
         <div className="flex gap-4 border-b border-accent py-3 text-sm">
           {
             <span className="flex gap-1">
-              {/* <span className="font-bold text-white">{sourcePost.repliesCount}</span>{" "} */}
+              {/* <span className="font-bold ">{sourcePost.repliesCount}</span>{" "} */}
               <AnimatedCount count={sourcePost?.repliesCount || "0"} className={"font-bold"} />
               <span className="text-slate-500">Replies</span>
             </span>
           }
           {
             <span className="flex gap-1">
-              {/* <span className="font-bold text-white">{sourcePost.repostsCount}</span>{" "} */}
+              {/* <span className="font-bold ">{sourcePost.repostsCount}</span>{" "} */}
               <AnimatedCount count={sourcePost.repostsCount} className={"font-bold"} />
               <span className="text-slate-500">Reposts</span>
             </span>
           }
           {
             <span className="flex gap-1">
-              {/* <span className="font-bold text-white">{sourcePost.likes.length}</span>{" "} */}
+              {/* <span className="font-bold ">{sourcePost.likes.length}</span>{" "} */}
               <AnimatedCount count={sourcePost.likes.length} className={"font-bold"} />
 
               <span className="text-slate-500">Likes</span>

@@ -554,7 +554,7 @@ const Post = ({
                     {isMyOriginalPost ? (
                       <>
                         <button
-                          className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-white transition duration-200 hover:bg-gray-700/30"
+                          className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold  transition duration-200 hover:bg-gray-700/30"
                           onClick={(e) => {
                             handleInteractiveClick(e)
                             setShowEditModal(true)
@@ -566,7 +566,7 @@ const Post = ({
 
                         {hasEditHistory && (
                           <button
-                            className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-white transition duration-200 hover:bg-gray-700/30"
+                            className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold  transition duration-200 hover:bg-gray-700/30"
                             onClick={(e) => {
                               e.stopPropagation()
                               setIsHistoryModalOpen(true)
@@ -594,7 +594,7 @@ const Post = ({
                       <>
                         {!sourcePost.isAnonymous && (
                           <button
-                            className="flex w-full items-center gap-2 px-4 py-2 text-left text-white transition duration-200 hover:bg-gray-700/30"
+                            className="flex w-full items-center gap-2 px-4 py-2 text-left  transition duration-200 hover:bg-gray-700/30"
                             onClick={handleFollowClick}
                             disabled={isFollowingOrUnfollowing}
                           >
@@ -616,7 +616,7 @@ const Post = ({
 
                         {hasEditHistory && (
                           <button
-                            className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-white transition duration-200 hover:bg-gray-700/30"
+                            className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold  transition duration-200 hover:bg-gray-700/30"
                             onClick={(e) => {
                               e.stopPropagation()
                               setIsHistoryModalOpen(true)
