@@ -71,12 +71,12 @@ const PostModal = ({
   }, [mode, editPost, initializeForEdit])
 
   // Prevent body scroll when modal is open
-  useEffect(() => {
-    document.body.style.overflow = "hidden"
-    return () => {
-      document.body.style.overflow = "unset"
-    }
-  }, [])
+  // useEffect(() => {
+  //   document.body.style.overflow = "hidden"
+  //   return () => {
+  //     document.body.style.overflow = "unset"
+  //   }
+  // }, [])
 
   // Click outside to close
   const handleBackgroundClick = (e) => {

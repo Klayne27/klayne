@@ -27,7 +27,7 @@ function App() {
   // const { selectedProfileImage, closeProfileImageModal, selectedImage, closeImageModal } =
   //   useAppStore()
   const { deferredPrompt, isInstalled, installApp, isIOSDevice } = usePWAInstall()
-  const { images, closeLightbox, nextImage, prevImage, currentIndex, isOpen } = useLightboxStore()
+const { isOpen, images, currentIndex, closeLightbox, goNext, goPrev } = useLightboxStore()
 
   useGlobalPrivateChatSocketEvents()
   useGlobalPublicChatSocketEvents()
@@ -136,8 +136,8 @@ function App() {
           images={images}
           currentIndex={currentIndex}
           onClose={closeLightbox}
-          onPrev={prevImage}
-          onNext={nextImage}
+          onNext={goNext}
+          onPrev={goPrev}
         />
       )}
     </>

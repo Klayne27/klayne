@@ -1,32 +1,16 @@
+// src/store/useLightboxStore.js
 import { create } from "zustand"
 
 export const useLightboxStore = create((set) => ({
-  images: [],
-  currentIndex: null,
   isOpen: false,
+  images: [], // [{ imageUrl }]
+  currentIndex: 0,
 
-  // Enhanced opener that handles both single images and arrays
-  openLightbox: (data, index = 0) => {
-    // If 'data' is an array, use it. If it's a single object, wrap it in [].
-    const imageArray = Array.isArray(data) ? data : [data]
+  openLightbox: ({ images, index = 0 }) => set({ isOpen: true, images, currentIndex: index }),
 
-    set({
-      images: imageArray,
-      currentIndex: index,
-      isOpen: true,
-    })
-  },
+  closeLightbox: () => set({ isOpen: false, images: [], currentIndex: 0 }),
 
-  closeLightbox: () => set({ isOpen: false, currentIndex: null }),
+  goNext: () => set((s) => ({ currentIndex: Math.min(s.currentIndex + 1, s.images.length - 1) })),
 
-  // Logic remains the same, it just works on an array of length 1
-  nextImage: () =>
-    set((state) => ({
-      currentIndex: (state.currentIndex + 1) % state.images.length,
-    })),
-
-  prevImage: () =>
-    set((state) => ({
-      currentIndex: (state.currentIndex - 1 + state.images.length) % state.images.length,
-    })),
+  goPrev: () => set((s) => ({ currentIndex: Math.max(s.currentIndex - 1, 0) })),
 }))

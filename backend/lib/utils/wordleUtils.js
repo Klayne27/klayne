@@ -92,25 +92,36 @@ export const evaluateWordleGuess = (guess, answer) => {
   return result;
 };
 
+const SHUFFLE_SEED = 20250521;
+
+const seededShuffle = (arr, seed) => {
+  const shuffled = [...arr];
+  let s = seed >>> 0; // coerce to uint32
+
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    // LCG step (Numerical Recipes constants)
+    s = Math.imul(s, 1664525) + 1013904223;
+    const j = (s >>> 0) % (i + 1); // unsigned right shift keeps it positive
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  return shuffled;
+};
+
+// Shuffled once at startup. Index = puzzleNumber - 1.
+const SHUFFLED_SOLUTIONS = seededShuffle(WORDLE_SOLUTIONS, SHUFFLE_SEED);
+
 export const getOrCreateWordlePuzzle = async (date = new Date()) => {
   const dateKey = getWordleDateKey(date);
   const puzzleNumber = getWordlePuzzleNumber(dateKey);
-  const answer = WORDLE_SOLUTIONS[(puzzleNumber - 1) % WORDLE_SOLUTIONS.length];
+
+  // Use shuffled order instead of CSV order
+  const answer = SHUFFLED_SOLUTIONS[(puzzleNumber - 1) % SHUFFLED_SOLUTIONS.length];
 
   return WordlePuzzle.findOneAndUpdate(
     { date: dateKey },
-    {
-      $setOnInsert: {
-        date: dateKey,
-        puzzleNumber,
-        answer,
-      },
-    },
-    {
-      new: true,
-      upsert: true,
-      setDefaultsOnInsert: true,
-    },
+    { $setOnInsert: { date: dateKey, puzzleNumber, answer } },
+    { new: true, upsert: true, setDefaultsOnInsert: true },
   );
 };
 

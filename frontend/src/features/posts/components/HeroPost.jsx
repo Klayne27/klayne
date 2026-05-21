@@ -33,6 +33,7 @@ import { CgUnblock } from "react-icons/cg"
 import UserAvatar from "../../../components/common/UserAvatar.jsx"
 import UserFullName from "../../../components/common/UserFullname.jsx"
 import { useLightboxStore } from "../../../store/useLightboxStore.js"
+import PostImagesGrid from "./PostImagesGrid.jsx"
 
 const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
   const navigate = useNavigate()
@@ -444,18 +445,16 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
         </span>
 
         {sourcePost.mediaType === "image" &&
-          sourcePost?.image?.imageUrl &&
-          sourcePost.image?._id && (
-            <div className="inline-flex max-w-full justify-center">
-              <img
-                src={getOptimizedImageUrl(sourcePost.image.imageUrl, "post")}
-                onClick={() => openLightbox({ imageUrl: sourcePost.image.imageUrl })}
-                className="block h-auto max-h-80 rounded-2xl border border-accent object-contain"
-                alt="post image"
-                loading="lazy"
-              />
-            </div>
-          )}
+          (() => {
+            // Prefer the new images array; fall back to legacy single image
+            const imgs =
+              sourcePost.images?.length > 0
+                ? sourcePost.images
+                : sourcePost.image?.imageUrl
+                  ? [sourcePost.image]
+                  : []
+            return imgs.length > 0 ? <PostImagesGrid images={imgs} /> : null
+          })()}
         {sourcePost.mediaType === "video" && sourcePost.video && (
           <video
             controls

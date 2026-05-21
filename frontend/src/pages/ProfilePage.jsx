@@ -949,7 +949,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               isMyProfile &&
               feedType === "likes" &&
               authUser?.isLikedFeedPrivate && (
-                <div className="m-1 flex flex-col items-start rounded-lg bg-[#02113D] px-4 py-2.5">
+                <div className="m-1 flex flex-col items-start rounded-lg bg-accent/50 px-4 py-2.5">
                   <p className="flex items-center gap-3 text-[15px]">
                     <RiLockFill />
                     Your likes are private. Only you can see them.

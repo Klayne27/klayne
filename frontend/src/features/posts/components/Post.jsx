@@ -43,6 +43,7 @@ import {
 import { useLightboxStore } from "../../../store/useLightboxStore.js"
 import UserAvatar from "../../../components/common/UserAvatar.jsx"
 import UserFullName from "../../../components/common/UserFullname.jsx"
+import PostImagesGrid from "./PostImagesGrid.jsx"
 
 const Post = ({
   post,
@@ -258,6 +259,7 @@ const Post = ({
     repostPost(sourcePost._id)
   }
 
+
   const handleCommentClick = (e) => {
     handleInteractiveClick(e)
     setIsAnimatingComment(true)
@@ -467,7 +469,11 @@ const Post = ({
                   <UserFullName
                     user={originalPostOwner}
                     className="flex-shrink-0 hover:underline"
-                    style={originalPostOwner.nameColor ? { color: originalPostOwner.nameColor } : undefined}
+                    style={
+                      originalPostOwner.nameColor
+                        ? { color: originalPostOwner.nameColor }
+                        : undefined
+                    }
                   />
 
                   <span className="flex shrink-0 items-center">
@@ -497,7 +503,7 @@ const Post = ({
                     ) : (
                       <span
                         // to={`/profile/${originalPostOwner.username}`}
-                        className="min-w-0 truncate "
+                        className="min-w-0 truncate"
                         onClick={handleInteractiveClick}
                         data-profile-trigger="true"
                         onMouseEnter={(e) => handleMouseEnter(originalPostOwner, e)}
@@ -674,18 +680,16 @@ const Post = ({
               {renderClickableText(sourcePost.text)}
             </span>
             {sourcePost.mediaType === "image" &&
-              sourcePost?.image?.imageUrl &&
-              sourcePost.image?._id && (
-                <div className="inline-flex max-w-full justify-center">
-                  <img
-                    src={getOptimizedImageUrl(sourcePost.image.imageUrl, "post")}
-                    onClick={() => openLightbox({ imageUrl: sourcePost.image.imageUrl })}
-                    className="block h-auto max-h-80 rounded-2xl border border-accent object-contain"
-                    alt="post image"
-                    loading="lazy"
-                  />
-                </div>
-              )}
+              (() => {
+                // Prefer the new images array; fall back to legacy single image
+                const imgs =
+                  sourcePost.images?.length > 0
+                    ? sourcePost.images
+                    : sourcePost.image?.imageUrl
+                      ? [sourcePost.image]
+                      : []
+                return imgs.length > 0 ? <PostImagesGrid images={imgs} /> : null
+              })()}
             {sourcePost.mediaType === "video" && sourcePost.video && (
               <video
                 controls

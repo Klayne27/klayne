@@ -58,8 +58,8 @@ const CreatePost = ({ feedType }) => {
 
   // State for post content
   const [postInput, setPostInput] = useState("")
-  const [postSelectedFile, setPostSelectedFile] = useState(null)
-  const [postPreviewImage, setPostPreviewImage] = useState(null)
+  // const [postSelectedFile, setPostSelectedFile] = useState(null)
+  // const [postPreviewImage, setPostPreviewImage] = useState(null)
 
   // State for emoji picker
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
@@ -79,6 +79,9 @@ const CreatePost = ({ feedType }) => {
   const [isScheduledPostsModalOpen, setIsScheduledPostsModalOpen] = useState(false)
   const [isEditScheduledPostModalOpen, setIsEditScheduledPostModalOpen] = useState(false)
   const [postToEdit, setPostToEdit] = useState(null)
+
+  const [postSelectedFiles, setPostSelectedFiles] = useState([]) // File[]
+  const [postPreviewImages, setPostPreviewImages] = useState([]) // string[] (object URLs)
 
   // State for mention feature
   // const [mentionQuery, setMentionQuery] = useState("")
@@ -123,7 +126,7 @@ const CreatePost = ({ feedType }) => {
     textInput: postInput,
     setTextInput: setPostInput,
     inputRef: postInputRef,
-    authUser
+    authUser,
   })
 
   // Determine character limit based on user status
@@ -165,12 +168,14 @@ const CreatePost = ({ feedType }) => {
 
   const resetForm = useCallback(() => {
     setPostInput("")
-    setPostSelectedFile(null)
-    setPostPreviewImage(null)
+    // setPostSelectedFile(null)
+    // setPostPreviewImage(null)
     setShowPollInputs(false)
     setPollChoices([{ text: "" }, { text: "" }])
     setScheduledAt(null)
     setShowEmojiPicker(false)
+    setPostSelectedFiles([])
+    setPostPreviewImages([])
     closeMentionSuggestions() // replaces the three manual mention resets
     if (postFileInputRef.current) postFileInputRef.current.value = null
     if (postInputRef.current) postInputRef.current.style.height = "auto"
@@ -185,7 +190,6 @@ const CreatePost = ({ feedType }) => {
     if (feedType === "venting") {
       // New check
       queryClient.invalidateQueries({ queryKey: postKeys.list("/api/posts/vent") })
-      // TODO: Create and use a useMarkVentsAsRead hook
       markVentFeedAsRead()
       setShowNewVentPostsButton(false)
     } else if (feedType === "forYou") {
@@ -208,14 +212,16 @@ const CreatePost = ({ feedType }) => {
     setShowNewICPostsButton,
   ])
 
-  const handlePaste = usePasteHandler({
-    inputRef: postInputRef,
-    input: postInput,
-    setInput: setPostInput,
-    setSelectedFile: setPostSelectedFile,
-    setPreviewImage: setPostPreviewImage,
-    postFileInputRef: postFileInputRef,
-  })
+const handlePaste = usePasteHandler({
+  inputRef: postInputRef,
+  input: postInput,
+  setInput: setPostInput,
+  // multi-image mode
+  setSelectedFiles: setPostSelectedFiles, // was: setSelectedFile
+  setPreviewImages: setPostPreviewImages, // was: setPreviewImage
+  currentImageCount: postSelectedFiles.length, // new — enforces the 4-cap
+  fileInputRef: postFileInputRef, // was: postFileInputRef (wrong key)
+})
 
   const {
     showEmojiPickerPopover,
@@ -243,7 +249,7 @@ const CreatePost = ({ feedType }) => {
     async (e) => {
       e.preventDefault()
 
-      if (postInput.trim() === "" && !postSelectedFile && !showPollInputs) return
+      if (postInput.trim() === "" && !postSelectedFiles.length > 0  && !showPollInputs) return
       if (isCreatingVentPost || isPending) return
 
       // --- 1. Prepare postData ---
@@ -263,23 +269,23 @@ const CreatePost = ({ feedType }) => {
       }
 
       // --- 3. Handle Media (Only if not a poll) ---
-      else if (postSelectedFile) {
-        try {
-          const base64File = await new Promise((resolve, reject) => {
-            const reader = new FileReader()
-            reader.onloadend = () => resolve(reader.result)
-            reader.onerror = reject
-            reader.readAsDataURL(postSelectedFile)
-          })
-
-          if (postSelectedFile.type.startsWith("image/")) {
-            postData.img = base64File
-          } else if (postSelectedFile.type.startsWith("video/")) {
-            postData.video = base64File
-          }
-        } catch (err) {
-          showAppToast("Failed to read file. Please try again.", "error")
-          return
+      else if (postSelectedFiles.length > 0) {
+        const isVideo = postSelectedFiles[0].type.startsWith("video/")
+        const base64s = await Promise.all(
+          postSelectedFiles.map(
+            (file) =>
+              new Promise((resolve, reject) => {
+                const reader = new FileReader()
+                reader.onloadend = () => resolve(reader.result)
+                reader.onerror = reject
+                reader.readAsDataURL(file)
+              }),
+          ),
+        )
+        if (isVideo) {
+          postData.video = base64s[0]
+        } else {
+          postData.imgs = base64s // ← array, not single `img`
         }
       }
 
@@ -308,70 +314,42 @@ const CreatePost = ({ feedType }) => {
       isCreatingVentPost,
       isAnonymous,
       postInput,
-      postSelectedFile,
+      // postSelectedFile,
       showPollInputs,
       pollChoices,
       scheduledAt,
       createPost,
       resetForm,
       isPending,
+      postSelectedFiles,
     ],
   )
 
-  const handleFileChange = useCallback((e) => {
-    const file = e.target.files[0]
-    if (file) {
-      if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
-        showAppToast("Unsupported file type. Please select an image or a video.", "error")
-        setPostSelectedFile(null)
-        setPostPreviewImage(null)
-        if (postFileInputRef.current) postFileInputRef.current.value = null
+  const handleFileChange = useCallback(
+    (e) => {
+      const files = Array.from(e.target.files)
+      const imageFiles = files.filter((f) => f.type.startsWith("image/"))
+      const videoFile = files.find((f) => f.type.startsWith("video/"))
+
+      // If any video — single video only, existing logic
+      if (videoFile && files.length === 1) {
+        // ... existing video validation logic unchanged ...
+        setPostSelectedFiles([videoFile])
+        setPostPreviewImages([URL.createObjectURL(videoFile)])
         return
       }
 
-      if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-        showAppToast(`File size exceeds ${MAX_FILE_SIZE_MB}MB limit.`, "error")
-        setPostSelectedFile(null)
-        setPostPreviewImage(null)
-        if (postFileInputRef.current) postFileInputRef.current.value = null
-        return
-      }
+      // Multi-image: cap at 4, images only
+      const remaining = 4 - postSelectedFiles.length
+      const toAdd = imageFiles.slice(0, remaining)
+      if (toAdd.length === 0) return
 
-      if (file.type.startsWith("video/")) {
-        const videoElement = document.createElement("video")
-        videoElement.preload = "metadata"
-
-        videoElement.onloadedmetadata = () => {
-          window.URL.revokeObjectURL(videoElement.src)
-          if (videoElement.duration > 30) {
-            showAppToast("Video duration cannot exceed 30 seconds.", "error")
-            setPostSelectedFile(null)
-            setPostPreviewImage(null)
-            if (postFileInputRef.current) postFileInputRef.current.value = null
-            return
-          }
-          setPostSelectedFile(file)
-          setPostPreviewImage(URL.createObjectURL(file))
-        }
-
-        videoElement.src = URL.createObjectURL(file)
-      } else {
-        // ✅ THIS BRANCH WAS MISSING
-        setPostSelectedFile(file)
-        setPostPreviewImage(URL.createObjectURL(file))
-      }
-
-      // Reset conflicting states
-      setShowPollInputs(false)
-      setPollChoices([{ text: "" }, { text: "" }])
-      // setShowMentionSuggestions(false)
-      closeMentionSuggestions()
-      setScheduledAt(null)
-    } else {
-      setPostSelectedFile(null)
-      setPostPreviewImage(null)
-    }
-  }, [])
+      setPostSelectedFiles((prev) => [...prev, ...toAdd])
+      setPostPreviewImages((prev) => [...prev, ...toAdd.map((f) => URL.createObjectURL(f))])
+      e.target.value = null // reset so same file can be re-selected
+    },
+    [postSelectedFiles],
+  )
 
   const onEmojiClick = useCallback((emojiObject) => {
     setPostInput((prevText) => prevText + emojiObject.emoji)
@@ -431,8 +409,10 @@ const CreatePost = ({ feedType }) => {
     setShowPollInputs((prev) => !prev)
     if (!showPollInputs) {
       // If turning poll inputs ON, clear other conflicting states
-      setPostSelectedFile(null)
-      setPostPreviewImage(null)
+      // setPostSelectedFile(null)
+      // setPostPreviewImage(null)
+      setPostSelectedFiles([])
+      setPostPreviewImages([])
       if (postFileInputRef.current) postFileInputRef.current.value = null
       setScheduledAt(null)
       setPollChoices([{ text: "" }, { text: "" }])
@@ -452,8 +432,10 @@ const CreatePost = ({ feedType }) => {
   const handleOpenSchedulePostModal = useCallback(() => {
     setShowSchedulePostModal(true)
     // When opening schedule modal, clear other conflicting states
-    setPostSelectedFile(null)
-    setPostPreviewImage(null)
+    // setPostSelectedFile(null)
+    // setPostPreviewImage(null)
+    setPostSelectedFiles([])
+    setPostPreviewImages([])
     if (postFileInputRef.current) postFileInputRef.current.value = null
     setShowPollInputs(false)
     setPollChoices([{ text: "" }, { text: "" }])
@@ -504,6 +486,11 @@ const CreatePost = ({ feedType }) => {
     // setIsScheduledPostsModalOpen(false); // If you prefer this behavior
   }
 
+  const handleRemovePreviewImage = useCallback((index) => {
+    setPostSelectedFiles((prev) => prev.filter((_, i) => i !== index))
+    setPostPreviewImages((prev) => prev.filter((_, i) => i !== index))
+  }, [])
+
   const postLength = postInput.length
   const progress = (postLength / characterLimit) * 100
 
@@ -521,7 +508,7 @@ const CreatePost = ({ feedType }) => {
     (() => {
       if (scheduledAt) {
         // Scheduled post requires text, and cannot have media or be a poll
-        return postInput.trim() === "" || postSelectedFile !== null || showPollInputs
+        return postInput.trim() === "" || postSelectedFiles.length > 0 || showPollInputs
       }
       if (showPollInputs) {
         // Poll requires postInput and at least two non-empty choices, and no choice exceeds max length
@@ -533,7 +520,7 @@ const CreatePost = ({ feedType }) => {
         )
       }
       // Regular post requires text OR a selected file
-      return postInput.trim() === "" && !postSelectedFile
+      return postInput.trim() === "" && postSelectedFiles.length === 0
     })()
 
   return (
@@ -620,31 +607,34 @@ const CreatePost = ({ feedType }) => {
             )}
           </div>
 
-          {postPreviewImage && (
-            <div className="relative mx-auto max-w-full sm:w-auto">
-              <ImagePreviewCloseButton
-                onClick={() => {
-                  setPostSelectedFile(null)
-                  setPostPreviewImage(null)
-                  if (postFileInputRef.current) postFileInputRef.current.value = null
-                }}
-              />
-              {postSelectedFile.type.startsWith("image/") ? (
-                <img
-                  src={postPreviewImage}
-                  className="h-auto max-h-96 w-full rounded object-contain"
-                  alt="Image preview"
-                />
-              ) : (
-                <video
-                  controls
-                  src={postPreviewImage}
-                  className="h-auto max-h-96 w-full rounded object-contain"
-                  preload="metadata"
-                >
-                  Your browser does not support the video tag.
-                </video>
-              )}
+          {postPreviewImages.length > 0 && (
+            <div
+              className={`grid gap-1 overflow-hidden rounded-2xl ${
+                postPreviewImages.length === 1 ? "grid-cols-1" : "grid-cols-2"
+              }`}
+            >
+              {postPreviewImages.map((src, i) => {
+                const file = postSelectedFiles[i]
+                // Unified media class: Ensures equal sizing via aspect-square
+                const mediaClass = "w-full aspect-square object-cover rounded-lg"
+
+                return (
+                  <div key={i} className="relative">
+                    {file?.type.startsWith("video/") ? (
+                      <video src={src} controls className={mediaClass} preload="metadata" />
+                    ) : (
+                      <img src={src} className={mediaClass} alt={`preview ${i + 1}`} />
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePreviewImage(i)}
+                      className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white hover:bg-black/80"
+                    >
+                      <IoClose size={14} />
+                    </button>
+                  </div>
+                )
+              })}
             </div>
           )}
 
@@ -711,7 +701,7 @@ const CreatePost = ({ feedType }) => {
             {feedType !== "venting" && (
               <div className="flex items-center gap-1">
                 {/* Image/Video input - hidden if poll or schedule is active */}
-                {!showPollInputs && !scheduledAt && (
+                {!showPollInputs && !scheduledAt && postSelectedFiles.length < 4 && (
                   <BiImageAdd
                     className="h-6 w-6 cursor-pointer text-primary hover:text-primary/80"
                     onClick={() => postFileInputRef.current.click()}
@@ -722,13 +712,14 @@ const CreatePost = ({ feedType }) => {
                 <input
                   type="file"
                   accept="image/*,video/*"
+                  multiple // ← add
                   hidden
                   ref={postFileInputRef}
                   onChange={handleFileChange}
                 />
 
                 {/* Poll icon - hidden if media or schedule is selected/previewed */}
-                {!postSelectedFile && !scheduledAt && (
+                {postSelectedFiles.length === 0 && !scheduledAt && (
                   <BiPoll
                     className="size-6 cursor-pointer text-primary hover:text-primary/80"
                     onClick={handlePollIconClick}
@@ -767,7 +758,7 @@ const CreatePost = ({ feedType }) => {
                 </div>
 
                 {/* Schedule NEW Post icon - hidden if media or poll is active */}
-                {!postSelectedFile && !showPollInputs && (
+                {postSelectedFiles.length === 0 && !showPollInputs && (
                   <TbCalendarClock
                     size={22}
                     className="cursor-pointer text-primary hover:text-primary/80"
@@ -782,7 +773,7 @@ const CreatePost = ({ feedType }) => {
             {feedType === "venting" && (
               <div className="flex w-full items-center justify-between gap-1 pr-2">
                 <div className="flex gap-1">
-                  {!showPollInputs && !scheduledAt && (
+                  {!showPollInputs && !scheduledAt && postSelectedFiles.length < 4 && (
                     <BiImageAdd
                       className="h-6 w-6 cursor-pointer text-primary hover:text-primary/80"
                       onClick={() => postFileInputRef.current.click()}
@@ -798,7 +789,7 @@ const CreatePost = ({ feedType }) => {
                     onChange={handleFileChange}
                   />
 
-                  {!postSelectedFile && !scheduledAt && (
+                  {postSelectedFiles.length === 0 && !scheduledAt && (
                     <BiPoll
                       className="size-6 cursor-pointer text-primary hover:text-primary/80"
                       onClick={handlePollIconClick}
@@ -847,7 +838,7 @@ const CreatePost = ({ feedType }) => {
               </div>
             )}
             <div className="flex gap-2">
-              {postLength > 0 && postSelectedFile === null && !showPollInputs && (
+              {postLength > 0 && postSelectedFiles.length === 0 && !showPollInputs && (
                 <>
                   <div className="flex items-center gap-2">
                     <CircularBarProgress

@@ -35,6 +35,7 @@ export const getPostThread = async (req, res) => {
         populate: { path: "profileImg", select: "imageUrl" },
       })
       .populate({ path: "image", select: "imageUrl" })
+      .populate({ path: "images", select: "imageUrl" })
       .lean();
 
     if (!post) return res.status(404).json({ error: "Post not found." });
@@ -51,6 +52,7 @@ export const getPostThread = async (req, res) => {
           populate: { path: "profileImg", select: "imageUrl" },
         })
         .populate({ path: "image", select: "imageUrl" })
+        .populate({ path: "images", select: "imageUrl" })
         .lean();
 
       if (!parent) break;
@@ -122,6 +124,7 @@ export const getPostReplies = async (req, res) => {
         populate: { path: "profileImg", select: "imageUrl" },
       })
       .populate({ path: "image", select: "imageUrl" })
+      .populate({ path: "images", select: "imageUrl" })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
@@ -143,6 +146,7 @@ export const getPostReplies = async (req, res) => {
             populate: { path: "profileImg", select: "imageUrl" },
           })
           .populate({ path: "image", select: "imageUrl" })
+          .populate({ path: "images", select: "imageUrl" })
           .sort({ createdAt: 1 }) // oldest first — the actual first reply
           .lean();
 
@@ -189,7 +193,7 @@ export const createReply = async (req, res) => {
   try {
     const { parentId } = req.params;
     const { text, isIC } = req.body;
-    let { img, video } = req.body;
+    let { img, video, imgs } = req.body;
     const userId = req.user._id;
 
     const parent = await Post.findById(parentId).populate("user", "-password -email");
@@ -209,9 +213,10 @@ export const createReply = async (req, res) => {
       }
     }
 
-    if (!text && !img && !video) {
-      return res.status(400).json({ error: "Reply must have text, image, or video." });
-    }
+const incomingImgs = Array.isArray(imgs) ? imgs : [];
+if (!text && !img && !incomingImgs.length && !video) {
+  return res.status(400).json({ error: "Reply must have text, image, or video." });
+}
 
     const { isGoldVerified } = req.user;
     if (video && !isGoldVerified) {
@@ -229,17 +234,33 @@ export const createReply = async (req, res) => {
     }
 
     let uploadedImgUrl = null;
-    let imgPublicId = null;
     let uploadedVideoUrl = null;
+    let imgPublicId = null;
     let videoPublicId = null;
     let mediaType = "none";
+    let uploadedImages = []; // { url, publicId }
 
-    if (img) {
-      const uploadedResponse = await cloudinary.uploader.upload(img, {
+    // const incomingImgs = Array.isArray(imgs) ? imgs.slice(0, 4) : [];
+    const incomingSingleImg = img; // legacy single-image support
+
+    if (incomingImgs.length > 0) {
+      const uploads = await Promise.all(
+        incomingImgs.map((b64) =>
+          cloudinary.uploader.upload(b64, { upload_preset: "ml_posts" }),
+        ),
+      );
+      uploadedImages = uploads.map((u) => ({ url: u.secure_url, publicId: u.public_id }));
+      uploadedImgUrl = uploadedImages[0].url; // keep legacy field populated
+      imgPublicId = uploadedImages[0].publicId;
+      mediaType = "image";
+    } else if (incomingSingleImg) {
+      // legacy path — single base64 img
+      const uploadedResponse = await cloudinary.uploader.upload(incomingSingleImg, {
         upload_preset: "ml_posts",
       });
       uploadedImgUrl = uploadedResponse.secure_url;
       imgPublicId = uploadedResponse.public_id;
+      uploadedImages = [{ url: uploadedImgUrl, publicId: imgPublicId }];
       mediaType = "image";
     } else if (video) {
       const uploadedResponse = await cloudinary.uploader.upload(video, {
@@ -274,18 +295,22 @@ export const createReply = async (req, res) => {
 
     await newReply.save();
 
-    if (img && uploadedImgUrl) {
-      const newImage = new Image({
-        imageUrl: uploadedImgUrl,
+if (uploadedImages.length > 0) {
+  const imageDocs = await Promise.all(
+    uploadedImages.map(({ url, publicId }) =>
+      new Image({
+        imageUrl: url,
         parentDocument: newReply._id,
         parentModel: "Post",
         uploadedBy: userId,
-        publicId: imgPublicId,
-      });
-      await newImage.save();
-      newReply.image = newImage._id;
-      await newReply.save();
-    }
+        publicId,
+      }).save(),
+    ),
+  );
+  newReply.image = imageDocs[0]._id;
+  newReply.images = imageDocs.map((d) => d._id);
+  await newReply.save();
+}
 
     // ── Sync hashtag counts ────────────────────────────────────────────────
     if (tags.length) {
@@ -325,7 +350,9 @@ export const createReply = async (req, res) => {
           "username fullName isCha isVerified isGoldVerified profileImg badges preferredBadge nameColor equipped",
         populate: { path: "profileImg", select: "imageUrl" },
       })
-      .populate({ path: "image", select: "imageUrl" });
+      .populate({ path: "image", select: "imageUrl" })
+        .populate({ path: "images", select: "imageUrl" }) // ← add
+
 
     let finalReply = populatedReply.toObject();
 
@@ -413,6 +440,7 @@ export const getAllPosts = async (req, res) => {
       text: 1,
       img: 1,
       image: 1,
+      images:1,
       video: 1,
       mediaType: 1,
       likes: 1,
@@ -565,6 +593,7 @@ export const getAllPosts = async (req, res) => {
               },
             },
             { $unwind: { path: "$profileImg", preserveNullAndEmptyArrays: true } },
+
             { $project: { ...userProjection, profileImg: "$profileImg" } },
           ],
         },
@@ -579,6 +608,14 @@ export const getAllPosts = async (req, res) => {
         },
       },
       { $unwind: { path: "$image", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "images",
+          localField: "images",
+          foreignField: "_id",
+          as: "images",
+        },
+      },
       {
         $lookup: {
           from: "posts",
@@ -616,6 +653,14 @@ export const getAllPosts = async (req, res) => {
               },
             },
             { $unwind: { path: "$image", preserveNullAndEmptyArrays: true } },
+            {
+              $lookup: {
+                from: "images",
+                localField: "images",
+                foreignField: "_id",
+                as: "images",
+              },
+            },
             { $project: repostedPostProjection },
           ],
         },
@@ -650,6 +695,7 @@ export const getAllPosts = async (req, res) => {
           text: 1,
           img: 1,
           image: 1,
+          images: 1,
           video: 1,
           mediaType: 1,
           imgPublicId: 1,
@@ -754,6 +800,7 @@ export const getICPosts = async (req, res) => {
       text: 1,
       img: 1,
       image: 1,
+      images: 1,
       video: 1,
       mediaType: 1,
       likes: 1,
@@ -914,6 +961,14 @@ export const getICPosts = async (req, res) => {
       { $unwind: { path: "$image", preserveNullAndEmptyArrays: true } },
       {
         $lookup: {
+          from: "images",
+          localField: "images",
+          foreignField: "_id",
+          as: "images",
+        },
+      },
+      {
+        $lookup: {
           from: "posts",
           localField: "repostedFrom",
           foreignField: "_id",
@@ -949,6 +1004,14 @@ export const getICPosts = async (req, res) => {
               },
             },
             { $unwind: { path: "$image", preserveNullAndEmptyArrays: true } },
+            {
+              $lookup: {
+                from: "images",
+                localField: "images",
+                foreignField: "_id",
+                as: "images",
+              },
+            },
             { $project: repostedPostProjection },
           ],
         },
@@ -1012,6 +1075,7 @@ export const getICPosts = async (req, res) => {
           text: 1,
           img: 1,
           image: 1,
+          images: 1,
           video: 1,
           mediaType: 1,
           imgPublicId: 1,
@@ -1140,6 +1204,7 @@ export const getLikedPosts = async (req, res) => {
       text: 1,
       img: 1,
       image: 1,
+      images: 1,
       video: 1,
       mediaType: 1,
       likes: 1,
@@ -1189,6 +1254,14 @@ export const getLikedPosts = async (req, res) => {
       { $unwind: { path: "$image", preserveNullAndEmptyArrays: true } },
       {
         $lookup: {
+          from: "images",
+          localField: "images",
+          foreignField: "_id",
+          as: "images",
+        },
+      },
+      {
+        $lookup: {
           from: "posts",
           localField: "repostedFrom",
           foreignField: "_id",
@@ -1224,6 +1297,14 @@ export const getLikedPosts = async (req, res) => {
               },
             },
             { $unwind: { path: "$image", preserveNullAndEmptyArrays: true } },
+            {
+              $lookup: {
+                from: "images",
+                localField: "images",
+                foreignField: "_id",
+                as: "images",
+              },
+            },
             { $project: repostedPostProjection },
           ],
         },
@@ -1235,6 +1316,7 @@ export const getLikedPosts = async (req, res) => {
           text: 1,
           img: 1,
           image: 1,
+          images: 1,
           video: 1,
           mediaType: 1,
           likes: 1,
@@ -1314,6 +1396,8 @@ export const getFollowingPosts = async (req, res) => {
 
     const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
     const { all: mutedUserIds } = await getMutedUsers(userId);
+    // Fetch private users the current user does not follow (aligns with reference code functionality)
+    const privateExcludedIds = await getPrivateExcludedIds(userId);
 
     const mutedObjectIds = mutedUserIds.map((id) => new mongoose.Types.ObjectId(id));
 
@@ -1322,6 +1406,13 @@ export const getFollowingPosts = async (req, res) => {
         ...blockedByMe.map((id) => new mongoose.Types.ObjectId(id)),
         ...blockedMe.map((id) => new mongoose.Types.ObjectId(id)),
       ]),
+    ];
+
+    // Combine exclusions to filter out authors downstream
+    const excludedUserIds = [
+      ...blockedAndBlockingObjectIds,
+      ...mutedObjectIds,
+      ...privateExcludedIds,
     ];
 
     const followingObjectIds = user.following.map(
@@ -1342,45 +1433,80 @@ export const getFollowingPosts = async (req, res) => {
 
     const now = new Date();
 
-    const queryConditions = {
-      isVent: { $ne: true },
-      parentPost: null,
-      $and: [
-        { "deletedFor.user": { $ne: userId } },
+    const scheduledPostConditions = {
+      $or: [
+        { isScheduled: { $ne: true } },
         {
-          $or: [
-            { isScheduled: { $ne: true } },
-            {
-              $and: [
-                { isScheduled: true },
-                { scheduledAt: { $ne: null } },
-                { scheduledAt: { $lte: now } },
-              ],
-            },
+          $and: [
+            { isScheduled: true },
+            { scheduledAt: { $ne: null } },
+            { scheduledAt: { $lte: now } },
           ],
         },
+      ],
+    };
+
+    const userProjection = {
+      _id: 1,
+      username: 1,
+      fullName: 1,
+      profileImg: 1,
+      isCha: 1,
+      isVerified: 1,
+      isGoldVerified: 1,
+      nameColor: 1,
+      preferredBadge: 1,
+      equipped: 1,
+    };
+
+    const repostedPostProjection = {
+      text: 1,
+      img: 1,
+      image: 1,
+      images: 1, // <-- Added field array to projection
+      imgs: 1,
+      video: 1,
+      mediaType: 1,
+      likes: 1,
+      repostsCount: 1,
+      bookmarkedBy: 1,
+      repostedBy: 1,
+      createdAt: 1,
+      user: 1,
+      isScheduled: 1,
+      scheduledAt: 1,
+    };
+
+    // Main filter criteria matching your initial parameters restricted to effectiveFollowing
+    const initialMatchConditions = {
+      isVent: { $ne: true },
+      parentPost: null,
+      "deletedFor.user": { $ne: userId },
+      user: { $in: effectiveFollowing },
+      ...scheduledPostConditions,
+    };
+
+    // Filter evaluating nested repost constraints
+    const repostedFromFilter = {
+      $or: [
+        { repostedFrom: { $eq: null } },
         {
-          $or: [
-            { user: { $in: effectiveFollowing } },
+          $and: [
+            { repostedFrom: { $ne: null } },
+            { "repostedFrom.user": { $ne: null } },
             {
-              $and: [
-                { user: { $in: effectiveFollowing } },
-                { repostedFrom: { $ne: null } },
+              "repostedFrom.user._id": {
+                $nin: excludedUserIds,
+              },
+            },
+            {
+              $or: [
+                { "repostedFrom.isScheduled": { $ne: true } },
                 {
-                  "repostedFrom.user": {
-                    $nin: [...blockedAndBlockingObjectIds, ...mutedObjectIds],
-                  },
-                },
-                {
-                  $or: [
-                    { "repostedFrom.isScheduled": { $ne: true } },
-                    {
-                      $and: [
-                        { "repostedFrom.isScheduled": true },
-                        { "repostedFrom.scheduledAt": { $ne: null } },
-                        { "repostedFrom.scheduledAt": { $lte: now } },
-                      ],
-                    },
+                  $and: [
+                    { "repostedFrom.isScheduled": true },
+                    { "repostedFrom.scheduledAt": { $ne: null } },
+                    { "repostedFrom.scheduledAt": { $lte: now } },
                   ],
                 },
               ],
@@ -1390,80 +1516,231 @@ export const getFollowingPosts = async (req, res) => {
       ],
     };
 
-    const totalCount = await Post.countDocuments(queryConditions);
-
-    const rawFeedPosts = await Post.find(queryConditions)
-      .sort({ publishedAt: -1, createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .populate({
-        path: "user",
-        select:
-          "username fullName profileImg badges isAdmin isCha isVerified isGoldVerified preferredBadge nameColor equipped",
-        populate: {
-          path: "profileImg coverImg",
-          select: "imageUrl publicId",
+    // 1. Calculate matching total posts count
+    const totalPostsResult = await Post.aggregate([
+      {
+        $lookup: {
+          from: "posts",
+          localField: "repostedFrom",
+          foreignField: "_id",
+          as: "repostedFromPostData",
+          pipeline: [{ $project: { isVent: 1 } }],
         },
-      })
-      .populate({
-        path: "repostedFrom",
-        populate: {
-          path: "user",
-          select:
-            "username fullName profileImg badges isAdmin isCha isVerified isGoldVerified preferredBadge nameColor equipped",
-          populate: {
-            path: "profileImg coverImg",
-            select: "imageUrl publicId",
-          },
+      },
+      { $unwind: { path: "$repostedFromPostData", preserveNullAndEmptyArrays: true } },
+      {
+        $match: {
+          isVent: { $ne: true },
+          parentPost: null,
+          "deletedFor.user": { $ne: userId },
+          "repostedFromPostData.isVent": { $ne: true },
         },
-        select:
-          "text img video mediaType likes repostsCount bookmarkedBy repostedBy createdAt user isScheduled scheduledAt",
-      })
-      .populate("image", "imageUrl")
-      .populate({
-        path: "parentPost",
-        populate: {
-          path: "user",
-          select:
-            "username fullName profileImg badges isAdmin isCha isVerified isGoldVerified preferredBadge nameColor equipped",
+      },
+      { $match: initialMatchConditions },
+      {
+        $lookup: {
+          from: "posts",
+          localField: "repostedFrom",
+          foreignField: "_id",
+          as: "repostedFrom",
+          pipeline: [
+            {
+              $lookup: {
+                from: "users",
+                localField: "user",
+                foreignField: "_id",
+                as: "user",
+                pipeline: [{ $project: { _id: 1 } }],
+              },
+            },
+            { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+            { $project: { _id: 1, user: 1, isScheduled: 1, scheduledAt: 1 } },
+          ],
         },
-      })
-      .lean();
+      },
+      { $unwind: { path: "$repostedFrom", preserveNullAndEmptyArrays: true } },
+      { $match: repostedFromFilter },
+      { $count: "count" },
+    ]);
 
-    const finalFeedPosts = rawFeedPosts.filter((post) => {
-      const postOwnerId = post.user?._id;
-      const repostedFromOwnerId = post.repostedFrom?.user?._id;
+    const totalCount = totalPostsResult.length > 0 ? totalPostsResult[0].count : 0;
 
-      if (blockedAndBlockingObjectIds.some((id) => id.equals(postOwnerId))) return false;
-      if (
-        post.repostedFrom &&
-        blockedAndBlockingObjectIds.some((id) => id.equals(repostedFromOwnerId))
-      )
-        return false;
+    // 2. Aggregate data feed collection
+    const posts = await Post.aggregate([
+      {
+        $lookup: {
+          from: "posts",
+          localField: "repostedFrom",
+          foreignField: "_id",
+          as: "repostedFromPostData",
+          pipeline: [{ $project: { isVent: 1 } }],
+        },
+      },
+      { $unwind: { path: "$repostedFromPostData", preserveNullAndEmptyArrays: true } },
+      {
+        $match: {
+          isVent: { $ne: true },
+          parentPost: null,
+          "deletedFor.user": { $ne: userId },
+          "repostedFromPostData.isVent": { $ne: true },
+        },
+      },
+      { $match: initialMatchConditions },
+      { $sort: { publishedAt: -1, createdAt: -1 } },
+      { $skip: skip },
+      { $limit: limit },
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user",
+          pipeline: [
+            {
+              $lookup: {
+                from: "images",
+                localField: "profileImg",
+                foreignField: "_id",
+                as: "profileImg",
+              },
+            },
+            { $unwind: { path: "$profileImg", preserveNullAndEmptyArrays: true } },
+            { $project: { ...userProjection, profileImg: "$profileImg" } },
+          ],
+        },
+      },
+      { $unwind: "$user" },
+      // Fetch Legacy Primary Image
+      {
+        $lookup: {
+          from: "images",
+          localField: "image",
+          foreignField: "_id",
+          as: "image",
+        },
+      },
+      { $unwind: { path: "$image", preserveNullAndEmptyArrays: true } },
+      // Fetch Multi-Image Array Support
+      {
+        $lookup: {
+          from: "images",
+          localField: "images",
+          foreignField: "_id",
+          as: "images",
+        },
+      },
+      // Lookup and resolve Nested Repost Subdocuments
+      {
+        $lookup: {
+          from: "posts",
+          localField: "repostedFrom",
+          foreignField: "_id",
+          as: "repostedFrom",
+          pipeline: [
+            {
+              $lookup: {
+                from: "users",
+                localField: "user",
+                foreignField: "_id",
+                as: "user",
+                pipeline: [
+                  {
+                    $lookup: {
+                      from: "images",
+                      localField: "profileImg",
+                      foreignField: "_id",
+                      as: "profileImg",
+                    },
+                  },
+                  { $unwind: { path: "$profileImg", preserveNullAndEmptyArrays: true } },
+                  { $project: userProjection },
+                ],
+              },
+            },
+            { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+            // Nested Legacy Image lookup
+            {
+              $lookup: {
+                from: "images",
+                localField: "image",
+                foreignField: "_id",
+                as: "image",
+              },
+            },
+            { $unwind: { path: "$image", preserveNullAndEmptyArrays: true } },
+            // Nested New Multi-Image lookup
+            {
+              $lookup: {
+                from: "images",
+                localField: "images",
+                foreignField: "_id",
+                as: "images",
+              },
+            },
+            { $project: repostedPostProjection },
+          ],
+        },
+      },
+      { $unwind: { path: "$repostedFrom", preserveNullAndEmptyArrays: true } },
+      { $match: repostedFromFilter },
+      {
+        $lookup: {
+          from: "posts",
+          localField: "parentPost",
+          foreignField: "_id",
+          as: "parentPost",
+          pipeline: [
+            {
+              $lookup: {
+                from: "users",
+                localField: "user",
+                foreignField: "_id",
+                as: "user",
+                pipeline: [{ $project: { _id: 1, username: 1 } }],
+              },
+            },
+            { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+            { $project: { _id: 1, user: 1 } },
+          ],
+        },
+      },
+      { $unwind: { path: "$parentPost", preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          _id: 1,
+          text: 1,
+          img: 1,
+          image: 1,
+          images: 1, // Output collection arrays
+          video: 1,
+          mediaType: 1,
+          imgPublicId: 1,
+          videoPublicId: 1,
+          likes: 1,
+          repliesCount: 1,
+          repostsCount: 1,
+          repostedBy: 1,
+          bookmarkedBy: 1,
+          pollTotalVotes: 1,
+          mentionedUsers: 1,
+          isScheduled: 1,
+          scheduledAt: 1,
+          publishedAt: 1,
+          pollOptions: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          user: 1,
+          repostedFrom: 1,
+          editHistory: 1,
+          parentPost: 1,
+        },
+      },
+    ]);
 
-      const isDeletedForMe = post.deletedFor?.some((entry) => entry.user.equals(userId));
-      if (isDeletedForMe) {
-        return false;
-      }
-
-      if (post.repostedFrom && post.repostedFrom.repostedFrom) {
-        return false;
-      }
-
-      if (post.repostedFrom && !post.repostedFrom.user) {
-        return false;
-      }
-      if (
-        post.repostedFrom &&
-        post.repostedFrom.isScheduled &&
-        post.repostedFrom.scheduledAt &&
-        new Date(post.repostedFrom.scheduledAt) > now
-      ) {
-        return false;
-      }
-
-      return true;
-    });
+    // Simple validation block verifying depth validation
+    const finalFeedPosts = posts.filter(
+      (post) => !(post.repostedFrom && post.repostedFrom.repostedFrom),
+    );
 
     const hasNextPage = page * limit < totalCount;
 
@@ -1509,30 +1786,30 @@ export const getUserPosts = async (req, res) => {
 
     const now = new Date();
 
-const queryConditions = {
-  parentPost: null,
-  $and: [
-    // Show regular posts AND non-anonymous vent posts
-    {
-      $or: [{ isVent: { $ne: true } }, { isVent: true, isAnonymous: { $ne: true } }],
-    },
-    { "deletedFor.user": { $ne: currentUserId } },
-    {
-      $or: [
-        { isScheduled: { $ne: true } },
-        { user: currentUserId },
+    const queryConditions = {
+      parentPost: null,
+      $and: [
+        // Show regular posts AND non-anonymous vent posts
         {
-          $and: [
-            { isScheduled: true },
-            { scheduledAt: { $ne: null } },
-            { scheduledAt: { $lte: now } },
+          $or: [{ isVent: { $ne: true } }, { isVent: true, isAnonymous: { $ne: true } }],
+        },
+        { "deletedFor.user": { $ne: currentUserId } },
+        {
+          $or: [
+            { isScheduled: { $ne: true } },
+            { user: currentUserId },
+            {
+              $and: [
+                { isScheduled: true },
+                { scheduledAt: { $ne: null } },
+                { scheduledAt: { $lte: now } },
+              ],
+            },
           ],
         },
+        { $or: [{ user: user._id }] },
       ],
-    },
-    { $or: [{ user: user._id }] },
-  ],
-};
+    };
     const totalUserPosts = await Post.countDocuments(queryConditions);
 
     const rawUserPosts = await Post.find(queryConditions)
@@ -1555,11 +1832,13 @@ const queryConditions = {
             populate: { path: "profileImg coverImg", select: "imageUrl publicId" },
           },
           { path: "image", select: "imageUrl" },
+          { path: "images", select: "imageUrl" },
         ],
         select:
           "text img video mediaType likes bookmarkedBy repostsCount isIC repostedBy createdAt user isScheduled scheduledAt image",
       })
       .populate("image", "imageUrl")
+      .populate("images", "imageUrl")
       .lean();
 
     const finalUserPosts = rawUserPosts.filter((post) => {
@@ -1695,6 +1974,14 @@ export const getUserReplies = async (req, res) => {
         },
       },
       { $unwind: { path: "$image", preserveNullAndEmptyArrays: true } },
+            {
+        $lookup: {
+          from: "images",
+          localField: "images",
+          foreignField: "_id",
+          as: "images",
+        },
+      },
       {
         $lookup: {
           from: "posts",
@@ -1752,6 +2039,7 @@ export const getUserReplies = async (req, res) => {
           text: 1,
           img: 1,
           image: 1,
+          images: 1,
           video: 1,
           mediaType: 1,
           likes: 1,
@@ -1792,7 +2080,6 @@ export const getUserMedia = async (req, res) => {
     const targetUser = await User.findOne({ username });
     if (!targetUser) return res.status(404).json({ error: "User not found" });
 
-    // Block logic (Keeping it consistent with your current code)
     if (currentUserId && (await isBlockedOrBlockedBy(currentUserId, targetUser._id))) {
       return res.status(403).json({ error: "Cannot view this user's media." });
     }
@@ -1810,27 +2097,30 @@ export const getUserMedia = async (req, res) => {
       equipped: 1,
     };
 
+    // FIX: match only posts that actually have media.
+    // mediaType is set to "image" or "video" in createPost/createReply whenever
+    // media is uploaded — this is the authoritative flag, not the presence of
+    // individual fields. We also exclude anonymous vent posts so the media tab
+    // doesn't leak identity.
     const matchConditions = {
       user: targetUser._id,
-      isVent: { $ne: true },
+      mediaType: { $in: ["image", "video"] }, // only posts with media
       "deletedFor.user": { $ne: currentUserId },
-      // --- THE KEY FILTER ---
       $or: [
-        { image: { $ne: null } },
-        { video: { $ne: null } },
-        { img: { $ne: null, $exists: true } },
+        { isAnonymous: { $ne: true } }, // non-anonymous posts always OK
+        { isVent: { $ne: true } }, // non-vent anonymous posts are fine
       ],
     };
 
     const totalCount = await Post.countDocuments(matchConditions);
 
-    // Reuse your existing aggregation pipeline logic here
     const mediaPosts = await Post.aggregate([
       { $match: matchConditions },
       { $sort: { createdAt: -1 } },
       { $skip: skip },
       { $limit: limit },
-      // ... (Include the same $lookup and $project blocks you used in getUserReplies)
+
+      // ── Populate post author ──────────────────────────────────────────────
       {
         $lookup: {
           from: "users",
@@ -1852,6 +2142,8 @@ export const getUserMedia = async (req, res) => {
         },
       },
       { $unwind: "$user" },
+
+      // ── Populate primary image (legacy single-image ref) ──────────────────
       {
         $lookup: {
           from: "images",
@@ -1861,6 +2153,39 @@ export const getUserMedia = async (req, res) => {
         },
       },
       { $unwind: { path: "$image", preserveNullAndEmptyArrays: true } },
+
+      // ── Populate images array (multi-image) ───────────────────────────────
+      {
+        $lookup: {
+          from: "images",
+          localField: "images",
+          foreignField: "_id",
+          as: "images",
+        },
+      },
+
+      // ── Project only what the frontend needs ──────────────────────────────
+      {
+        $project: {
+          _id: 1,
+          text: 1,
+          img: 1,
+          image: 1,
+          images: 1,
+          video: 1,
+          mediaType: 1,
+          likes: 1,
+          repliesCount: 1,
+          repostsCount: 1,
+          repostedBy: 1,
+          bookmarkedBy: 1,
+          isAnonymous: 1,
+          isVent: 1,
+          publishedAt: 1,
+          createdAt: 1,
+          user: 1,
+        },
+      },
     ]);
 
     const hasNextPage = page * limit < totalCount;
@@ -1870,7 +2195,6 @@ export const getUserMedia = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
 export const getPost = async (req, res) => {
   try {
     const { postId } = req.params;
@@ -1900,9 +2224,10 @@ export const getPost = async (req, res) => {
           },
         ],
         select:
-          "text img video mediaType isVent likes repostsCount bookmarkedBy createdAt user isScheduled scheduledAt repostedBy", // Ensure these are selected
+          "text img images video mediaType isVent likes repostsCount bookmarkedBy createdAt user isScheduled scheduledAt repostedBy", // Ensure these are selected
       })
       .populate("image", "imageUrl")
+      .populate("images", "imageUrl")
       .lean();
 
     if (!post) {
@@ -2007,6 +2332,7 @@ export const getBookmarkedPosts = async (req, res) => {
         },
       })
       .populate("image", "imageUrl")
+      .populate("images", "imageUrl")
       .lean();
 
     // ── Filter: hide reposts whose original author is private + not followed ──
@@ -2074,6 +2400,10 @@ export const getPinnedPosts = async (req, res) => {
             select: "imageUrl",
           },
           {
+            path: "images",
+            select: "imageUrl",
+          },
+          {
             path: "repostedFrom",
             select:
               "text img video mediaType likes bookmarkedBy repostsCount createdAt user isScheduled scheduledAt repostedBy image",
@@ -2089,6 +2419,10 @@ export const getPinnedPosts = async (req, res) => {
               },
               {
                 path: "image",
+                select: "imageUrl",
+              },
+              {
+                path: "images",
                 select: "imageUrl",
               },
             ],
@@ -2151,13 +2485,14 @@ export const getScheduledPosts = async (req, res) => {
 export const createPost = async (req, res) => {
   try {
     const { text, pollOptions, scheduledAt, isIC } = req.body;
-    let { img, video } = req.body;
+    let { img, video, imgs } = req.body;
 
     const userId = req.user._id.toString();
 
-    if (!text && !img && !video) {
-      return res.status(400).json({ error: "Reply must have text, image, or video." });
-    }
+const incomingImgs = Array.isArray(imgs) ? imgs : [];
+if (!text && !img && !incomingImgs.length && !video) {
+  return res.status(400).json({ error: "Post must have text, image, or video." });
+}
 
     const { isGoldVerified } = req.user;
 
@@ -2166,7 +2501,13 @@ export const createPost = async (req, res) => {
     }
 
     try {
-      if (!text && !img && !video && (!pollOptions || pollOptions.length === 0)) {
+      if (
+        !text &&
+        !img &&
+        !incomingImgs.length &&
+        !video &&
+        (!pollOptions || pollOptions.length === 0)
+      ) {
         return res
           .status(400)
           .json({ error: "Post must have text, image, video, or poll options." });
@@ -2189,13 +2530,29 @@ export const createPost = async (req, res) => {
     let imgPublicId = null;
     let videoPublicId = null;
     let mediaType = "none";
+    let uploadedImages = []; // { url, publicId }
 
-    if (img) {
-      const uploadedResponse = await cloudinary.uploader.upload(img, {
+    // const incomingImgs = Array.isArray(imgs) ? imgs.slice(0, 4) : [];
+    const incomingSingleImg = img; // legacy single-image support
+
+    if (incomingImgs.length > 0) {
+      const uploads = await Promise.all(
+        incomingImgs.map((b64) =>
+          cloudinary.uploader.upload(b64, { upload_preset: "ml_posts" }),
+        ),
+      );
+      uploadedImages = uploads.map((u) => ({ url: u.secure_url, publicId: u.public_id }));
+      uploadedImgUrl = uploadedImages[0].url; // keep legacy field populated
+      imgPublicId = uploadedImages[0].publicId;
+      mediaType = "image";
+    } else if (incomingSingleImg) {
+      // legacy path — single base64 img
+      const uploadedResponse = await cloudinary.uploader.upload(incomingSingleImg, {
         upload_preset: "ml_posts",
       });
       uploadedImgUrl = uploadedResponse.secure_url;
       imgPublicId = uploadedResponse.public_id;
+      uploadedImages = [{ url: uploadedImgUrl, publicId: imgPublicId }];
       mediaType = "image";
     } else if (video) {
       const uploadedResponse = await cloudinary.uploader.upload(video, {
@@ -2242,9 +2599,9 @@ export const createPost = async (req, res) => {
       newPostData.videoPublicId = null;
       newPostData.mediaType = "none";
     } else {
-      newPostData.img = uploadedImgUrl;
-      newPostData.video = uploadedVideoUrl;
+      newPostData.img = uploadedImgUrl; // legacy compat
       newPostData.imgPublicId = imgPublicId;
+      newPostData.video = uploadedVideoUrl;
       newPostData.videoPublicId = videoPublicId;
       newPostData.mediaType = mediaType;
     }
@@ -2254,16 +2611,20 @@ export const createPost = async (req, res) => {
 
     let newImage = null;
 
-    if (img) {
-      newImage = new Image({
-        imageUrl: uploadedImgUrl,
-        parentDocument: newPost._id,
-        parentModel: "Post",
-        uploadedBy: userId,
-        publicId: imgPublicId,
-      });
-      await newImage.save();
-      newPost.image = newImage._id;
+    if (uploadedImages.length > 0) {
+      const imageDocs = await Promise.all(
+        uploadedImages.map(({ url, publicId }) =>
+          new Image({
+            imageUrl: url,
+            parentDocument: newPost._id,
+            parentModel: "Post",
+            uploadedBy: userId,
+            publicId,
+          }).save(),
+        ),
+      );
+      newPost.image = imageDocs[0]._id; // legacy single ref
+      newPost.images = imageDocs.map((d) => d._id); // new multi-image refs
       await newPost.save();
     }
 
@@ -2314,10 +2675,12 @@ export const createPost = async (req, res) => {
       .populate({
         path: "user",
         select:
-          "username fullName isCha isVerified isGoldVerified badges preferredBadge nameColor equipped",
+          "username isPrivate fullName isCha isVerified isGoldVerified badges preferredBadge nameColor equipped",
         populate: { path: "profileImg", select: "imageUrl" },
       })
       .populate({ path: "image", select: "imageUrl" })
+      .populate({ path: "images", select: "imageUrl" }) // ← add
+
       .populate({ path: "video" })
       .exec();
 
@@ -2454,8 +2817,6 @@ export const deletePost = async (req, res) => {
       }
 
       // ── Decrement hashtag counts for all posts being deleted ─────────────
-      // Fetch hashtags from every post in the deletion set so we can tally
-      // how many times each tag will be removed.
       const allDocsToDelete = await Post.find(
         { _id: { $in: idsToDelete } },
         { hashtags: 1 },
@@ -2469,10 +2830,6 @@ export const deletePost = async (req, res) => {
         }
       }
 
-      // Also include any reposts of the root post that we're wiping out.
-      // Reposts don't carry independent hashtags (they inherit from the original),
-      // so no extra count adjustment is needed for them.
-
       if (Object.keys(tagFrequency).length > 0) {
         const Hashtag = (await import("../models/hashtag.model.js")).default;
         const ops = Object.entries(tagFrequency).map(([tag, freq]) => ({
@@ -2481,15 +2838,40 @@ export const deletePost = async (req, res) => {
             update: { $inc: { count: -freq } },
           },
         }));
-        // Use { ordered: false } so a single tag miss doesn't abort the batch.
         await Hashtag.bulkWrite(ops, { ordered: false });
       }
 
-      // ── Media cleanup ─────────────────────────────────────────────────────
-      if (postToDelete.imgPublicId) {
-        await cloudinary.uploader.destroy(postToDelete.imgPublicId);
-        await Image.deleteOne({ parentDocument: postToDelete._id });
+      // ── Media cleanup (FIXED LOGIC) ───────────────────────────────────────
+
+      // 1. Fetch any attached subdocuments from the Image collection for this post
+      const imageSubDocuments = await Image.find(
+        { parentDocument: postToDelete._id },
+        { publicId: 1 },
+      ).lean();
+
+      // 2. Build a unique array of publicIds combining the subdocuments and legacy field
+      const publicIdsToDestroy = imageSubDocuments
+        .map((img) => img.publicId)
+        .filter(Boolean); // Filter out any empty/null records
+
+      if (
+        postToDelete.imgPublicId &&
+        !publicIdsToDestroy.includes(postToDelete.imgPublicId)
+      ) {
+        publicIdsToDestroy.push(postToDelete.imgPublicId);
       }
+
+      // 3. Fire parallel Cloudinary destruction calls if IDs are present
+      if (publicIdsToDestroy.length > 0) {
+        await Promise.all(
+          publicIdsToDestroy.map((publicId) => cloudinary.uploader.destroy(publicId)),
+        );
+      }
+
+      // 4. Wipe out referenced records from the Image database collection
+      await Image.deleteMany({ parentDocument: postToDelete._id });
+
+      // Video Cleanup Block
       if (postToDelete.videoPublicId) {
         await cloudinary.uploader.destroy(postToDelete.videoPublicId, {
           resource_type: "video",
@@ -2515,7 +2897,6 @@ export const deletePost = async (req, res) => {
       await Post.deleteOne({ _id: postId });
     } else {
       // Repost deletion: just decrement the original's repost counter.
-      // Reposts share the original's hashtags so no count adjustment needed.
       await Post.updateOne(
         { _id: postToDelete.repostedFrom },
         {
@@ -2654,6 +3035,7 @@ export const repostPost = async (req, res) => {
         pollOptions: originalPost.pollOptions,
         pollTotalVotes: originalPost.pollTotalVotes,
         image: originalPost.image,
+        images: originalPost.images,
         img: originalPost.img,
         video: originalPost.video,
         mediaType: originalPost.mediaType,
@@ -3044,7 +3426,7 @@ export const deleteMultipleScheduledPosts = async (req, res) => {
 export const createVentPost = async (req, res) => {
   try {
     const { text, isAnonymous, pollOptions } = req.body;
-    let { img, video } = req.body;
+    let { img, video, imgs } = req.body;
 
     const userId = req.user._id;
     const user = await User.findById(userId);
@@ -3053,16 +3435,36 @@ export const createVentPost = async (req, res) => {
       return res.status(403).json({ error: "Only Gold Verified users can post videos." });
     }
 
-    if (!text?.trim() && !img && !video && (!pollOptions || pollOptions.length === 0)) {
+    const incomingImgs = Array.isArray(imgs) ? imgs : [];
+    if (!text && !img && !incomingImgs.length && !video) {
       return res
         .status(400)
-        .json({ error: "Vent post must have text, media, or a poll." });
+        .json({ error: "Vent post must have text, image, or video." });
     }
 
-    if ((img || video) && pollOptions && pollOptions.length > 0) {
-      return res
-        .status(400)
-        .json({ error: "You cannot post a poll with an image or video." });
+    try {
+      if (
+        !text &&
+        !img &&
+        !incomingImgs.length &&
+        !video &&
+        (!pollOptions || pollOptions.length === 0)
+      ) {
+        return res
+          .status(400)
+          .json({ error: "Post must have text, image, video, or poll options." });
+      }
+
+      if ((img || video) && pollOptions && pollOptions.length > 0) {
+        return res
+          .status(400)
+          .json({ error: "You cannot post a poll with an image or video." });
+      }
+    } catch (uploadError) {
+      return res.status(500).json({
+        error: "Failed to upload media. Please try again.",
+        details: uploadError.message,
+      });
     }
 
     let uploadedImgUrl = null;
@@ -3070,22 +3472,37 @@ export const createVentPost = async (req, res) => {
     let imgPublicId = null;
     let videoPublicId = null;
     let mediaType = "none";
+    let uploadedImages = []; // { url, publicId }
 
-    if (img) {
-      const uploadedResponse = await cloudinary.uploader.upload(img, {
-        upload_preset: "ml_ventposts",
-      });
-      uploadedImgUrl = uploadedResponse.secure_url;
-      imgPublicId = uploadedResponse.public_id;
-      mediaType = "image";
-    } else if (video) {
-      const uploadedResponse = await cloudinary.uploader.upload(video, {
-        resource_type: "video",
-      });
-      uploadedVideoUrl = uploadedResponse.secure_url;
-      videoPublicId = uploadedResponse.public_id;
-      mediaType = "video";
-    }
+    const incomingSingleImg = img; // legacy single-image support
+
+ if (incomingImgs.length > 0) {
+   const uploads = await Promise.all(
+     incomingImgs.map((b64) =>
+       cloudinary.uploader.upload(b64, { upload_preset: "ml_posts" }),
+     ),
+   );
+   uploadedImages = uploads.map((u) => ({ url: u.secure_url, publicId: u.public_id }));
+   uploadedImgUrl = uploadedImages[0].url; // keep legacy field populated
+   imgPublicId = uploadedImages[0].publicId;
+   mediaType = "image";
+ } else if (incomingSingleImg) {
+   // legacy path — single base64 img
+   const uploadedResponse = await cloudinary.uploader.upload(incomingSingleImg, {
+     upload_preset: "ml_posts",
+   });
+   uploadedImgUrl = uploadedResponse.secure_url;
+   imgPublicId = uploadedResponse.public_id;
+   uploadedImages = [{ url: uploadedImgUrl, publicId: imgPublicId }];
+   mediaType = "image";
+ } else if (video) {
+   const uploadedResponse = await cloudinary.uploader.upload(video, {
+     resource_type: "video",
+   });
+   uploadedVideoUrl = uploadedResponse.secure_url;
+   videoPublicId = uploadedResponse.public_id;
+   mediaType = "video";
+ }
 
     const newPostData = {
       user: userId,
@@ -3119,16 +3536,20 @@ export const createVentPost = async (req, res) => {
     const newPost = new Post(newPostData);
     await newPost.save();
 
-    if (img) {
-      const newImage = new Image({
-        imageUrl: uploadedImgUrl,
-        parentDocument: newPost._id,
-        parentModel: "Post",
-        uploadedBy: userId,
-        publicId: imgPublicId,
-      });
-      await newImage.save();
-      newPost.image = newImage._id;
+    if (uploadedImages.length > 0) {
+      const imageDocs = await Promise.all(
+        uploadedImages.map(({ url, publicId }) =>
+          new Image({
+            imageUrl: url,
+            parentDocument: newPost._id,
+            parentModel: "Post",
+            uploadedBy: userId,
+            publicId,
+          }).save(),
+        ),
+      );
+      newPost.image = imageDocs[0]._id; // legacy single ref
+      newPost.images = imageDocs.map((d) => d._id); // new multi-image refs
       await newPost.save();
     }
 
@@ -3228,6 +3649,14 @@ export const getVentPosts = async (req, res) => {
       { $unwind: { path: "$image", preserveNullAndEmptyArrays: true } },
       {
         $lookup: {
+          from: "images",
+          localField: "images",
+          foreignField: "_id",
+          as: "images",
+        },
+      },
+      {
+        $lookup: {
           from: "posts",
           localField: "repostedFrom",
           foreignField: "_id",
@@ -3278,10 +3707,19 @@ export const getVentPosts = async (req, res) => {
             },
             { $unwind: { path: "$image", preserveNullAndEmptyArrays: true } },
             {
+              $lookup: {
+                from: "images",
+                localField: "images",
+                foreignField: "_id",
+                as: "images",
+              },
+            },
+            {
               $project: {
                 text: 1,
                 img: 1,
                 image: 1,
+                images: 1,
                 video: 1,
                 mediaType: 1,
                 likes: 1,
@@ -3308,6 +3746,7 @@ export const getVentPosts = async (req, res) => {
           isAnonymous: 1,
           img: 1,
           image: 1,
+          images: 1,
           video: 1,
           mediaType: 1,
           pollOptions: 1,

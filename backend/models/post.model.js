@@ -18,6 +18,13 @@ const postSchema = new mongoose.Schema(
       ref: "Image",
       default: null,
     },
+    images: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Image",
+        default: [],
+      },
+    ],
     video: {
       type: String,
     },
