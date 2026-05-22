@@ -35,7 +35,7 @@ const LinkPreviewCard = ({ url }) => {
 
   const playerClass = isPortrait
     ? "mx-auto w-full max-w-[330px]  h-full aspect-[9/16]"
-    : "w-full mx-auto max-w-[600px] aspect-video"
+    : " w-full mx-auto max-w-[600px] aspect-video"
 
   const shellClass = `overflow-hidden rounded-xl border ${meta.border} ${playerClass}`
 
