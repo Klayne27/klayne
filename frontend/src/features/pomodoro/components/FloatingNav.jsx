@@ -10,17 +10,17 @@ import { PiCoatHanger } from "react-icons/pi"
 import { shouldTextBeWhite } from "../../../utils/shouldTextBeWhite"
 import { useTheme } from "../../../context/ThemeContext"
 
-const Badge = ({ count }) => {
-  const { theme } = useTheme()
-  if (!count || count <= 0) return null
-  return (
-    <div
-      className={`border-full absolute ${shouldTextBeWhite(theme)} -right-3 -top-3 z-10 flex h-4 min-w-[1.1rem] items-center justify-center rounded-full border-white/20 bg-primary px-1 text-[9px] font-black shadow-sm ring-1 ring-black/20`}
-    >
-      {formatCount(count)}
-    </div>
-  )
-}
+// const Badge = ({ count }) => {
+//   const { theme } = useTheme()
+//   if (!count || count <= 0) return null
+//   return (
+//     <div
+//       className={`border-full absolute ${shouldTextBeWhite(theme)} -right-3 -top-3 z-10 flex h-4 min-w-[1.1rem] items-center justify-center rounded-full border-white/20 bg-primary px-1 text-[9px] font-black shadow-sm ring-1 ring-black/20`}
+//     >
+//       {formatCount(count)}
+//     </div>
+//   )
+// }
 
 const NavItem = ({ icon, path, label, badge, navigate }) => {
   const location = useLocation()
@@ -55,24 +55,28 @@ function FloatingNav() {
     useSocket()
 
   const socialItems = [
-    { icon: <GoHome size={22} />, path: "/", label: "Home", badge: <Badge count={newPostCount} /> },
+    { icon: <GoHome size={22} />, 
+      path: "/", 
+      label: "Home", 
+      // badge: <Badge count={newPostCount} /> 
+    },
     {
       icon: <GoBell size={22} />,
       path: "/notifications",
       label: "Notifications",
-      badge: <Badge count={unreadNotificationsCount} />,
+      // badge: <Badge count={unreadNotificationsCount} />,
     },
     {
       icon: <CiMail size={24} />,
       path: "/messages",
       label: "Messages",
-      badge: <Badge count={unreadMessageCount} />,
+      // badge: <Badge count={unreadMessageCount} />,
     },
     {
       icon: <IoChatbubblesOutline size={22} />,
       path: "/public-chat",
       label: "Public Chat",
-      badge: <Badge count={unreadPublicChatCount} />,
+      // badge: <Badge count={unreadPublicChatCount} />,
     },
   ]
 
@@ -85,7 +89,7 @@ function FloatingNav() {
 
   return (
     <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 md:bottom-auto md:left-6 md:top-1/2 md:-translate-y-1/2 md:translate-x-0">
-      <div className="flex flex-row items-center md:gap-1.5 rounded-2xl border border-white/20 bg-white/[0.03] p-0.5 md:p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-2xl before:absolute before:inset-0 before:-z-10 before:rounded-2xl before:bg-gradient-to-b before:from-white/[0.08] before:to-transparent md:flex-col">
+      <div className="flex flex-row items-center rounded-2xl border border-white/20 bg-white/[0.03] p-0.5 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-2xl before:absolute before:inset-0 before:-z-10 before:rounded-2xl before:bg-gradient-to-b before:from-white/[0.08] before:to-transparent md:flex-col md:gap-1.5 md:p-1.5">
         {socialItems.map((item) => (
           <NavItem key={item.path} {...item} navigate={navigate} />
         ))}
