@@ -67,7 +67,7 @@ export const useMessageScroll = ({
       setTimeout(() => {
         scrollToBottom()
         setShowNewMessageButton(false)
-      }, 10)
+      }, 50)
     }
   }, [scrollToBottom, setShowNewMessageButton])
 
@@ -90,21 +90,7 @@ export const useMessageScroll = ({
     setShowNewMessageButton(false)
   }, [scrollToBottom, setShowNewMessageButton])
 
-  // ─── Main scroll-to-bottom effect ─────────────────────────────────────────
-  //
-  // THE FIX: Previously scrollToBottom() was only called inside
-  // waitForImagesToLoad().then(...), meaning the chat sat at scrollTop=0
-  // (visually stuck at the top) until every image finished loading over the
-  // network. For slow/uncached images this was clearly visible.
-  //
-  // Now we call scrollToBottom() immediately (synchronously inside
-  // useLayoutEffect, before the browser paints), so the user always lands at
-  // the bottom. We then call it a second time once images have loaded, in case
-  // their height increased scrollHeight beyond where we already scrolled to.
-  //
-  // The re-check `!isUserScrollingUp.current` inside .then() prevents the
-  // second call from yanking the user back to the bottom if they deliberately
-  // scrolled up while images were loading.
+
   useLayoutEffect(() => {
     const listEl = messageListRef.current
     if (!listEl || isLoadingMessages) return

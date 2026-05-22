@@ -74,7 +74,7 @@ const MessageBubble = ({
               (() => {
                 const previewable = extractPreviewableUrl(message.text)
                 return previewable ? (
-                  <LinkPreviewCard url={previewable.url} platform={previewable.platform} />
+                  <LinkPreviewCard url={previewable.url} platform={previewable.platform} onLoad={onLoadImage} />
                 ) : null
               })()}
           </>

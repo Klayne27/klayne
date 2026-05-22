@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { FaYoutube } from "react-icons/fa"
 import { SiTiktok } from "react-icons/si"
 import { useLinkPreview } from "../../hooks/customHooks/useLinkPreview"
@@ -16,9 +16,17 @@ const PLATFORM_META = {
   },
 }
 
-const LinkPreviewCard = ({ url }) => {
+const LinkPreviewCard = ({ url, onLoad }) => {
   const { preview, isLoading } = useLinkPreview(url)
   const [isPlaying, setIsPlaying] = useState(false)
+
+  // When the async fetch settles (either way), notify the scroll hook
+  // so it can re-evaluate whether to scroll to bottom.
+  useEffect(() => {
+    if (!isLoading) {
+      onLoad?.()
+    }
+  }, [isLoading, onLoad])
 
   if (isLoading) {
     return <div className="mt-2 h-[72px] w-full animate-pulse rounded-xl bg-base-300/40" />
@@ -39,13 +47,10 @@ const LinkPreviewCard = ({ url }) => {
 
   const shellClass = `overflow-hidden rounded-xl border ${meta.border} ${playerClass}`
 
-  // ── Inline player (YouTube AND TikTok now use identical logic) ────────────
-  // Both platforms provide an embedUrl; both get click-to-play behaviour.
   if (isPlaying && embedUrl) {
-    // Both YouTube and TikTok player/v1 support autoplay=1
     const iframeSrc = embedUrl.includes("autoplay")
-      ? embedUrl // params already baked in (future-proof)
-      : `${embedUrl}&autoplay=1` // append for YouTube (its embedUrl ends without autoplay)
+      ? embedUrl
+      : `${embedUrl}&autoplay=1`
 
     return (
       <div
@@ -67,7 +72,6 @@ const LinkPreviewCard = ({ url }) => {
     )
   }
 
-  // ── No thumbnail — minimal link pill ─────────────────────────────────────
   if (!thumbnail) {
     const canPlay = !!embedUrl
     return canPlay ? (
@@ -97,7 +101,6 @@ const LinkPreviewCard = ({ url }) => {
     )
   }
 
-  // ── Thumbnail card — click to play when embedUrl is available ─────────────
   const isClickToPlay = !!embedUrl
 
   const cardProps = isClickToPlay
@@ -133,13 +136,12 @@ const LinkPreviewCard = ({ url }) => {
           alt={title ?? "Video preview"}
           className="absolute inset-0 h-full w-full object-cover"
           loading="lazy"
+          onLoad={onLoad}  // ← fires after the thumbnail image itself loads
         />
         <div className="absolute inset-0 bg-black/25" />
 
-        {/* Play button — same for both platforms */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-black/60 backdrop-blur-sm">
-            {/* Standard play triangle for both when embedUrl exists */}
             <div className="ml-1 border-y-[8px] border-l-[14px] border-y-transparent border-l-white" />
           </div>
         </div>
