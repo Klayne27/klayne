@@ -16,13 +16,6 @@ const PLATFORM_META = {
   },
 }
 
-// ── TikTok cannot be embedded — this component explains why clearly ───────────
-// TikTok's oEmbed API intentionally omits a direct video URL or iframe src.
-// Their embed.js widget is ~200kb, slow, and blocked by most ad blockers.
-// The correct UX (used by Twitter/X, Discord, Slack) is:
-//   thumbnail + metadata card → click → opens tiktok.com in new tab.
-// That is exactly what this component does for TikTok.
-
 const LinkPreviewCard = ({ url }) => {
   const { preview, isLoading } = useLinkPreview(url)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -30,50 +23,66 @@ const LinkPreviewCard = ({ url }) => {
   if (isLoading) {
     return <div className="mt-2 h-[72px] w-full animate-pulse rounded-xl bg-base-300/40" />
   }
-
-  // Nothing usable from the API
   if (!preview) return null
 
-  const platform = preview.platform
+  const { platform, videoId, embedUrl, thumbnail, title, author, isShort } = preview
   const meta = PLATFORM_META[platform]
   if (!meta) return null
 
   const isYoutube = platform === "youtube"
-  const isTikTok  = platform === "tiktok"
-  const isShort   = !!preview.isShort
+  const isTikTok = platform === "tiktok"
+  const isPortrait = isTikTok || !!isShort
 
-  // ── Aspect ratio ──────────────────────────────────────────────────────────
-  // YouTube Shorts and TikTok are portrait 9:16.
-  // Regular YouTube is landscape 16:9.
-  const isPortrait = isShort || isTikTok
   const playerClass = isPortrait
-    ? "mx-auto w-full max-w-[220px] aspect-[9/16]"
+    ? "mx-auto w-full max-w-[330px]  h-full aspect-[9/16]"
     : "w-full aspect-video"
 
   const shellClass = `overflow-hidden rounded-xl border ${meta.border} ${playerClass}`
 
-  // ── YouTube inline player ─────────────────────────────────────────────────
-  if (isPlaying && isYoutube && preview.videoId) {
+  // ── Inline player (YouTube AND TikTok now use identical logic) ────────────
+  // Both platforms provide an embedUrl; both get click-to-play behaviour.
+  if (isPlaying && embedUrl) {
+    // Both YouTube and TikTok player/v1 support autoplay=1
+    const iframeSrc = embedUrl.includes("autoplay")
+      ? embedUrl // params already baked in (future-proof)
+      : `${embedUrl}&autoplay=1` // append for YouTube (its embedUrl ends without autoplay)
+
     return (
       <div
         className={`mt-2 overflow-hidden rounded-xl border bg-black ${meta.border} ${playerClass}`}
         onClick={(e) => e.stopPropagation()}
       >
         <iframe
-          src={`https://www.youtube.com/embed/${preview.videoId}?autoplay=1&rel=0`}
-          title={preview.title ?? "YouTube"}
-          allow="autoplay; encrypted-media; fullscreen"
+          src={iframeSrc}
+          title={title ?? platform}
+          allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
           allowFullScreen
           className="h-full w-full"
+          referrerPolicy="strict-origin-when-cross-origin"
+          {...(isTikTok && {
+            sandbox: "allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox",
+          })}
         />
       </div>
     )
   }
 
-  // ── No thumbnail available (TikTok oEmbed failed) ─────────────────────────
-  // Show a minimal "Watch on TikTok" pill so the link is still surfaced.
-  if (!preview.thumbnail) {
-    return (
+  // ── No thumbnail — minimal link pill ─────────────────────────────────────
+  if (!thumbnail) {
+    const canPlay = !!embedUrl
+    return canPlay ? (
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          setIsPlaying(true)
+        }}
+        className={`mt-2 inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition-colors hover:bg-base-200 ${meta.border}`}
+      >
+        {meta.icon}
+        <span className="flex items-center gap-1">▶ Play on {meta.label}</span>
+        {title && <span className="max-w-[200px] truncate text-slate-500">{title}</span>}
+      </button>
+    ) : (
       <a
         href={url}
         target="_blank"
@@ -83,25 +92,26 @@ const LinkPreviewCard = ({ url }) => {
       >
         {meta.icon}
         <span>Watch on {meta.label}</span>
-        {preview.title && (
-          <span className="max-w-[200px] truncate text-slate-500">{preview.title}</span>
-        )}
+        {title && <span className="max-w-[200px] truncate text-slate-500">{title}</span>}
       </a>
     )
   }
 
-  // ── Thumbnail card ────────────────────────────────────────────────────────
-  // YouTube  → clicking plays inline (no new tab)
-  // TikTok   → clicking opens tiktok.com in a new tab (cannot embed)
-  const isClickToPlay = isYoutube && !!preview.videoId
+  // ── Thumbnail card — click to play when embedUrl is available ─────────────
+  const isClickToPlay = !!embedUrl
 
   const cardProps = isClickToPlay
     ? {
         as: "div",
         role: "button",
         tabIndex: 0,
-        onClick: (e) => { e.stopPropagation(); setIsPlaying(true) },
-        onKeyDown: (e) => { if (e.key === "Enter") setIsPlaying(true) },
+        onClick: (e) => {
+          e.stopPropagation()
+          setIsPlaying(true)
+        },
+        onKeyDown: (e) => {
+          if (e.key === "Enter") setIsPlaying(true)
+        },
         className: `mt-2 cursor-pointer ${shellClass}`,
       }
     : {
@@ -118,47 +128,29 @@ const LinkPreviewCard = ({ url }) => {
   return (
     <Tag {...rest}>
       <div className="relative h-full w-full bg-black">
-        {/* Thumbnail */}
         <img
-          src={preview.thumbnail}
-          alt={preview.title ?? "Video preview"}
+          src={thumbnail}
+          alt={title ?? "Video preview"}
           className="absolute inset-0 h-full w-full object-cover"
           loading="lazy"
         />
-
-        {/* Dim overlay */}
         <div className="absolute inset-0 bg-black/25" />
 
-        {/* Play button */}
+        {/* Play button — same for both platforms */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-black/60 backdrop-blur-sm">
-            {isTikTok ? (
-              // TikTok: show the TikTok icon instead of a play arrow to signal "opens externally"
-              <SiTiktok className="text-white" size={20} />
-            ) : (
-              <div className="ml-1 border-y-[8px] border-l-[14px] border-y-transparent border-l-white" />
-            )}
+            {/* Standard play triangle for both when embedUrl exists */}
+            <div className="ml-1 border-y-[8px] border-l-[14px] border-y-transparent border-l-white" />
           </div>
         </div>
 
-        {/* Bottom metadata strip */}
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3">
           <div className="flex items-center gap-1 text-[11px] text-white/80">
             {meta.icon}
             <span>{meta.label}</span>
-            {/* Small "opens in new tab" hint for TikTok */}
-            {isTikTok && (
-              <span className="ml-auto text-[10px] text-white/50">↗ tap to open</span>
-            )}
           </div>
-
-          {preview.title && (
-            <p className="line-clamp-2 text-sm font-semibold text-white">{preview.title}</p>
-          )}
-
-          {preview.author && (
-            <p className="truncate text-[11px] text-white/70">{preview.author}</p>
-          )}
+          {title && <p className="line-clamp-2 text-sm font-semibold text-white">{title}</p>}
+          {author && <p className="truncate text-[11px] text-white/70">{author}</p>}
         </div>
       </div>
     </Tag>
