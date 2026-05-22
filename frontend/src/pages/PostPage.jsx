@@ -279,7 +279,7 @@ const handlePaste = usePasteHandler({
       <div className="flex items-center gap-2 border-b border-accent px-3 py-2 md:gap-4 md:px-4 md:py-3.5">
         <button
           onClick={() => navigate(-1)}
-          className="flex-shrink-0 rounded-full p-2.5 transition duration-200 hover:bg-gray-800"
+          className="flex-shrink-0 rounded-full p-2.5 transition duration-200 hover:bg-gray-800/80 hover:text-white"
         >
           <FaArrowLeft className="h-4 w-4" />
         </button>
