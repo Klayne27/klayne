@@ -7,7 +7,7 @@ import { Link, useLocation, useNavigate, useParams } from "react-router-dom"
 import LoadingSpinner from "../../../components/common/LoadingSpinner.jsx"
 import { formatPostDate } from "../../../utils/date/index.js"
 import { useAuthUser } from "../../auth/authHooks/useAuthUser.js"
-import { renderClickableText } from "../../../utils/textUtils.jsx"
+import { extractPreviewableUrl, renderClickableText } from "../../../utils/textUtils.jsx"
 import React, { useEffect, useState, useRef } from "react"
 import { FaBookmark, FaRegBookmark } from "react-icons/fa6"
 import PollDisplay from "../../../components/common/PollDisplay.jsx"
@@ -44,6 +44,7 @@ import { useLightboxStore } from "../../../store/useLightboxStore.js"
 import UserAvatar from "../../../components/common/UserAvatar.jsx"
 import UserFullName from "../../../components/common/UserFullname.jsx"
 import PostImagesGrid from "./PostImagesGrid.jsx"
+import LinkPreviewCard from "../../../components/common/LinkPreviewCard.jsx"
 
 const Post = ({
   post,
@@ -554,7 +555,7 @@ const Post = ({
                     {isMyOriginalPost ? (
                       <>
                         <button
-                          className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold  transition duration-200 hover:bg-gray-700/30"
+                          className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
                           onClick={(e) => {
                             handleInteractiveClick(e)
                             setShowEditModal(true)
@@ -566,7 +567,7 @@ const Post = ({
 
                         {hasEditHistory && (
                           <button
-                            className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold  transition duration-200 hover:bg-gray-700/30"
+                            className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
                             onClick={(e) => {
                               e.stopPropagation()
                               setIsHistoryModalOpen(true)
@@ -594,7 +595,7 @@ const Post = ({
                       <>
                         {!sourcePost.isAnonymous && (
                           <button
-                            className="flex w-full items-center gap-2 px-4 py-2 text-left  transition duration-200 hover:bg-gray-700/30"
+                            className="flex w-full items-center gap-2 px-4 py-2 text-left transition duration-200 hover:bg-gray-700/30"
                             onClick={handleFollowClick}
                             disabled={isFollowingOrUnfollowing}
                           >
@@ -616,7 +617,7 @@ const Post = ({
 
                         {hasEditHistory && (
                           <button
-                            className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold  transition duration-200 hover:bg-gray-700/30"
+                            className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
                             onClick={(e) => {
                               e.stopPropagation()
                               setIsHistoryModalOpen(true)
@@ -703,6 +704,13 @@ const Post = ({
                 Your browser does not support the video tag.
               </video>
             )}
+            {sourcePost.text &&
+              (() => {
+                const previewable = extractPreviewableUrl(sourcePost.text)
+                return previewable ? (
+                  <LinkPreviewCard url={previewable.url} platform={previewable.platform} />
+                ) : null
+              })()}
             {post.pollOptions && post.pollOptions.length > 0 && <PollDisplay post={post} />}
           </div>
 

@@ -112,3 +112,18 @@ export function formatCount(count) {
     return (count / 1000000).toFixed(1) + "m"
   }
 }
+
+const YOUTUBE_REGEX =
+  /(?:youtube\.com\/(?:watch\?(?:[^&\s]*&)*v=|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+const TIKTOK_REGEX = /tiktok\.com\/@[\w.-]+\/video\/\d+/
+
+// Returns the first previewable URL found in a text string, or null
+export const extractPreviewableUrl = (text) => {
+  if (!text) return null
+  const urls = text.match(/https?:\/\/[^\s]+/g) ?? []
+  for (const url of urls) {
+    if (YOUTUBE_REGEX.test(url)) return { url, platform: "youtube" }
+    if (TIKTOK_REGEX.test(url)) return { url, platform: "tiktok" }
+  }
+  return null
+}

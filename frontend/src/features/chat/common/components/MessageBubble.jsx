@@ -1,8 +1,9 @@
 // src/features/chat/common/components/MessageBubble.jsx
 import { useAuthUser } from "../../../auth/authHooks/useAuthUser"
-import { renderClickableText } from "../../../../utils/textUtils"
+import { extractPreviewableUrl, renderClickableText } from "../../../../utils/textUtils"
 import { getOptimizedImageUrl } from "../../../../utils/cloudinaryUtils"
 import { useLightboxStore } from "../../../../store/useLightboxStore"
+import LinkPreviewCard from "../../../../components/common/LinkPreviewCard"
 
 const MessageBubble = ({
   message,
@@ -69,6 +70,13 @@ const MessageBubble = ({
                 {renderClickableText(message.text)}
               </p>
             )}
+            {message.text &&
+              (() => {
+                const previewable = extractPreviewableUrl(message.text)
+                return previewable ? (
+                  <LinkPreviewCard url={previewable.url} platform={previewable.platform} />
+                ) : null
+              })()}
           </>
         )}
       </div>

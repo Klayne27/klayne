@@ -511,9 +511,9 @@ export const PomodoroTimerEngine = () => {
       document.title = "Goal Reached!"
     } else if (isActive) {
       const status = isBreak ? "Break" : "Focus"
-      document.title = `${getTimeString(timer)} ${status} | Klayne`
+      document.title = `${getTimeString(timer - 1)} ${status} | Klayne`
     } else if (timer > 0) {
-      document.title = `Paused - ${getTimeString(timer)}`
+      document.title = `Paused - ${getTimeString(timer - 1)}`
     } else {
       document.title = "Klayne"
     }

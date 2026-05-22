@@ -25,6 +25,7 @@ import wardrobeRoutes from "./routes/wardrobe.routes.js";
 import hashtagRoutes from "./routes/hashtag.routes.js";
 import suggestionRoutes from "./routes/suggestion.routes.js";
 import wordleRoutes from "./routes/wordle.routes.js";
+import linkPreviewRoutes from "./routes/linkPreview.routes.js";
 
 import connectMongoDB from "./db/connectMongoDB.js";
 import { publishScheduledPosts } from "./cron/scheduledPostPublisher.js";
@@ -73,6 +74,8 @@ app.use("/api/wardrobe", wardrobeRoutes);
 app.use("/api/hashtags", hashtagRoutes);
 app.use("/api/suggestions", suggestionRoutes);
 app.use("/api/wordle", wordleRoutes);
+app.use("/api/link-preview", linkPreviewRoutes)
+
 
 
 if (process.env.NODE_ENV === "production") {

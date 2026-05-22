@@ -207,28 +207,6 @@ const PrivateChatMessageItem = ({
 
   const messageDeleted = <span className="text-sm italic text-gray-600">[Message Deleted]</span>
 
-  
-
-  // if (isTypingOtherUser) {
-  //   return (
-  //     <div className="message-item-container ml-10 flex justify-start rounded-lg p-1">
-  //       <div className="flex max-w-[70%] flex-col rounded-full bg-[#2F3336] p-3 text-white">
-  //         <span className="flex items-center gap-0.5">
-  //           <span className="pulsing-dot pulsing-dot-1 inline-block">
-  //             <FaCircle size={6} />
-  //           </span>
-  //           <span className="pulsing-dot pulsing-dot-2 inline-block">
-  //             <FaCircle size={6} />
-  //           </span>
-  //           <span className="pulsing-dot pulsing-dot-3 inline-block">
-  //             <FaCircle size={6} />
-  //           </span>
-  //         </span>
-  //       </div>
-  //     </div>
-  //   )
-  // }
-
   return (
     <>
       {message.isNewDay && <DateSeparator date={message.createdAt} />}
@@ -332,48 +310,18 @@ const PrivateChatMessageItem = ({
               />
             )}
 
-            {/* -mt-5 slides the bubble up over the ghost's pb-6 pocket → ~30% overlap */}
-            {/* z-10 ensures the main bubble renders on top of the ghost visually */}
             <div className={`flex ${message.repliedTo ? "relative z-10 -mt-5" : ""}`}>
               <MessageBubble
                 message={message}
                 messageText={message.text}
                 isSentByCurrentUser={isSentByCurrentUser}
                 bubbleClasses={bubbleClasses}
-                onLoadImage={onLoadImage}
+                onLoadImage={onLoadImage} 
                 messageContentStyle={messageContentStyle}
                 onJumpToOriginalMessage={handleJumpToOriginalMessage}
                 isReplyToMessageDeleted={isReplyToMessageDeleted}
                 hasReply={!!message.repliedTo}
               />
-              {/* {selectedConversation.isGroup ? (
-                <div></div>
-              ) : (
-                isSentByCurrentUser && (
-                  <span className="ml-1 flex-shrink-0 self-end text-sm">
-                    {message?.seen ? (
-                      <div className="mt-1">
-                        <img
-                          src={
-                            selectedConversation.participants?.find(
-                              (p) => p._id.toString() !== currentUser._id.toString(),
-                            )?.profileImg?.imageUrl || "/avatar-placeholder.png"
-                          }
-                          alt=""
-                          title={`Seen by @${
-                            selectedConversation.participants?.find(
-                              (p) => p._id.toString() !== currentUser._id.toString(),
-                            )?.username ?? ""
-                          }`}
-                          className="h-4 w-4 rounded-full object-cover ring-1 ring-base-100"
-                        />
-                      </div>
-                    ) : (
-                      <BsCheck2 size={16} className="text-gray-500" />
-                    )}
-                  </span>
-                )
-              )} */}
             </div>
 
             {hasAnyReactions && (
