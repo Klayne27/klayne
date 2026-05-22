@@ -95,7 +95,7 @@ const ImageLightbox = ({ images, currentIndex, onClose, onPrev, onNext }) => {
         <IoClose size={40} />
       </button>
 
-      {images.length > 1 && !isZoomed && (
+      {images?.length > 1 && !isZoomed && (
         <div className="contents">
           <button
             onClick={(e) => {

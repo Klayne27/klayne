@@ -38,7 +38,7 @@ const NavItem = ({ icon, path, label, badge, navigate }) => {
     >
       <div className="relative text-slate-400 transition-transform duration-200 group-hover:-translate-y-0.5 md:group-hover:-translate-y-0 md:group-hover:translate-x-0.5">
         {icon}
-        {badge}
+        {/* {badge} */}
       </div>
 
       {/* Responsive Tooltip: Top for mobile, Right for desktop */}
@@ -51,8 +51,8 @@ const NavItem = ({ icon, path, label, badge, navigate }) => {
 
 function FloatingNav() {
   const navigate = useNavigate()
-  const { unreadMessageCount, unreadPublicChatCount, newPostCount, unreadNotificationsCount } =
-    useSocket()
+  // const { unreadMessageCount, unreadPublicChatCount, newPostCount, unreadNotificationsCount } =
+  //   useSocket()
 
   const socialItems = [
     { icon: <GoHome size={22} />, 
