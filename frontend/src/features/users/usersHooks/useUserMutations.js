@@ -150,8 +150,7 @@ export const useFollow = () => {
             if (!isTargetPrivate) {
               newFollowing.push(userIdToFollow)
             }
-            // If private, we don't modify the 'following' array optimistically.
-            // The UI should instead rely on a "pendingRequest" check if you have one.
+
           }
 
           return { ...oldData, following: newFollowing }
