@@ -10,20 +10,16 @@ const fmt = (ms) => {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}.${String(cs).padStart(2, "0")}`
 }
 
-// ── SVG clock constants ──────────────────────────────────────────────────────
+// ── SVG clock constants ───────────────────────────────────────────────────────
 const CX = 100,
   CY = 100,
   R = 82
-
 const toRad = (deg) => (deg * Math.PI) / 180
-
-// Modified to accept custom center points for the mini-clock
 const pointAt = (r, deg, cx = CX, cy = CY) => ({
   x: cx + r * Math.cos(toRad(deg - 90)),
   y: cy + r * Math.sin(toRad(deg - 90)),
 })
 
-// Main clock ticks (60 seconds)
 const TICKS = Array.from({ length: 60 }, (_, i) => {
   const deg = (i / 60) * 360
   const isVeryMajor = i % 15 === 0
@@ -36,13 +32,11 @@ const TICKS = Array.from({ length: 60 }, (_, i) => {
   }
 })
 
-// Skips of 5 for the seconds labels
 const LABELS = Array.from({ length: 12 }, (_, i) => i * 5).map((s) => ({
   s: s === 0 ? "60" : s,
   ...pointAt(R - 22, (s / 60) * 360),
 }))
 
-// Mini clock constants (30 minutes)
 const MINI_CX = 100,
   MINI_CY = 142,
   MINI_R = 22
@@ -62,16 +56,56 @@ const MINI_LABELS = Array.from({ length: 6 }, (_, i) => i * 5).map((m) => ({
   ...pointAt(MINI_R - 8, (m / 30) * 360, MINI_CX, MINI_CY),
 }))
 
-// ── Clock face component ──────────────────────────────────────────────────────
-const Clock = memo(({ totalMs, lapMs, lapNum }) => {
-  // Main arm tracks total seconds
-  const mainDeg = ((totalMs % 60000) / 60000) * 360
-  const mainTip = pointAt(R - 15, mainDeg)
-  const mainDot = pointAt(R - 9, mainDeg)
+// ── Animated arm using CSS transform on a <g> ─────────────────────────────────
+// We rotate the whole group around the pivot (cx, cy) so the arm always
+// points correctly. Using a CSS rotate() instead of computing x2/y2 means
+// we can attach a CSS transition and let the browser interpolate.
+//
+// Reset animation: when resetting we animate *forward* to 360° (≡ 0°) so the
+// hand sweeps clockwise to the top rather than spinning backwards.
+const Arm = ({
+  cx,
+  cy, // pivot point
+  length, // arm length in SVG units
+  strokeWidth = 2,
+  deg, // current angle (0 = 12 o'clock)
+  animating, // true during reset sweep
+  className = "stroke-primary",
+  children, // optional extra elements at the pivot
+}) => {
+  // tipY is above the pivot by `length`
+  const tipX = cx
+  const tipY = cy - length
 
-  // Mini arm tracks total minutes (30 mins = 1,800,000 ms)
+  // During reset: animate to 360 (same as 0, but clockwise from current pos)
+  const rotateTo = animating ? -360 : deg
+
+  return (
+    <g
+      style={{
+        transformOrigin: `${cx}px ${cy}px`,
+        transform: `rotate(${rotateTo}deg)`,
+        transition: animating ? "transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)" : "none",
+      }}
+    >
+      <line
+        x1={cx}
+        y1={cy}
+        x2={tipX}
+        y2={tipY}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        className={className}
+      />
+      {children}
+    </g>
+  )
+}
+
+// ── Clock face ────────────────────────────────────────────────────────────────
+const Clock = memo(({ totalMs, lapMs, lapNum, resetting }) => {
+  const mainDeg = ((totalMs % 60000) / 60000) * 360
   const minDeg = ((totalMs % 1800000) / 1800000) * 360
-  const minTip = pointAt(MINI_R - 2, minDeg, MINI_CX, MINI_CY)
 
   return (
     <svg viewBox="0 0 200 200" className="h-full w-full select-none drop-shadow-sm">
@@ -106,7 +140,7 @@ const Clock = memo(({ totalMs, lapMs, lapNum }) => {
         />
       ))}
 
-      {/* Main Labels every 5 s */}
+      {/* Main Labels */}
       {LABELS.map(({ s, x, y }) => (
         <text
           key={`label-${s}`}
@@ -123,10 +157,8 @@ const Clock = memo(({ totalMs, lapMs, lapNum }) => {
         </text>
       ))}
 
-      {/* ── Mini 30-Minute Dial ── */}
+      {/* Mini Dial */}
       <circle cx={MINI_CX} cy={MINI_CY} r={MINI_R} className="fill-base-200/30" strokeWidth={1} />
-
-      {/* Mini Ticks */}
       {MINI_TICKS.map(({ from, to, isMajor }, i) => (
         <line
           key={`min-tick-${i}`}
@@ -139,8 +171,6 @@ const Clock = memo(({ totalMs, lapMs, lapNum }) => {
           className={isMajor ? "stroke-base-content/80" : "stroke-base-content/30"}
         />
       ))}
-
-      {/* Mini Labels */}
       {MINI_LABELS.map(({ m, x, y }) => (
         <text
           key={`min-label-${m}`}
@@ -157,20 +187,20 @@ const Clock = memo(({ totalMs, lapMs, lapNum }) => {
         </text>
       ))}
 
-      {/* Mini Arm */}
-      <line
-        x1={MINI_CX}
-        y1={MINI_CY}
-        x2={minTip.x}
-        y2={minTip.y}
+      {/* Mini Arm — always rendered, animates on reset */}
+      <Arm
+        cx={MINI_CX}
+        cy={MINI_CY}
+        length={MINI_R - 2}
         strokeWidth={1.5}
-        strokeLinecap="round"
-        className="stroke-primary"
-      />
-      <circle cx={MINI_CX} cy={MINI_CY} r={2} className="fill-primary" />
-      <circle cx={MINI_CX} cy={MINI_CY} r={0.75} className="fill-base-100" />
+        deg={minDeg}
+        animating={resetting}
+      >
+        <circle cx={MINI_CX} cy={MINI_CY} r={2} className="fill-primary" />
+        <circle cx={MINI_CX} cy={MINI_CY} r={0.75} className="fill-base-100" />
+      </Arm>
 
-      {/* ── Digital Displays (Top Center) ── */}
+      {/* Digital display */}
       <text
         x={CX}
         y={CY - 42}
@@ -199,43 +229,35 @@ const Clock = memo(({ totalMs, lapMs, lapNum }) => {
         </text>
       )}
 
-      {/* ── Main Arm (Drawn last to sit on top of everything) ── */}
-      <line
-        x1={CX}
-        y1={CY}
-        x2={mainTip.x}
-        y2={mainTip.y}
+      {/* Main Arm — always rendered, animates on reset */}
+      <Arm
+        cx={CX}
+        cy={CY}
+        length={R - 15}
         strokeWidth={2}
-        strokeLinecap="round"
+        deg={mainDeg}
+        animating={resetting}
         className="stroke-primary"
-        filter="url(#shadow)"
       />
 
-      {/* Main Tip dot */}
-      {/* <circle
-        cx={mainDot.x}
-        cy={mainDot.y}
-        r={4.5}
-        className="fill-primary"
-        filter="url(#shadow)"
-      />
-      <circle cx={mainDot.x} cy={mainDot.y} r={1.5} className="fill-base-100" /> */}
-
-      {/* Main Hub */}
+      {/* Hub */}
       <circle cx={CX} cy={CY} r={4.5} className="fill-base-content" />
       <circle cx={CX} cy={CY} r={2} className="fill-base-100" />
     </svg>
   )
 })
 
-// ── Main stopwatch ────────────────────────────────────────────────────────────
+// ── Stopwatch ─────────────────────────────────────────────────────────────────
 const Stopwatch = () => {
   const { isRunning, startTime, accumulatedMs, lapStartMs, laps, start, pause, lap, reset } =
     useStopwatchStore()
 
   const [now, setNow] = useState(Date.now)
+  const [resetting, setResetting] = useState(false) // drives reset animation
   const rafRef = useRef(null)
+  const resetTimerRef = useRef(null)
 
+  // RAF ticker
   useEffect(() => {
     cancelAnimationFrame(rafRef.current)
     if (!isRunning) return
@@ -247,9 +269,25 @@ const Stopwatch = () => {
     return () => cancelAnimationFrame(rafRef.current)
   }, [isRunning])
 
-  const totalMs = isRunning && startTime ? accumulatedMs + (now - startTime) : accumulatedMs
-  const lapMs = totalMs - lapStartMs
+const totalMs = isRunning && startTime ? accumulatedMs + Math.max(0, now - startTime) : accumulatedMs  
+const lapMs = totalMs - lapStartMs
   const started = totalMs > 0 || laps.length > 0
+
+  const handleReset = () => {
+    if (!started || isRunning) return
+
+    // 1. Trigger the sweep-to-360 animation
+    setResetting(true)
+
+    // 2. After the transition (600ms) actually zero the store and un-flag
+    clearTimeout(resetTimerRef.current)
+    resetTimerRef.current = setTimeout(() => {
+      reset()
+      setResetting(false)
+    }, 600)
+  }
+
+  useEffect(() => () => clearTimeout(resetTimerRef.current), [])
 
   const shortestMs = laps.length > 1 ? Math.min(...laps.map((l) => l.lapMs)) : null
   const longestMs = laps.length > 1 ? Math.max(...laps.map((l) => l.lapMs)) : null
@@ -258,15 +296,12 @@ const Stopwatch = () => {
   return (
     <section className="mx-auto w-full max-w-2xl px-4 pb-20">
       <div className="flex flex-col items-center">
-        {/* ── Clock ── */}
         <div className="mt-4 w-full max-w-[320px]">
-          {/* Passed totalMs to feed main hand and new sub-dial, and removed external Total Time */}
-          <Clock totalMs={totalMs} lapMs={lapMs} lapNum={laps.length + 1} />
+          <Clock totalMs={totalMs} lapMs={lapMs} lapNum={laps.length + 1} resetting={resetting} />
         </div>
 
-        {/* ── Controls ── */}
+        {/* Controls */}
         <div className="mt-8 flex items-center justify-center gap-8">
-          {/* Lap */}
           <button
             onClick={lap}
             disabled={!isRunning}
@@ -276,7 +311,6 @@ const Stopwatch = () => {
             <span className="text-[8px] font-black uppercase tracking-widest opacity-60">Lap</span>
           </button>
 
-          {/* Play / Pause */}
           <button
             onClick={isRunning ? pause : start}
             className={`flex h-[76px] w-[76px] items-center justify-center rounded-full text-white shadow-xl transition-all active:scale-90 ${
@@ -288,9 +322,8 @@ const Stopwatch = () => {
             {isRunning ? <FaPause size={26} /> : <FaPlay size={26} className="ml-1.5" />}
           </button>
 
-          {/* Reset */}
           <button
-            onClick={reset}
+            onClick={handleReset}
             disabled={!started || isRunning}
             className="flex h-16 w-16 flex-col items-center justify-center gap-1 rounded-full border border-base-300 bg-base-100 text-base-content shadow-sm transition-all active:scale-90 enabled:hover:bg-base-200 enabled:hover:shadow-md disabled:cursor-default disabled:opacity-30"
           >
@@ -302,7 +335,7 @@ const Stopwatch = () => {
         </div>
       </div>
 
-      {/* ── Lap table ── */}
+      {/* Lap table */}
       {started && (
         <div className="mt-12 max-h-[320px] overflow-y-auto rounded-2xl border border-base-300 bg-base-100/60 shadow-lg backdrop-blur-md">
           <table className="w-full text-left">
@@ -314,8 +347,7 @@ const Stopwatch = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-base-300/50">
-              {/* Live current lap — always at top */}
-              <tr className=" transition-colors hover:bg-primary/10">
+              <tr className="transition-colors hover:bg-primary/10">
                 <td className="py-3.5 pl-6 text-sm font-bold text-primary">
                   {String(laps.length + 1).padStart(2, "0")}
                 </td>
@@ -327,7 +359,6 @@ const Stopwatch = () => {
                 </td>
               </tr>
 
-              {/* Completed laps — newest first */}
               {[...laps].reverse().map((l) => {
                 const isShortest = hasColors && l.lapMs === shortestMs
                 const isLongest = hasColors && l.lapMs === longestMs
@@ -336,7 +367,6 @@ const Stopwatch = () => {
                   : isLongest
                     ? "text-red-400"
                     : "text-base-content/80"
-
                 return (
                   <tr key={l.index} className={`transition-colors hover:bg-base-200/30 ${color}`}>
                     <td className="py-3 pl-6 text-sm font-semibold opacity-70">
