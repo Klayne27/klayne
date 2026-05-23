@@ -30,6 +30,8 @@ const QuickTaskPanel = () => {
   const [searchQuery, setSearchQuery] = useState("")
   const [dueDate, setDueDate] = useState(null)
   const [hasTime, setHasTime] = useState(false)
+  const [isTasksVisible, setIsTasksVisible] = useState(true)
+
   const inputRef = useRef(null)
   const [completingId, setCompletingId] = useState(null) // Add this state
   const { play: playComplete } = useSound("/sounds/confirmation-003.mp3", 0.6) // Add this hook
@@ -258,103 +260,120 @@ const QuickTaskPanel = () => {
 
       {/* Task feed */}
       <div className="flex flex-col gap-2.5">
-        {filteredTodos.length === 0 ? (
-          <div className="flex flex-col items-center py-12 opacity-30">
-            <div className="mb-2 h-px w-12 bg-slate-500" />
-            <p className="text-[11px] font-bold uppercase tracking-widest">No Targets Found</p>
-          </div>
-        ) : (
-          filteredTodos.map((task) => {
-            const isActive = selectedTaskId === task._id
-            const isCompleting = completingId === task._id // New helper variable
+        <div className="flex items-center justify-between px-1">
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 opacity-70">
+            {filteredTodos.length} task{filteredTodos.length !== 1 ? "s" : ""}
+          </span>
+          <button
+            onClick={() => setIsTasksVisible((v) => !v)}
+            className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-[10px] font-bold uppercase tracking-wide transition-colors hover:bg-secondary/50"
+          >
+            {isTasksVisible ? "Hide" : "Show"}
+            <span
+              className={`inline-block transition-transform duration-300 ${isTasksVisible ? "rotate-0" : "-rotate-90"}`}
+            >
+              ▾
+            </span>
+          </button>
+        </div>
+        {isTasksVisible &&
+          (filteredTodos.length === 0 ? (
+            <div className="flex flex-col items-center py-12 opacity-30">
+              <div className="mb-2 h-px w-12 bg-slate-500" />
+              <p className="text-[11px] font-bold uppercase tracking-widest">No Targets Found</p>
+            </div>
+          ) : (
+            filteredTodos.map((task) => {
+              const isActive = selectedTaskId === task._id
+              const isCompleting = completingId === task._id // New helper variable
 
-            return (
-              <div
-                key={task._id}
-                onClick={() => !isCompleting && handleClickTask(task._id)}
-                className={`group relative flex cursor-pointer items-center justify-between rounded-2xl border p-4 transition-all duration-500 ${
-                  isCompleting
-                    ? "translate-x-8 skew-x-2 scale-95 opacity-0" // Animation when completing
-                    : isActive
-                      ? "border-primary/30 bg-primary/5 shadow-[0_0_20px_rgba(var(--p),0.05)]"
-                      : "border-accent/50 bg-white/[0.02] hover:border-accent/70 hover:bg-secondary/30"
-                }`}
-              >
-                {isActive && !isCompleting && (
-                  <div className="absolute left-0 top-1/4 h-1/2 w-1 rounded-full bg-primary" />
-                )}
+              return (
+                <div
+                  key={task._id}
+                  onClick={() => !isCompleting && handleClickTask(task._id)}
+                  className={`group relative flex cursor-pointer items-center justify-between rounded-2xl border p-4 transition-all duration-500 ${
+                    isCompleting
+                      ? "translate-x-8 skew-x-2 scale-95 opacity-0" // Animation when completing
+                      : isActive
+                        ? "border-primary/30 bg-primary/5 shadow-[0_0_20px_rgba(var(--p),0.05)]"
+                        : "border-accent/50 bg-white/[0.02] hover:border-accent/70 hover:bg-secondary/30"
+                  }`}
+                >
+                  {isActive && !isCompleting && (
+                    <div className="absolute left-0 top-1/4 h-1/2 w-1 rounded-full bg-primary" />
+                  )}
 
-                <div className="flex min-w-0 items-center gap-4">
-                  <button
-                    onClick={(e) => handleComplete(task._id, e)}
-                    disabled={isCompleting}
-                    className="relative shrink-0"
-                  >
-                    <div
-                      className={`h-6 w-6 rounded-full border-2 bg-base-100 shadow-sm transition-all ${
-                        isCompleting
-                          ? "animate-ping border-success bg-success/20"
-                          : `${getPriorityColor(task.priority)} group-hover:scale-110`
-                      }`}
-                    />
-                    {isCompleting && (
-                      <FaCheckCircle className="absolute inset-0 size-6 animate-pulse text-success" />
-                    )}
-                  </button>
-
-                  <div className="min-w-0">
-                    <p
-                      className={`truncate text-sm font-bold tracking-tight transition-all duration-300 ${
-                        isCompleting ? "line-through opacity-50" : ""
-                      }`}
+                  <div className="flex min-w-0 items-center gap-4">
+                    <button
+                      onClick={(e) => handleComplete(task._id, e)}
+                      disabled={isCompleting}
+                      className="relative shrink-0"
                     >
-                      {task.title}
-                    </p>
-
-                    {/* ... Meta info (list name, due date, etc) ... */}
-                    <div className="flex items-center gap-2">
-                      {/* Wrap existing meta info in a div that fades out during completion */}
                       <div
-                        className={`flex items-center gap-2 transition-opacity ${isCompleting ? "opacity-0" : "opacity-100"}`}
+                        className={`h-6 w-6 rounded-full border-2 bg-base-100 shadow-sm transition-all ${
+                          isCompleting
+                            ? "animate-ping border-success bg-success/20"
+                            : `${getPriorityColor(task.priority)} group-hover:scale-110`
+                        }`}
+                      />
+                      {isCompleting && (
+                        <FaCheckCircle className="absolute inset-0 size-6 animate-pulse text-success" />
+                      )}
+                    </button>
+
+                    <div className="min-w-0">
+                      <p
+                        className={`truncate text-sm font-bold tracking-tight transition-all duration-300 ${
+                          isCompleting ? "line-through opacity-50" : ""
+                        }`}
                       >
-                        <span className="text-[9px] font-black uppercase tracking-tighter text-slate-500">
-                          {task.listName}
-                        </span>
-                        {task.dueDate && (
-                          <div className="flex items-center gap-1 text-[10px] text-slate-400">
-                            <span className="opacity-70">Due:</span>
-                            <span>
-                              {new Date(task.dueDate).toLocaleDateString("en-US", {
-                                month: "short",
-                                day: "numeric",
-                              })}
-                            </span>
-                            <span className="text-primary">
-                              {(() => {
-                                const d = new Date(task.dueDate)
-                                const taskHasTime = d.getHours() !== 0 || d.getMinutes() !== 0
-                                return formatSuggestedDate(d, taskHasTime)
-                              })()}
-                            </span>
-                          </div>
-                        )}
+                        {task.title}
+                      </p>
+
+                      {/* ... Meta info (list name, due date, etc) ... */}
+                      <div className="flex items-center gap-2">
+                        {/* Wrap existing meta info in a div that fades out during completion */}
+                        <div
+                          className={`flex items-center gap-2 transition-opacity ${isCompleting ? "opacity-0" : "opacity-100"}`}
+                        >
+                          <span className="text-[9px] font-black uppercase tracking-tighter text-slate-500">
+                            {task.listName}
+                          </span>
+                          {task.dueDate && (
+                            <div className="flex items-center gap-1 text-[10px] text-slate-400">
+                              <span className="opacity-70">Due:</span>
+                              <span>
+                                {new Date(task.dueDate).toLocaleDateString("en-US", {
+                                  month: "short",
+                                  day: "numeric",
+                                })}
+                              </span>
+                              <span className="text-primary">
+                                {(() => {
+                                  const d = new Date(task.dueDate)
+                                  const taskHasTime = d.getHours() !== 0 || d.getMinutes() !== 0
+                                  return formatSuggestedDate(d, taskHasTime)
+                                })()}
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Flag Icon */}
-                <div
-                  className={`flex items-center gap-3 transition-opacity ${isCompleting ? "opacity-0" : "opacity-100"}`}
-                >
-                  <FaFlag
-                    className={`text-[10px] ${getTextColor(task.priority)} opacity-40 transition-opacity group-hover:opacity-100`}
-                  />
+                  {/* Flag Icon */}
+                  <div
+                    className={`flex items-center gap-3 transition-opacity ${isCompleting ? "opacity-0" : "opacity-100"}`}
+                  >
+                    <FaFlag
+                      className={`text-[10px] ${getTextColor(task.priority)} opacity-40 transition-opacity group-hover:opacity-100`}
+                    />
+                  </div>
                 </div>
-              </div>
-            )
-          })
-        )}
+              )
+            })
+          ))}
       </div>
     </div>
   )
