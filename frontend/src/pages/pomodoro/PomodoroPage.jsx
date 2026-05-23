@@ -35,6 +35,7 @@ import { FaCheckCircle } from "react-icons/fa"
 import { POMODORO_PRESETS } from "../../constants/pomodoroPresets"
 import PomodoroBackground from "../../features/pomodoro/components/PomodoroBackground"
 import { usePomodoroBackgroundStore } from "../../store/usePomodoroBackgroundStore"
+import Stopwatch from "../../features/stopwatch/components/Stopwatch"
 
 const getTimerState = (isGoalReached, isBreak, sessionCount, settings) => {
   if (isGoalReached) {
@@ -298,7 +299,7 @@ const hasBackground = !!(presetKey || customImageUrl)
       <main
         className="template flex min-h-screen w-full flex-col items-center border-accent bg-base-100 pb-28 font-sans md:pb-10"
         style={{
-          background: `radial-gradient(circle at 50% 35%, ${timerState.glow} 0%, transparent 45%)`,
+          background: `radial-gradient(circle at 50% 25%, ${timerState.glow} 0%, transparent 45%)`,
         }}
       >
         <PomodoroHeader
@@ -413,13 +414,12 @@ const hasBackground = !!(presetKey || customImageUrl)
               )}
             </div>
           </section>
-         
+
           <div className="w-full px-4 pb-2 xl:hidden">
-             <QuoteWidget />
-        
+            <QuoteWidget />
           </div>
           {/* ── Mirror column — keeps the timer centred ── */}
-          <aside className="mt-10 hidden xl:flex xl:flex-col xl:items-center xl:self-stretch mr-12">
+          <aside className="mr-12 mt-10 hidden xl:flex xl:flex-col xl:items-center xl:self-stretch">
             {/* Subtle vertical divider on the right edge of the aside */}
             <div className="relative w-full">
               <div className="absolute left-0 top-1/2 h-32 -translate-y-1/2" />
@@ -437,6 +437,16 @@ const hasBackground = !!(presetKey || customImageUrl)
         </div>
 
         <QuickTaskPanel />
+
+        <div className="flex w-full items-center gap-4 px-8 py-4 md:mt-20">
+          <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-slate-800 to-transparent" />
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-600">
+            Stopwatch
+          </span>
+          <div className="h-[1px] flex-1 bg-gradient-to-r from-slate-800 via-slate-800 to-transparent" />
+        </div>
+        
+        <Stopwatch />
       </main>
 
       {settings && isSettingsOpen && (
