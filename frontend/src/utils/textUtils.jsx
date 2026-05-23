@@ -115,15 +115,24 @@ export function formatCount(count) {
 
 const YOUTUBE_REGEX =
   /(?:youtube\.com\/(?:watch\?(?:[^&\s]*&)*v=|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
-const TIKTOK_REGEX = /tiktok\.com\/@[\w.-]+\/video\/\d+/
+const TIKTOK_URL_RE =
+  /https?:\/\/(?:(?:vt|vm|m)\.tiktok\.com\/[\w]+(?:\/)?|(?:www\.)?tiktok\.com\/(?:@[\w.-]+\/video\/\d+|t\/[\w]+))/gi
 
 // Returns the first previewable URL found in a text string, or null
-export const extractPreviewableUrl = (text) => {
+export function extractPreviewableUrl(text) {
   if (!text) return null
-  const urls = text.match(/https?:\/\/[^\s]+/g) ?? []
-  for (const url of urls) {
-    if (YOUTUBE_REGEX.test(url)) return { url, platform: "youtube" }
-    if (TIKTOK_REGEX.test(url)) return { url, platform: "tiktok" }
-  }
+
+  // YouTube — watch URLs, short youtu.be links, Shorts
+  const ytMatch = text.match(
+    /https?:\/\/(?:youtu\.be\/|(?:www\.)?youtube\.com\/(?:watch\?(?:[^&\s]*&)*v=|shorts\/))[a-zA-Z0-9_-]{11}/,
+  )
+  if (ytMatch) return { url: ytMatch[0], platform: "youtube" }
+
+  // TikTok — long-form, mobile, AND short redirect links (vt./vm.)
+  const ttMatch = text.match(
+    /https?:\/\/(?:(?:vt|vm|m)\.tiktok\.com\/[\w]+(?:\/)?|(?:www\.)?tiktok\.com\/(?:@[\w.-]+\/video\/\d+|t\/[\w]+))/gi,
+  )
+  if (ttMatch) return { url: ttMatch[0], platform: "tiktok" }
+
   return null
 }
