@@ -1,7 +1,7 @@
 import axios from "axios";
 import crypto from "crypto";
 import User from "../models/user.model.js";
-import { encrypt } from "../lib/utils/crypto.js";
+import { decrypt, encrypt } from "../lib/utils/crypto.js";
 
 // ── Move this logic inside a helper function so it evaluates lazily ──
 const getEnv = () => ({
