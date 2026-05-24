@@ -62,9 +62,19 @@ const SpotifyPlaylistBrowser = ({ token, onPlay, activeTrackId }) => {
           </div>
         )}
         {tracksError && (
-          <p className="py-4 text-center text-xs text-red-400">
-            {tracksErrorDetails?.message ?? "Failed to load tracks."}
-          </p>
+          <div className="flex flex-col items-center gap-3 py-4 text-center">
+            <p className="text-xs text-red-400">
+              {tracksErrorDetails?.message ?? "Failed to load tracks."}
+            </p>
+            {tracksErrorDetails?.reauthorize && (
+              <a
+                href="/api/spotify/auth"
+                className="rounded-full bg-green-500 px-4 py-2 text-xs font-black text-black transition hover:bg-green-400"
+              >
+                Reconnect Spotify
+              </a>
+            )}
+          </div>
         )}
 
         {!loadingTracks && !tracksError && (

@@ -28,7 +28,13 @@ export const disconnectSpotifyApi = async () => {
 const backendFetch = async (path) => {
   const res = await fetch(`${BACKEND}${path}`)
   const data = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(data.error ?? `Spotify backend error ${res.status}`)
+  if (!res.ok) {
+    throw Object.assign(new Error(data.error ?? `Spotify backend error ${res.status}`), {
+      status: res.status,
+      reauthorize: data.reauthorize ?? false,
+      spotifyError: data.spotifyError,
+    })
+  }
   return data
 }
 

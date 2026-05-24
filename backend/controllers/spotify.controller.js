@@ -112,9 +112,11 @@ const sendSpotifyApiError = (res, err, fallbackMessage) => {
   const status = err.status ?? err.response?.status ?? 500;
   const spotifyMessage = err.response?.data?.error?.message;
 
-  if (status === 403 && spotifyMessage?.toLowerCase().includes("scope")) {
+  if (status === 403) {
     return res.status(403).json({
-      error: "Spotify needs playlist permission. Disconnect and reconnect Spotify.",
+      error: "Spotify blocked playlist access. Reconnect Spotify to approve playlist permissions.",
+      reauthorize: true,
+      spotifyError: spotifyMessage ?? "Forbidden",
     });
   }
 
@@ -167,19 +169,20 @@ export const handleSpotifyCallback = async (req, res) => {
 
     const { data: profile } = await getSpotifyProfile(access_token);
 
-    await User.findByIdAndUpdate(entry.userId, {
-      $set: {
-        "spotify.spotifyId": profile.id,
-        "spotify.displayName": profile.display_name,
-        "spotify.email": profile.email,
-        "spotify.imageUrl": profile.images?.[0]?.url ?? null,
-        "spotify.isPremium": profile.product === "premium",
-        "spotify.accessToken": encrypt(access_token),
-        "spotify.refreshToken": encrypt(refresh_token),
-        "spotify.tokenExpiresAt": new Date(Date.now() + expires_in * 1_000),
-        "spotify.connectedAt": new Date(),
-      },
-    });
+    const spotifyUpdate = {
+      "spotify.spotifyId": profile.id,
+      "spotify.displayName": profile.display_name,
+      "spotify.email": profile.email,
+      "spotify.imageUrl": profile.images?.[0]?.url ?? null,
+      "spotify.isPremium": profile.product === "premium",
+      "spotify.accessToken": encrypt(access_token),
+      "spotify.tokenExpiresAt": new Date(Date.now() + expires_in * 1_000),
+      "spotify.connectedAt": new Date(),
+    };
+
+    if (refresh_token) spotifyUpdate["spotify.refreshToken"] = encrypt(refresh_token);
+
+    await User.findByIdAndUpdate(entry.userId, { $set: spotifyUpdate });
 
     res.redirect(`${FRONTEND_URL}/pomodoro?spotify=connected`);
   } catch (err) {
@@ -243,7 +246,7 @@ export const getSpotifyPlaylistTracks = async (req, res) => {
           "items(track(id,name,duration_ms,uri,artists(name),album(images(url)))),total,next,offset,limit",
       });
     } catch (err) {
-      if (err.response?.status !== 400) throw err;
+      if (![400, 403].includes(err.response?.status)) throw err;
       data = await spotifyApiGet(path, accessToken, { limit, offset, additional_types: "track" });
     }
 
