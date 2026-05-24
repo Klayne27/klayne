@@ -36,6 +36,7 @@ import { POMODORO_PRESETS } from "../../constants/pomodoroPresets"
 import PomodoroBackground from "../../features/pomodoro/components/PomodoroBackground"
 import { usePomodoroBackgroundStore } from "../../store/usePomodoroBackgroundStore"
 import Stopwatch from "../../features/stopwatch/components/Stopwatch"
+import SpotifyPanel from "../../features/spotify/components/SpotifyPanel"
 
 const getTimerState = (isGoalReached, isBreak, sessionCount, settings) => {
   if (isGoalReached) {
@@ -437,6 +438,7 @@ const hasBackground = !!(presetKey || customImageUrl)
         </div>
 
         <QuickTaskPanel />
+        <SpotifyPanel />
 
         <div className="flex w-full items-center gap-4 px-8 py-4 md:mt-20">
           <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-slate-800 to-transparent" />
@@ -445,7 +447,7 @@ const hasBackground = !!(presetKey || customImageUrl)
           </span>
           <div className="h-[1px] flex-1 bg-gradient-to-r from-slate-800 via-slate-800 to-transparent" />
         </div>
-        
+
         <Stopwatch />
       </main>
 

@@ -355,6 +355,17 @@ const userSchema = new mongoose.Schema(
     // pomodoroBackground: { type: String, default: null },
     pomodoroBackgroundUrl: { type: String, default: null }, // custom Cloudinary URL
     pomodoroBackgroundPublicId: { type: String, default: null }, // stored at upload for reliable deletion
+    spotify: {
+      spotifyId: { type: String, default: null },
+      displayName: { type: String, default: null },
+      email: { type: String, default: null },
+      imageUrl: { type: String, default: null },
+      isPremium: { type: Boolean, default: false },
+      accessToken: { type: String, default: null }, // encrypt in prod (e.g. with AES-256)
+      refreshToken: { type: String, default: null }, // encrypt in prod
+      tokenExpiresAt: { type: Date, default: null },
+      connectedAt: { type: Date, default: null },
+    },
   },
   { timestamps: true },
 );

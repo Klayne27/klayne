@@ -1,208 +1,196 @@
-// backend/controllers/spotify.controller.js
+import axios from "axios";
+import crypto from "crypto";
 import User from "../models/user.model.js";
 
-const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
-const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
-const BASE_URL = process.env.RENDER_EXTERNAL_URL || "http://localhost:5000";
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
-const REDIRECT_URI = `${BASE_URL}/api/spotify/callback`;
+// ── Move this logic inside a helper function so it evaluates lazily ──
+const getEnv = () => ({
+  CLIENT_ID: process.env.SPOTIFY_CLIENT_ID,
+  CLIENT_SECRET: process.env.SPOTIFY_CLIENT_SECRET,
+  REDIRECT_URI: process.env.SPOTIFY_REDIRECT_URI,
+  FRONTEND_URL: process.env.FRONTEND_URL,
+});
 
 const SCOPES = [
   "streaming",
   "user-read-email",
   "user-read-private",
-  "user-library-read",
-  "playlist-read-private",
-  "playlist-read-collaborative",
   "user-read-playback-state",
   "user-modify-playback-state",
-  "user-read-currently-playing",
+  "playlist-read-private",
+  "playlist-read-collaborative",
 ].join(" ");
 
-// ── Shared helpers ────────────────────────────────────────────────────────────
+const pendingStates = new Map();
 
-const basicAuth = () =>
-  `Basic ${Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString("base64")}`;
+// Generate basicAuth lazily when needed
+const getBasicAuth = () => {
+  const { CLIENT_ID, CLIENT_SECRET } = getEnv();
+  return Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString("base64");
+};
 
-/**
- * Returns a valid access token for the user, refreshing it automatically
- * when it is within 60 s of expiry.
- */
-async function getOrRefreshToken(userId) {
-  const user = await User.findById(userId)
-    .select(
-      "+spotifyAccessToken +spotifyRefreshToken spotifyTokenExpiry spotifyConnected",
-    )
-    .lean();
+// ── Update your helpers to grab the fresh lazy variables ───────────────────────
 
-  if (!user?.spotifyConnected || !user?.spotifyRefreshToken) {
-    throw Object.assign(new Error("Spotify not connected"), { code: "not_connected" });
-  }
-
-  // Use cached token if it still has > 60 s of life
-  const bufferMs = 60_000;
-  if (
-    user.spotifyAccessToken &&
-    user.spotifyTokenExpiry &&
-    new Date(user.spotifyTokenExpiry).getTime() - Date.now() > bufferMs
-  ) {
-    return user.spotifyAccessToken;
-  }
-
-  // Refresh
-  const res = await fetch("https://accounts.spotify.com/api/token", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      Authorization: basicAuth(),
-    },
-    body: new URLSearchParams({
-      grant_type: "refresh_token",
-      refresh_token: user.spotifyRefreshToken,
+const exchangeCode = (code) => {
+  const { REDIRECT_URI } = getEnv();
+  return axios.post(
+    "https://accounts.spotify.com/api/token",
+    new URLSearchParams({
+      code,
+      redirect_uri: REDIRECT_URI,
+      grant_type: "authorization_code",
     }),
+    {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: `Basic ${getBasicAuth()}`,
+      },
+    },
+  );
+};
+
+const refreshAccessToken = (refreshToken) =>
+  axios.post(
+    "https://accounts.spotify.com/api/token",
+    new URLSearchParams({ grant_type: "refresh_token", refresh_token: refreshToken }),
+    {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: `Basic ${getBasicAuth()}`,
+      },
+    },
+  );
+
+const getSpotifyProfile = (accessToken) =>
+  axios.get("https://api.spotify.com/v1/me", {
+    headers: { Authorization: `Bearer ${accessToken}` },
   });
 
-  if (!res.ok) {
-    // Token was revoked — mark disconnected so the UI shows the reconnect CTA
-    await User.findByIdAndUpdate(userId, { spotifyConnected: false });
-    throw Object.assign(new Error("Token refresh failed"), { code: "token_revoked" });
-  }
+// ── Update the controller entry points ─────────────────────────────────────────
 
-  const data = await res.json();
-
-  await User.findByIdAndUpdate(userId, {
-    spotifyAccessToken: data.access_token,
-    spotifyTokenExpiry: new Date(Date.now() + data.expires_in * 1000),
-    // Spotify may or may not rotate the refresh token
-    ...(data.refresh_token && { spotifyRefreshToken: data.refresh_token }),
-  });
-
-  return data.access_token;
-}
-
-// ── Route handlers ────────────────────────────────────────────────────────────
-
-// GET /api/spotify/auth  — redirect to Spotify OAuth
-// Uses protectRoute so req.user is set; the JWT cookie travels with the
-// subsequent Spotify → /callback redirect automatically.
 export const initiateSpotifyAuth = (req, res) => {
-  if (!CLIENT_ID) {
-    return res.status(500).json({ error: "Spotify is not configured on this server." });
-  }
+  const { CLIENT_ID, REDIRECT_URI } = getEnv(); // Grab them here!
+
+  const state = crypto.randomBytes(16).toString("hex");
+  const userId = req.user._id.toString();
+
+  pendingStates.forEach((v, k) => {
+    if (Date.now() > v.exp) pendingStates.delete(k);
+  });
+  pendingStates.set(state, { userId, exp: Date.now() + 5 * 60 * 1000 });
 
   const params = new URLSearchParams({
     response_type: "code",
     client_id: CLIENT_ID,
     scope: SCOPES,
     redirect_uri: REDIRECT_URI,
-    // show_dialog forces the Spotify account picker — handy for switching accounts
-    show_dialog: "false",
+    state,
+    show_dialog: "true",
   });
 
   res.redirect(`https://accounts.spotify.com/authorize?${params}`);
 };
 
-// GET /api/spotify/callback  — Spotify calls this after authorization
-// protectRoute works here because the browser includes the JWT cookie.
-export const spotifyCallback = async (req, res) => {
-  const { code, error } = req.query;
+export const handleSpotifyCallback = async (req, res) => {
+  const { FRONTEND_URL } = getEnv(); // Grab it here!
+  const { code, state, error } = req.query;
 
-  if (error || !code) {
-    return res.redirect(`${FRONTEND_URL}/pomodoro?spotify_error=${error ?? "cancelled"}`);
-  }
+  if (error)
+    return res.redirect(`${FRONTEND_URL}/pomodoro?spotify=error&reason=${error}`);
+
+  const entry = pendingStates.get(state);
+  if (!entry || Date.now() > entry.exp)
+    return res.redirect(`${FRONTEND_URL}/pomodoro?spotify=error&reason=invalid_state`);
+
+  pendingStates.delete(state);
 
   try {
-    const tokenRes = await fetch("https://accounts.spotify.com/api/token", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: basicAuth(),
+    const { data: tokens } = await exchangeCode(code);
+    const { access_token, refresh_token, expires_in } = tokens;
+
+    const { data: profile } = await getSpotifyProfile(access_token);
+
+    await User.findByIdAndUpdate(entry.userId, {
+      $set: {
+        "spotify.spotifyId": profile.id,
+        "spotify.displayName": profile.display_name,
+        "spotify.email": profile.email,
+        "spotify.imageUrl": profile.images?.[0]?.url ?? null,
+        "spotify.isPremium": profile.product === "premium",
+        "spotify.accessToken": access_token,
+        "spotify.refreshToken": refresh_token,
+        "spotify.tokenExpiresAt": new Date(Date.now() + expires_in * 1_000),
+        "spotify.connectedAt": new Date(),
       },
-      body: new URLSearchParams({
-        grant_type: "authorization_code",
-        code,
-        redirect_uri: REDIRECT_URI,
-      }),
     });
 
-    if (!tokenRes.ok) {
-      const err = await tokenRes.json().catch(() => ({}));
-      console.error("Spotify token exchange failed:", err);
-      return res.redirect(`${FRONTEND_URL}/pomodoro?spotify_error=token_exchange`);
-    }
-
-    const tokens = await tokenRes.json();
-
-    await User.findByIdAndUpdate(req.user._id, {
-      spotifyAccessToken: tokens.access_token,
-      spotifyRefreshToken: tokens.refresh_token,
-      spotifyTokenExpiry: new Date(Date.now() + tokens.expires_in * 1000),
-      spotifyConnected: true,
-    });
-
-    res.redirect(`${FRONTEND_URL}/pomodoro?spotify_connected=true`);
+    res.redirect(`${FRONTEND_URL}/pomodoro?spotify=connected`);
   } catch (err) {
-    console.error("Spotify callback error:", err);
-    res.redirect(`${FRONTEND_URL}/pomodoro?spotify_error=server`);
+    console.error("[spotify/callback]", err.response?.data ?? err.message);
+    res.redirect(`${FRONTEND_URL}/pomodoro?spotify=error&reason=token_exchange`);
   }
 };
 
-// GET /api/spotify/token  — returns a fresh access token to the frontend
+// Returns a guaranteed-valid access token, refreshing silently when needed
 export const getSpotifyToken = async (req, res) => {
   try {
-    const token = await getOrRefreshToken(req.user._id);
-    res.json({ accessToken: token, isConnected: true });
+    const user = await User.findById(req.user._id).select("spotify");
+
+    if (!user?.spotify?.refreshToken)
+      return res.status(401).json({ error: "Spotify not connected" });
+
+    const { accessToken, refreshToken, tokenExpiresAt } = user.spotify;
+
+    // Proactively refresh 3 minutes before expiry
+    const needsRefresh =
+      !tokenExpiresAt || Date.now() >= tokenExpiresAt.getTime() - 3 * 60_000;
+
+    if (!needsRefresh) return res.json({ accessToken, expiresAt: tokenExpiresAt });
+
+    const { data } = await refreshAccessToken(refreshToken);
+    const newExpiresAt = new Date(Date.now() + data.expires_in * 1_000);
+
+    const update = {
+      "spotify.accessToken": data.access_token,
+      "spotify.tokenExpiresAt": newExpiresAt,
+    };
+    if (data.refresh_token) update["spotify.refreshToken"] = data.refresh_token;
+
+    await User.findByIdAndUpdate(req.user._id, { $set: update });
+
+    return res.json({ accessToken: data.access_token, expiresAt: newExpiresAt });
   } catch (err) {
-    if (err.code === "not_connected") {
-      return res.json({ isConnected: false, accessToken: null });
+    console.error("[spotify/token]", err.response?.data ?? err.message);
+
+    // Refresh token revoked — force disconnect
+    if ([400, 401].includes(err.response?.status)) {
+      await User.findByIdAndUpdate(req.user._id, { $unset: { spotify: 1 } });
+      return res
+        .status(401)
+        .json({ error: "Spotify session expired. Please reconnect." });
     }
-    if (err.code === "token_revoked") {
-      return res.json({ isConnected: false, accessToken: null, revoked: true });
-    }
-    console.error("getSpotifyToken error:", err);
-    res.status(500).json({ error: "Internal server error" });
+
+    res.status(500).json({ error: "Failed to refresh Spotify token" });
   }
 };
 
-// GET /api/spotify/playlists  — user's playlists via backend proxy
-export const getSpotifyPlaylists = async (req, res) => {
+export const getSpotifyStatus = async (req, res) => {
   try {
-    const token = await getOrRefreshToken(req.user._id);
-    const limit = Math.min(parseInt(req.query.limit ?? "50"), 50);
-    const offset = parseInt(req.query.offset ?? "0");
+    const user = await User.findById(req.user._id).select("spotify");
 
-    const spotRes = await fetch(
-      `https://api.spotify.com/v1/me/playlists?limit=${limit}&offset=${offset}`,
-      { headers: { Authorization: `Bearer ${token}` } },
-    );
+    if (!user?.spotify?.spotifyId) return res.json({ connected: false });
 
-    if (!spotRes.ok) {
-      return res.status(spotRes.status).json({ error: "Spotify API error" });
-    }
-
-    const data = await spotRes.json();
-    res.json(data);
-  } catch (err) {
-    if (err.code === "not_connected" || err.code === "token_revoked") {
-      return res.json({ isConnected: false, items: [] });
-    }
-    console.error("getSpotifyPlaylists error:", err);
-    res.status(500).json({ error: "Internal server error" });
+    const { spotifyId, displayName, email, imageUrl, isPremium } = user.spotify;
+    res.json({ connected: true, spotifyId, displayName, email, imageUrl, isPremium });
+  } catch {
+    res.status(500).json({ error: "Failed to get Spotify status" });
   }
 };
 
-// DELETE /api/spotify/disconnect  — remove tokens, mark disconnected
 export const disconnectSpotify = async (req, res) => {
   try {
-    await User.findByIdAndUpdate(req.user._id, {
-      spotifyAccessToken: null,
-      spotifyRefreshToken: null,
-      spotifyTokenExpiry: null,
-      spotifyConnected: false,
-    });
-    res.json({ success: true });
-  } catch (err) {
-    console.error("disconnectSpotify error:", err);
-    res.status(500).json({ error: "Internal server error" });
+    await User.findByIdAndUpdate(req.user._id, { $unset: { spotify: 1 } });
+    res.json({ message: "Spotify disconnected" });
+  } catch {
+    res.status(500).json({ error: "Failed to disconnect Spotify" });
   }
 };
