@@ -160,7 +160,7 @@ export const getSpotifyToken = async (req, res) => {
 
     await User.findByIdAndUpdate(req.user._id, { $set: update });
 
-    return res.json({ rawAccess: data.access_token, expiresAt: newExpiresAt });
+    return res.json({ rawAccess: encrypt(data.access_token), expiresAt: newExpiresAt });
   } catch (err) {
     console.error("[spotify/token]", err.response?.data ?? err.message);
 
