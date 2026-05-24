@@ -125,7 +125,9 @@ const SpotifyPlaylistBrowser = ({ token, onPlay, activeTrackId }) => {
               <p className="line-clamp-2 text-[11px] font-semibold leading-tight">
                 {playlist.name}
               </p>
-              <p className="text-[10px] text-base-content/35">{playlist.tracks.total} tracks</p>
+              <p className="text-[10px] text-base-content/35">
+                {playlist.tracks?.total || 0} tracks
+              </p>
             </button>
           ))}
         </div>
