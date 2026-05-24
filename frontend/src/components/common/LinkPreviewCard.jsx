@@ -17,7 +17,7 @@ const PLATFORM_META = {
   },
 }
 
-const LinkPreviewCard = ({ url, onPreviewLoad, onLoad }) => {
+const LinkPreviewCard = ({ url, onPreviewLoad = null, onLoad }) => {
   const { preview, isLoading } = useLinkPreview(url)
   const { activeId, setActiveId, clearActiveId } = useVideoPreviewStore()
 
@@ -29,9 +29,9 @@ const LinkPreviewCard = ({ url, onPreviewLoad, onLoad }) => {
   const hasAutoplayed = useRef(false) // only autoplay once per mount
   
 
-  useEffect(() => {
-    if (!isLoading) onPreviewLoad?.()
-  }, [isLoading, onPreviewLoad])
+  // useEffect(() => {
+  //   if (!isLoading) onPreviewLoad?.()
+  // }, [isLoading, onPreviewLoad])
 
   // ── IntersectionObserver autoplay ─────────────────────────────────────────
   useEffect(() => {
@@ -170,7 +170,7 @@ const LinkPreviewCard = ({ url, onPreviewLoad, onLoad }) => {
           alt={title ?? "Video preview"}
           className="absolute inset-0 h-full w-full object-cover"
           loading="lazy"
-          onPreviewLoad={onLoad}
+          onLoad={onLoad}
         />
         <div className="absolute inset-0 bg-black/25" />
         <div className="absolute inset-0 flex items-center justify-center">

@@ -45,12 +45,43 @@ const loadSDK = () => {
   return sdkPromise
 }
 
-// Direct token fetch (used inside SDK callbacks, outside React lifecycle)
 const fetchToken = async () => {
   const res = await fetch("/api/spotify/token")
   const data = await res.json()
   if (!res.ok) throw new Error(data.error)
   return data.accessToken
+}
+
+// ── Retry transferPlayback until Spotify's backend acknowledges the device ──────
+// Spotify's API can take 1–5 seconds after the SDK `ready` event to register
+// the new device. We retry with exponential backoff up to ~15 seconds total.
+const transferWithRetry = async (token, deviceId, maxAttempts = 6) => {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      await transferPlaybackApi(token, deviceId)
+      return true // success
+    } catch (err) {
+      const isDeviceNotFound =
+        err?.message?.includes("device") || err?.message?.includes("404") || err?.status === 404
+
+      if (!isDeviceNotFound || attempt === maxAttempts - 1) {
+        // Non-device error or exhausted retries — give up
+        console.warn(
+          `[spotify] transferPlayback failed after ${attempt + 1} attempts:`,
+          err.message,
+        )
+        return false
+      }
+
+      // Exponential backoff: 500ms, 1s, 2s, 4s, 8s
+      const delay = Math.min(500 * 2 ** attempt, 8000)
+      console.log(
+        `[spotify] device not ready yet, retrying transfer in ${delay}ms (attempt ${attempt + 1})`,
+      )
+      await new Promise((r) => setTimeout(r, delay))
+    }
+  }
+  return false
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -59,6 +90,9 @@ const SpotifyPlayer = forwardRef(({ onTrackChange, initialVolume = 0.5 }, ref) =
   const playerRef = useRef(null)
   const deviceIdRef = useRef(null)
   const tickRef = useRef(null)
+  // FIX: track whether transferPlayback completed so playTracks knows the
+  // device is actually recognized by Spotify's API, not just the SDK.
+  const transferredRef = useRef(false)
 
   const [isReady, setIsReady] = useState(false)
   const [isConnecting, setIsConnecting] = useState(true)
@@ -72,14 +106,31 @@ const SpotifyPlayer = forwardRef(({ onTrackChange, initialVolume = 0.5 }, ref) =
 
   const pct = durationMs > 0 ? (positionMs / durationMs) * 100 : 0
 
-  // Expose an imperative playTracks() so parent can trigger playback
   useImperativeHandle(ref, () => ({
     playTracks: async ({ uris, offsetPosition = 0 }) => {
-      if (!deviceIdRef.current) return
+      if (!deviceIdRef.current) {
+        showAppToast("Player not ready yet", "error")
+        return
+      }
+
       try {
         const token = await fetchToken()
+
+        // FIX: if transfer hasn't confirmed yet, retry it before playing.
+        // This handles the case where the user clicks play very quickly after
+        // connecting and transferWithRetry is still in-flight.
+        if (!transferredRef.current) {
+          const ok = await transferWithRetry(token, deviceIdRef.current)
+          if (!ok) {
+            showAppToast("Could not activate Spotify device. Try again.", "error")
+            return
+          }
+          transferredRef.current = true
+        }
+
         await startPlaybackApi(token, deviceIdRef.current, { uris, offsetPosition })
-      } catch {
+      } catch (err) {
+        console.error("[spotify] playTracks error:", err)
         showAppToast("Playback failed", "error")
       }
     },
@@ -88,17 +139,19 @@ const SpotifyPlayer = forwardRef(({ onTrackChange, initialVolume = 0.5 }, ref) =
   // ── SDK lifecycle ─────────────────────────────────────────────────────────
   useEffect(() => {
     let player
+    let cancelled = false
 
     const init = async () => {
       let token
       try {
         token = await fetchToken()
       } catch {
-        setIsConnecting(false)
+        if (!cancelled) setIsConnecting(false)
         return
       }
 
       await loadSDK()
+      if (cancelled) return
 
       player = new window.Spotify.Player({
         name: "Klayne Pomodoro Player",
@@ -112,29 +165,46 @@ const SpotifyPlayer = forwardRef(({ onTrackChange, initialVolume = 0.5 }, ref) =
         volume: initialVolume,
       })
 
-      player.addListener("ready", ({ device_id }) => {
+      player.addListener("ready", async ({ device_id }) => {
+        if (cancelled) return
         deviceIdRef.current = device_id
+        transferredRef.current = false // reset on each new device registration
+
         setIsReady(true)
         setIsConnecting(false)
-        // Hand Spotify's active device to the browser player silently
-        transferPlaybackApi(token, device_id).catch(console.warn)
+
+        // FIX: don't fire-and-forget — use retrying transfer so we know when
+        // Spotify's backend has actually registered the device.
+        const ok = await transferWithRetry(token, device_id)
+        if (!cancelled) {
+          transferredRef.current = ok
+          if (!ok) {
+            console.warn("[spotify] Could not transfer playback to web player after retries")
+          }
+        }
       })
 
-      player.addListener("not_ready", () => setIsReady(false))
+      player.addListener("not_ready", ({ device_id }) => {
+        console.log("[spotify] device went offline:", device_id)
+        transferredRef.current = false
+        setIsReady(false)
+      })
 
       player.addListener("initialization_error", ({ message }) => {
-        setPlayerError("Player failed to initialize. Try refreshing.")
+        if (!cancelled) setPlayerError("Player failed to initialize. Try refreshing.")
         console.error("[spotify] init error:", message)
       })
 
       player.addListener("authentication_error", ({ message }) => {
-        setPlayerError("Spotify authentication failed. Reconnect your account.")
+        if (!cancelled) setPlayerError("Spotify authentication failed. Reconnect your account.")
         console.error("[spotify] auth error:", message)
       })
 
       player.addListener("account_error", () => {
-        setIsPremiumErr(true)
-        setPlayerError("Spotify Premium is required for browser streaming.")
+        if (!cancelled) {
+          setIsPremiumErr(true)
+          setPlayerError("Spotify Premium is required for browser streaming.")
+        }
       })
 
       player.addListener("playback_error", ({ message }) => {
@@ -143,7 +213,7 @@ const SpotifyPlayer = forwardRef(({ onTrackChange, initialVolume = 0.5 }, ref) =
       })
 
       player.addListener("player_state_changed", (state) => {
-        if (!state) return
+        if (!state || cancelled) return
         const {
           track_window: { current_track },
           paused,
@@ -164,6 +234,7 @@ const SpotifyPlayer = forwardRef(({ onTrackChange, initialVolume = 0.5 }, ref) =
     init()
 
     return () => {
+      cancelled = true
       clearInterval(tickRef.current)
       player?.disconnect()
     }
@@ -221,9 +292,14 @@ const SpotifyPlayer = forwardRef(({ onTrackChange, initialVolume = 0.5 }, ref) =
 
   if (isConnecting || !isReady)
     return (
-      <div className="flex items-center justify-center gap-2 rounded-2xl border border-accent/20 bg-base-200/30 py-5 text-sm text-base-content/40">
-        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-green-500" />
-        Connecting to Spotify…
+      <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-accent/20 bg-base-200/30 py-6 text-sm text-base-content/40">
+        <div className="flex items-center gap-2">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-green-500" />
+          Connecting to Spotify…
+        </div>
+        <p className="text-[10px] text-base-content/25">
+          This may take a few seconds on first load
+        </p>
       </div>
     )
 

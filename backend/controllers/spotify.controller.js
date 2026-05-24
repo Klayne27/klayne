@@ -1,6 +1,7 @@
 import axios from "axios";
 import crypto from "crypto";
 import User from "../models/user.model.js";
+import { encrypt } from "../lib/utils/crypto.js";
 
 // ── Move this logic inside a helper function so it evaluates lazily ──
 const getEnv = () => ({
@@ -116,8 +117,8 @@ export const handleSpotifyCallback = async (req, res) => {
         "spotify.email": profile.email,
         "spotify.imageUrl": profile.images?.[0]?.url ?? null,
         "spotify.isPremium": profile.product === "premium",
-        "spotify.accessToken": access_token,
-        "spotify.refreshToken": refresh_token,
+        "spotify.accessToken": encrypt(access_token),
+        "spotify.refreshToken": encrypt(refresh_token),
         "spotify.tokenExpiresAt": new Date(Date.now() + expires_in * 1_000),
         "spotify.connectedAt": new Date(),
       },
@@ -135,29 +136,31 @@ export const getSpotifyToken = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select("spotify");
 
-    if (!user?.spotify?.refreshToken)
-      return res.status(401).json({ error: "Spotify not connected" });
+    const rawAccess = decrypt(user.spotify.accessToken);
+    const rawRefresh = decrypt(user.spotify.refreshToken);
 
-    const { accessToken, refreshToken, tokenExpiresAt } = user.spotify;
+    if (!rawRefresh) return res.status(401).json({ error: "Spotify not connected" });
+
+    const { tokenExpiresAt } = user.spotify;
 
     // Proactively refresh 3 minutes before expiry
     const needsRefresh =
       !tokenExpiresAt || Date.now() >= tokenExpiresAt.getTime() - 3 * 60_000;
 
-    if (!needsRefresh) return res.json({ accessToken, expiresAt: tokenExpiresAt });
+    if (!needsRefresh) return res.json({ rawAccess, expiresAt: tokenExpiresAt });
 
-    const { data } = await refreshAccessToken(refreshToken);
+    const { data } = await refreshAccessToken(rawRefresh);
     const newExpiresAt = new Date(Date.now() + data.expires_in * 1_000);
 
     const update = {
-      "spotify.accessToken": data.access_token,
+      "spotify.accessToken": encrypt(data.access_token),
       "spotify.tokenExpiresAt": newExpiresAt,
     };
-    if (data.refresh_token) update["spotify.refreshToken"] = data.refresh_token;
+    if (data.refresh_token) update["spotify.refreshToken"] = encrypt(data.refresh_token);
 
     await User.findByIdAndUpdate(req.user._id, { $set: update });
 
-    return res.json({ accessToken: data.access_token, expiresAt: newExpiresAt });
+    return res.json({ rawAccess: data.access_token, expiresAt: newExpiresAt });
   } catch (err) {
     console.error("[spotify/token]", err.response?.data ?? err.message);
 

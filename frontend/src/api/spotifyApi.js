@@ -41,9 +41,11 @@ const spotifyFetch = async (path, token, options = {}) => {
 
   const data = await res.json()
 
-  if (res.status === 401) throw Object.assign(new Error("SPOTIFY_UNAUTHORIZED"), { status: 401 })
-  if (res.status === 403) throw Object.assign(new Error("SPOTIFY_FORBIDDEN"), { status: 403 })
-  if (!res.ok) throw new Error(data.error?.message ?? `Spotify API error ${res.status}`)
+  if (!res.ok) {
+    const message = data.error?.message ?? `Spotify API error ${res.status}`
+    // Attach status so transferWithRetry can inspect it reliably
+    throw Object.assign(new Error(message), { status: res.status })
+  }
 
   return data
 }
