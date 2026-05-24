@@ -14,6 +14,7 @@ const MessageBubble = ({
   isMessageDeleted,
   isSenderBanned,
   hasReply,
+  onPreviewLoad,
 }) => {
   const { authUser } = useAuthUser()
   const finalIsDeleted = isMessageDeleted || isSenderBanned || message.isDeletedByAdmin
@@ -80,6 +81,9 @@ const MessageBubble = ({
                     url={previewable.url}
                     platform={previewable.platform}
                     onLoad={onLoadImage}
+                    onPreviewLoad={onPreviewLoad}
+                    // onLoad intentionally omitted — link previews load async and would
+                    // re-snap scroll to bottom every time the preview renders/resizes
                   />
                 ) : null
               })()}

@@ -130,7 +130,7 @@ export function extractPreviewableUrl(text) {
 
   // TikTok — long-form, mobile, AND short redirect links (vt./vm.)
   const ttMatch = text.match(
-    /https?:\/\/(?:(?:vt|vm|m)\.tiktok\.com\/[\w]+(?:\/)?|(?:www\.)?tiktok\.com\/(?:@[\w.-]+\/video\/\d+|t\/[\w]+))/gi,
+    /https?:\/\/(?:(?:vt|vm|m)\.tiktok\.com\/[\w]+(?:\/)?|(?:www\.)?tiktok\.com\/(?:@[\w.-]+\/(?:video|photo)\/\d+|t\/[\w]+))/gi,
   )
   if (ttMatch) return { url: ttMatch[0], platform: "tiktok" }
 

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react"
+import React, { useCallback, useRef, useState } from "react"
 import { usePublicChatStore } from "../../../../store/usePublicChatStore"
 import { useIsMobile } from "../../../../hooks/customHooks/useIsMobile"
 import { useMessagingMetaData } from "../../../../hooks/customHooks/useMessagingMetaData"
@@ -202,6 +202,13 @@ const PublicChatMessageList = React.memo(function PublicChatMessageList({
     setShowMoreActionsModal(false)
   }
 
+  const onPreviewLoad = useCallback(() => {
+    const listEl = messageListRef?.current // only if you thread this ref down
+    if (!listEl) return
+    const isAtBottom = listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + 80
+    if (isAtBottom) listEl.scrollTop = listEl.scrollHeight
+  }, [])
+
   const messageDeleted = <span className="text-sm italic text-gray-600">[Message Deleted]</span>
 
   return (
@@ -313,6 +320,7 @@ const PublicChatMessageList = React.memo(function PublicChatMessageList({
                 isSentByCurrentUser={isSentByCurrentUser}
                 bubbleClasses={bubbleClasses}
                 onLoadImage={onLoadImage}
+                onPreviewLoad={onPreviewLoad}
                 // onImageClick={handleImageClick}
                 messageContentStyle={messageContentStyle}
                 isReplyToMessageDeleted={isReplyToMessageDeleted}

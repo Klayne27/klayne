@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react"
+import React, { useCallback, useRef, useState } from "react"
 import { FaCircle, FaReply } from "react-icons/fa"
 import { BsCheck2, BsCheck2All } from "react-icons/bs"
 import { usePrivateChatStore } from "../../../../store/usePrivateChatStore"
@@ -205,6 +205,13 @@ const PrivateChatMessageItem = ({
     setShowMoreActionsModal(false)
   }
 
+  const onPreviewLoad = useCallback(() => {
+    const listEl = messageListRef?.current // only if you thread this ref down
+    if (!listEl) return
+    const isAtBottom = listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + 500
+    if (isAtBottom) listEl.scrollTop = listEl.scrollHeight
+  }, [])
+
   const messageDeleted = <span className="text-sm italic text-gray-600">[Message Deleted]</span>
 
   return (
@@ -316,7 +323,8 @@ const PrivateChatMessageItem = ({
                 messageText={message.text}
                 isSentByCurrentUser={isSentByCurrentUser}
                 bubbleClasses={bubbleClasses}
-                onLoadImage={onLoadImage} 
+                onLoadImage={onLoadImage}
+                onPreviewLoad={onPreviewLoad}
                 messageContentStyle={messageContentStyle}
                 onJumpToOriginalMessage={handleJumpToOriginalMessage}
                 isReplyToMessageDeleted={isReplyToMessageDeleted}

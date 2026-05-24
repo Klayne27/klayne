@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query"
 
 const fetchPreview = async (url) => {
   const res = await fetch(`/api/link-preview?url=${encodeURIComponent(url)}`)
-  if (!res.ok) throw new Error("Preview unavailable")
+  if (!res.ok) return null // ← return null instead of throwing; card just won't render
   return res.json()
 }
 
