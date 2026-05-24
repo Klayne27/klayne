@@ -45,7 +45,7 @@ export const useSpotifyToken = (enabled = true) => {
 export const useSpotifyPlaylists = (token) => {
   const { data, isLoading, isError, error } = useQuery({
     queryKey: spotifyKeys.playlists(),
-    queryFn: () => getPlaylistsApi(token),
+    queryFn: getPlaylistsApi,
     enabled: !!token,
     staleTime: 5 * 60_000,
     retry: 1,
@@ -57,7 +57,7 @@ export const useSpotifyTracks = (token, playlistId) => {
   const { data, isLoading, isError, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useInfiniteQuery({
       queryKey: spotifyKeys.tracks(playlistId),
-      queryFn: ({ pageParam = 0 }) => getPlaylistTracksApi(token, playlistId, pageParam),
+      queryFn: ({ pageParam = 0 }) => getPlaylistTracksApi(playlistId, pageParam),
       initialPageParam: 0,
       getNextPageParam: (lastPage) => {
         const nextOffset = (lastPage?.offset ?? 0) + (lastPage?.limit ?? 50)

@@ -66,6 +66,63 @@ const getSpotifyProfile = (accessToken) =>
     headers: { Authorization: `Bearer ${accessToken}` },
   });
 
+const getValidSpotifyAccessToken = async (userId) => {
+  const user = await User.findById(userId).select("spotify");
+
+  const rawAccess = decrypt(user?.spotify?.accessToken);
+  const rawRefresh = decrypt(user?.spotify?.refreshToken);
+
+  if (!rawRefresh) {
+    const err = new Error("Spotify not connected");
+    err.status = 401;
+    throw err;
+  }
+
+  const { tokenExpiresAt } = user.spotify;
+  const needsRefresh =
+    !tokenExpiresAt || Date.now() >= tokenExpiresAt.getTime() - 3 * 60_000;
+
+  if (!needsRefresh) {
+    return { accessToken: rawAccess, expiresAt: tokenExpiresAt };
+  }
+
+  const { data } = await refreshAccessToken(rawRefresh);
+  const newExpiresAt = new Date(Date.now() + data.expires_in * 1_000);
+
+  const update = {
+    "spotify.accessToken": encrypt(data.access_token),
+    "spotify.tokenExpiresAt": newExpiresAt,
+  };
+  if (data.refresh_token) update["spotify.refreshToken"] = encrypt(data.refresh_token);
+
+  await User.findByIdAndUpdate(userId, { $set: update });
+
+  return { accessToken: data.access_token, expiresAt: newExpiresAt };
+};
+
+const spotifyApiGet = async (path, accessToken, params = {}) => {
+  const { data } = await axios.get(`https://api.spotify.com/v1${path}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    params,
+  });
+  return data;
+};
+
+const sendSpotifyApiError = (res, err, fallbackMessage) => {
+  const status = err.status ?? err.response?.status ?? 500;
+  const spotifyMessage = err.response?.data?.error?.message;
+
+  if (status === 403 && spotifyMessage?.toLowerCase().includes("scope")) {
+    return res.status(403).json({
+      error: "Spotify needs playlist permission. Disconnect and reconnect Spotify.",
+    });
+  }
+
+  return res.status(status >= 400 && status < 500 ? status : 500).json({
+    error: spotifyMessage ?? err.message ?? fallbackMessage,
+  });
+};
+
 // ── Update the controller entry points ─────────────────────────────────────────
 
 export const initiateSpotifyAuth = (req, res) => {
@@ -134,38 +191,11 @@ export const handleSpotifyCallback = async (req, res) => {
 // Returns a guaranteed-valid access token, refreshing silently when needed
 export const getSpotifyToken = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select("spotify");
-
-    const rawAccess = decrypt(user.spotify.accessToken);
-    const rawRefresh = decrypt(user.spotify.refreshToken);
-
-    if (!rawRefresh) return res.status(401).json({ error: "Spotify not connected" });
-
-    const { tokenExpiresAt } = user.spotify;
-
-    // Proactively refresh 3 minutes before expiry
-    const needsRefresh =
-      !tokenExpiresAt || Date.now() >= tokenExpiresAt.getTime() - 3 * 60_000;
-
-    // FIX 1: Send 'accessToken' key, and ensure it's the raw string
-    if (!needsRefresh) return res.json({ accessToken: rawAccess, expiresAt: tokenExpiresAt });
-
-    const { data } = await refreshAccessToken(rawRefresh);
-    const newExpiresAt = new Date(Date.now() + data.expires_in * 1_000);
-
-    const update = {
-      "spotify.accessToken": encrypt(data.access_token),
-      "spotify.tokenExpiresAt": newExpiresAt,
-    };
-    if (data.refresh_token) update["spotify.refreshToken"] = encrypt(data.refresh_token);
-
-    await User.findByIdAndUpdate(req.user._id, { $set: update });
-
-    // FIX 2: Send the unencrypted data.access_token to the frontend, 
-    // but keep it as 'accessToken' so the frontend React code understands it
-    return res.json({ accessToken: data.access_token, expiresAt: newExpiresAt });
+    return res.json(await getValidSpotifyAccessToken(req.user._id));
   } catch (err) {
     console.error("[spotify/token]", err.response?.data ?? err.message);
+
+    if (err.status === 401) return res.status(401).json({ error: err.message });
 
     // Refresh token revoked — force disconnect
     if ([400, 401].includes(err.response?.status)) {
@@ -176,6 +206,51 @@ export const getSpotifyToken = async (req, res) => {
     }
 
     res.status(500).json({ error: "Failed to refresh Spotify token" });
+  }
+};
+
+export const getSpotifyPlaylists = async (req, res) => {
+  try {
+    const { accessToken } = await getValidSpotifyAccessToken(req.user._id);
+    const data = await spotifyApiGet("/me/playlists", accessToken, {
+      limit: 50,
+      fields: "items(id,name,uri,images(url),tracks(total)),total",
+    });
+
+    res.json(data);
+  } catch (err) {
+    console.error("[spotify/playlists]", err.response?.data ?? err.message);
+    sendSpotifyApiError(res, err, "Failed to load Spotify playlists");
+  }
+};
+
+export const getSpotifyPlaylistTracks = async (req, res) => {
+  try {
+    const { playlistId } = req.params;
+    const limit = Math.min(Number(req.query.limit) || 50, 50);
+    const offset = Number(req.query.offset) || 0;
+    const { accessToken } = await getValidSpotifyAccessToken(req.user._id);
+
+    const path = `/playlists/${encodeURIComponent(playlistId)}/tracks`;
+    let data;
+
+    try {
+      data = await spotifyApiGet(path, accessToken, {
+        limit,
+        offset,
+        additional_types: "track",
+        fields:
+          "items(track(id,name,duration_ms,uri,artists(name),album(images(url)))),total,next,offset,limit",
+      });
+    } catch (err) {
+      if (err.response?.status !== 400) throw err;
+      data = await spotifyApiGet(path, accessToken, { limit, offset, additional_types: "track" });
+    }
+
+    res.json(data);
+  } catch (err) {
+    console.error("[spotify/playlist-tracks]", err.response?.data ?? err.message);
+    sendSpotifyApiError(res, err, "Failed to load Spotify playlist tracks");
   }
 };
 

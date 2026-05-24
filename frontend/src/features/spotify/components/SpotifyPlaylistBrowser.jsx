@@ -23,6 +23,7 @@ const SpotifyPlaylistBrowser = ({ token, onPlay, activeTrackId }) => {
     total: trackTotal,
     isLoading: loadingTracks,
     isError: tracksError,
+    error: tracksErrorDetails,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
@@ -61,7 +62,9 @@ const SpotifyPlaylistBrowser = ({ token, onPlay, activeTrackId }) => {
           </div>
         )}
         {tracksError && (
-          <p className="py-4 text-center text-xs text-red-400">Failed to load tracks.</p>
+          <p className="py-4 text-center text-xs text-red-400">
+            {tracksErrorDetails?.message ?? "Failed to load tracks."}
+          </p>
         )}
 
         {!loadingTracks && !tracksError && (

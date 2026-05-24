@@ -25,6 +25,13 @@ export const disconnectSpotifyApi = async () => {
   return data
 }
 
+const backendFetch = async (path) => {
+  const res = await fetch(`${BACKEND}${path}`)
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.error ?? `Spotify backend error ${res.status}`)
+  return data
+}
+
 // ── Spotify Web API ───────────────────────────────────────────────────────────
 
 const spotifyFetch = async (path, token, options = {}) => {
@@ -39,7 +46,7 @@ const spotifyFetch = async (path, token, options = {}) => {
 
   if (res.status === 204) return null
 
-  const data = await res.json()
+  const data = await res.json().catch(() => ({}))
 
   if (!res.ok) {
     const message = data.error?.message ?? `Spotify API error ${res.status}`
@@ -50,13 +57,18 @@ const spotifyFetch = async (path, token, options = {}) => {
   return data
 }
 
-export const getPlaylistsApi = (token) =>
-  spotifyFetch("/me/playlists?limit=50&fields=items(id,name,uri,images,tracks(total)),total", token)
+const toQueryString = (params) => new URLSearchParams(params).toString()
 
-export const getPlaylistTracksApi = (token, playlistId, offset = 0, limit = 50) =>
-  spotifyFetch(
-    `/playlists/${playlistId}/tracks?limit=${limit}&offset=${offset}&fields=items(track(id,name,duration_ms,uri,artists,album(images))),total,next,offset,limit`,
-    token,
+export const getPlaylistsApi = () =>
+  backendFetch(
+    `/playlists?${toQueryString({
+      limit: 50,
+    })}`,
+  )
+
+export const getPlaylistTracksApi = (playlistId, offset = 0, limit = 50) =>
+  backendFetch(
+    `/playlists/${encodeURIComponent(playlistId)}/tracks?${toQueryString({ limit, offset })}`,
   )
 
 export const transferPlaybackApi = (token, deviceId) =>
