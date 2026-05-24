@@ -52,7 +52,7 @@ const SearchPanel = () => {
       {/* Results Dropdown */}
       {showResults && (debouncedQuery.length > 0 || suggestedUsers?.length > 0) && (
         <div
-          className="absolute left-0 top-[45px] z-[100] max-h-[70vh] w-full overflow-y-hidden overflow-x-hidden rounded-xl border border-accent bg-base-100 shadow-xl"
+          className="absolute left-0 top-[45px] z-[100] max-h-[70vh] w-full overflow-x-hidden overflow-y-hidden rounded-xl border border-accent bg-base-100 shadow-xl"
           // Removing the style={{maxWidth}} calc.
           // w-full here makes it exactly the width of the search input bar.
         >
@@ -61,7 +61,7 @@ const SearchPanel = () => {
           ) : isError ? (
             <p className="p-4 text-center text-sm text-red-500">{error.message}</p>
           ) : suggestedUsers?.length > 0 ? (
-            <div className="flex flex-col ">
+            <div className="flex flex-col">
               {suggestedUsers.map((user) => (
                 <Link
                   to={`/profile/${user.username}`}
@@ -79,12 +79,24 @@ const SearchPanel = () => {
                       isAnon={user.blockedUsers.includes(authUser._id)}
                     />
                   </div>
-                  <div className="flex min-w-0 flex-col">
+                  <div className="flex min-w-0 flex-col items-start">
+                    <div className="flex items-center justify-center gap-1">
+                      
                     <UserFullName
                       user={user}
                       className="truncate text-[15px] font-bold"
                       style={user.nameColor ? { color: user.nameColor } : undefined}
-                    />
+                      />
+                    {user.isVerified && (
+                      <img src="/verified2.png" className="size-[16px]" alt="verified" />
+                    )}
+                    {user.isGoldVerified && (
+                      <img src="/gold-verified2.png" className="size-[16px]" alt="gold verified" />
+                    )}
+                    {user.isCha && (
+                      <img src="/cha.png" className="size-[14px] rounded-md" alt="cha" />
+                    )}
+                    </div>
                     <span className="truncate text-sm text-slate-500">@{user.username}</span>
                   </div>
                 </Link>
