@@ -107,7 +107,7 @@ const SpotifyPlayer = forwardRef(({ onTrackChange, initialVolume = 0.5 }, ref) =
   const pct = durationMs > 0 ? (positionMs / durationMs) * 100 : 0
 
   useImperativeHandle(ref, () => ({
-    playTracks: async ({ uris, offsetPosition = 0 }) => {
+    playTracks: async ({ uris, contextUri, offsetPosition = 0, offsetUri }) => {
       if (!deviceIdRef.current) {
         showAppToast("Player not ready yet", "error")
         return
@@ -128,7 +128,12 @@ const SpotifyPlayer = forwardRef(({ onTrackChange, initialVolume = 0.5 }, ref) =
           transferredRef.current = true
         }
 
-        await startPlaybackApi(token, deviceIdRef.current, { uris, offsetPosition })
+        await startPlaybackApi(token, deviceIdRef.current, {
+          uris,
+          contextUri,
+          offsetPosition,
+          offsetUri,
+        })
       } catch (err) {
         console.error("[spotify] playTracks error:", err)
         showAppToast("Playback failed", "error")

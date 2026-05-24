@@ -40,8 +40,8 @@ const SpotifyPanel = () => {
     window.history.replaceState({}, "", clean.toString())
   }, [qc])
 
-  const handlePlay = ({ uris, offsetPosition }) => {
-    playerRef.current?.playTracks({ uris, offsetPosition })
+  const handlePlay = ({ uris, contextUri, offsetPosition, offsetUri }) => {
+    playerRef.current?.playTracks({ uris, contextUri, offsetPosition, offsetUri })
   }
 
   if (isLoading) return null

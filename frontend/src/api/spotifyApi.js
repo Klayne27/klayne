@@ -50,11 +50,12 @@ const spotifyFetch = async (path, token, options = {}) => {
   return data
 }
 
-export const getPlaylistsApi = (token) => spotifyFetch("/me/playlists?limit=50", token)
+export const getPlaylistsApi = (token) =>
+  spotifyFetch("/me/playlists?limit=50&fields=items(id,name,uri,images,tracks(total)),total", token)
 
-export const getPlaylistTracksApi = (token, playlistId) =>
+export const getPlaylistTracksApi = (token, playlistId, offset = 0, limit = 50) =>
   spotifyFetch(
-    `/playlists/${playlistId}/tracks?limit=50&fields=items(track(id,name,duration_ms,uri,artists,album(images))),total`,
+    `/playlists/${playlistId}/tracks?limit=${limit}&offset=${offset}&fields=items(track(id,name,duration_ms,uri,artists,album(images))),total,next,offset,limit`,
     token,
   )
 
@@ -64,11 +65,15 @@ export const transferPlaybackApi = (token, deviceId) =>
     body: JSON.stringify({ device_ids: [deviceId], play: false }),
   })
 
-export const startPlaybackApi = (token, deviceId, { uris, contextUri, offsetPosition = 0 }) => {
+export const startPlaybackApi = (
+  token,
+  deviceId,
+  { uris, contextUri, offsetPosition = 0, offsetUri },
+) => {
   const body = {}
   if (contextUri) {
     body.context_uri = contextUri
-    body.offset = { position: offsetPosition }
+    body.offset = offsetUri ? { uri: offsetUri } : { position: offsetPosition }
   } else {
     body.uris = uris
     if (offsetPosition > 0) body.offset = { position: offsetPosition }

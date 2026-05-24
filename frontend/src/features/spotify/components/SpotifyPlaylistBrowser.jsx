@@ -20,13 +20,22 @@ const SpotifyPlaylistBrowser = ({ token, onPlay, activeTrackId }) => {
   } = useSpotifyPlaylists(token)
   const {
     tracks,
+    total: trackTotal,
     isLoading: loadingTracks,
     isError: tracksError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
   } = useSpotifyTracks(token, selectedPlaylist?.id)
 
   const handleTrackClick = (index) => {
     if (!tracks.length) return
-    onPlay({ uris: tracks.map((t) => t.uri), offsetPosition: index })
+    onPlay({
+      contextUri: selectedPlaylist?.uri,
+      uris: tracks.map((t) => t.uri),
+      offsetPosition: index,
+      offsetUri: tracks[index]?.uri,
+    })
   }
 
   // ── Track list view ───────────────────────────────────────────────────────
@@ -39,6 +48,11 @@ const SpotifyPlaylistBrowser = ({ token, onPlay, activeTrackId }) => {
         >
           <FaChevronLeft size={10} />
           <span className="max-w-[200px] truncate font-semibold">{selectedPlaylist.name}</span>
+          {trackTotal > 0 && (
+            <span className="text-[10px] text-base-content/30">
+              {tracks.length}/{trackTotal}
+            </span>
+          )}
         </button>
 
         {loadingTracks && (
@@ -79,6 +93,15 @@ const SpotifyPlaylistBrowser = ({ token, onPlay, activeTrackId }) => {
                 </button>
               )
             })}
+            {hasNextPage && (
+              <button
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+                className="mt-2 flex w-full items-center justify-center rounded-xl border border-base-content/10 px-3 py-2 text-xs font-semibold text-base-content/50 transition hover:border-green-500/30 hover:text-green-400 disabled:cursor-wait disabled:opacity-50"
+              >
+                {isFetchingNextPage ? "Loading..." : "Load more tracks"}
+              </button>
+            )}
           </div>
         )}
       </div>

@@ -1,5 +1,10 @@
-import { useQuery } from "@tanstack/react-query"
-import { getPlaylistsApi, getPlaylistTracksApi, getSpotifyStatusApi, getSpotifyTokenApi } from "../../../api/spotifyApi"
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query"
+import {
+  getPlaylistsApi,
+  getPlaylistTracksApi,
+  getSpotifyStatusApi,
+  getSpotifyTokenApi,
+} from "../../../api/spotifyApi"
 import { spotifyKeys } from "./spotifyKeys"
 
 export const useSpotifyStatus = () => {
@@ -49,14 +54,32 @@ export const useSpotifyPlaylists = (token) => {
 }
 
 export const useSpotifyTracks = (token, playlistId) => {
-  const { data, isLoading, isError, error } = useQuery({
-    queryKey: spotifyKeys.tracks(playlistId),
-    queryFn: () => getPlaylistTracksApi(token, playlistId),
-    enabled: !!token && !!playlistId,
-    staleTime: 5 * 60_000,
-    retry: 1,
-  })
+  const { data, isLoading, isError, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useInfiniteQuery({
+      queryKey: spotifyKeys.tracks(playlistId),
+      queryFn: ({ pageParam = 0 }) => getPlaylistTracksApi(token, playlistId, pageParam),
+      initialPageParam: 0,
+      getNextPageParam: (lastPage) => {
+        const nextOffset = (lastPage?.offset ?? 0) + (lastPage?.limit ?? 50)
+        return lastPage?.next ? nextOffset : undefined
+      },
+      enabled: !!token && !!playlistId,
+      staleTime: 5 * 60_000,
+      retry: 1,
+    })
   // Strip null/unplayable tracks
-  const tracks = (data?.items ?? []).map((i) => i?.track).filter((t) => t?.id && t?.uri)
-  return { tracks, total: data?.total ?? 0, isLoading, isError, error }
+  const tracks = (data?.pages ?? [])
+    .flatMap((page) => page?.items ?? [])
+    .map((i) => i?.track)
+    .filter((t) => t?.id && t?.uri)
+  return {
+    tracks,
+    total: data?.pages?.[0]?.total ?? 0,
+    isLoading,
+    isError,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  }
 }
