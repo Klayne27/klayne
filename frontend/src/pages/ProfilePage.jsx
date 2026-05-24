@@ -257,7 +257,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
       setPhotoModal("coverImg")
     } else {
       const url = userProfile?.coverImg?.imageUrl || "/cover.png"
-      openLightbox({ imageUrl: url })
+      openLightbox({ images: [{ imageUrl: url }], index: 0 })
     }
   }
 
@@ -267,7 +267,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
       setPhotoModal("profileImg")
     } else {
       const url = userProfile?.profileImg?.imageUrl || "/avatar-placeholder.png"
-      openLightbox({ imageUrl: url })
+      openLightbox({ images: [{ imageUrl: url }], index: 0 })
     }
   }
 

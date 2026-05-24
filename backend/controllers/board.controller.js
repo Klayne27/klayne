@@ -10,7 +10,11 @@ import {
   io,
   onlineUsersMap,
 } from "../lib/socket.js";
-import { getBlockingUsers, getMutedUsers, isBlockedOrBlockedBy } from "../lib/utils/helpers.js";
+import {
+  getBlockingUsers,
+  getMutedUsers,
+  isBlockedOrBlockedBy,
+} from "../lib/utils/helpers.js";
 
 const userProjection = {
   _id: 1,
@@ -241,7 +245,14 @@ export const getBoardPosts = async (req, res) => {
       .lean();
 
     const hasNextPage = page * limit < totalCount;
-    res.status(200).json({ posts, hasNextPage, totalCount });
+    res
+      .status(200)
+      .json({
+        posts,
+        hasNextPage,
+        totalCount,
+        nextPage: hasNextPage ? page + 1 : undefined,
+      });
   } catch (error) {
     console.error("Error in getBoardPosts:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -384,7 +395,10 @@ export const createBoardComment = async (req, res) => {
       return res.status(400).json({ error: "Comment must have content or an image." });
     }
 
-    const post = await BoardPost.findById(boardPostId).populate("user", "-password -email");
+    const post = await BoardPost.findById(boardPostId).populate(
+      "user",
+      "-password -email",
+    );
     if (!post) return res.status(404).json({ error: "Board post not found." });
 
     const postOwnerId = post.user._id; // extract ObjectId from populated user

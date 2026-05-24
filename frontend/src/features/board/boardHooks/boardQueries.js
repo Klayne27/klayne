@@ -7,13 +7,13 @@ export const useGetBoardPosts = () => {
     useInfiniteQuery({
       queryKey: boardKeys.list(),
       queryFn: getBoardPostsApi,
-      getNextPageParam: (lastPage) =>
-        lastPage.hasNextPage ? (lastPage.nextPage ?? true) : undefined,
+      // allPages.length is the number of pages already fetched,
+      // so the next page is always allPages.length + 1
+      getNextPageParam: (lastPage) => lastPage.nextPage,
       initialPageParam: 1,
     })
 
   const posts = data?.pages.flatMap((page) => page.posts) ?? []
-
   return { posts, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch }
 }
 
@@ -22,9 +22,9 @@ export const useGetBoardPost = (id) => {
     queryKey: boardKeys.detail(id),
     queryFn: () => getBoardPostApi(id),
     enabled: !!id,
-  });
-  return { post, isLoading };
-};
+  })
+  return { post, isLoading }
+}
 
 export const useGetBoardComments = (boardPostId) => {
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
@@ -35,7 +35,6 @@ export const useGetBoardComments = (boardPostId) => {
     enabled: !!boardPostId,
   })
 
-  const comments = data?.pages.flatMap((p) => p.comments) ?? [];
-  return { comments, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage };
-};
-
+  const comments = data?.pages.flatMap((p) => p.comments) ?? []
+  return { comments, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage }
+}

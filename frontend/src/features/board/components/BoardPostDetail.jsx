@@ -461,7 +461,7 @@ const BoardPostDetail = ({ postId, onClose }) => {
                     {post.images.map((img, i) => (
                       <div // Changed from Link to div
                         key={img._id || i}
-                        onClick={() => openLightbox(post.images, i)}
+                        onClick={() => openLightbox({ images: post.images, index: i })}
                         className={`relative cursor-pointer overflow-hidden rounded-md border border-accent ${
                           post.images.length === 3 && i === 0 ? "col-span-2" : ""
                         }`}
