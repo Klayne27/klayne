@@ -1,7 +1,6 @@
 import crypto from "crypto";
 
-// ENCRYPTION_KEY must be a 64-char hex string (32 bytes)
-// Generate with: node -e "console.log(crypto.randomBytes(32).toString('hex'))"
+
 const getKey = () => {
   const hex = process.env.ENCRYPTION_KEY;
   if (!hex || hex.length !== 64) throw new Error("ENCRYPTION_KEY must be 64 hex chars");

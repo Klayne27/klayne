@@ -147,7 +147,8 @@ export const getSpotifyToken = async (req, res) => {
     const needsRefresh =
       !tokenExpiresAt || Date.now() >= tokenExpiresAt.getTime() - 3 * 60_000;
 
-    if (!needsRefresh) return res.json({ rawAccess, expiresAt: tokenExpiresAt });
+    // FIX 1: Send 'accessToken' key, and ensure it's the raw string
+    if (!needsRefresh) return res.json({ accessToken: rawAccess, expiresAt: tokenExpiresAt });
 
     const { data } = await refreshAccessToken(rawRefresh);
     const newExpiresAt = new Date(Date.now() + data.expires_in * 1_000);
@@ -160,7 +161,9 @@ export const getSpotifyToken = async (req, res) => {
 
     await User.findByIdAndUpdate(req.user._id, { $set: update });
 
-    return res.json({ rawAccess: encrypt(data.access_token), expiresAt: newExpiresAt });
+    // FIX 2: Send the unencrypted data.access_token to the frontend, 
+    // but keep it as 'accessToken' so the frontend React code understands it
+    return res.json({ accessToken: data.access_token, expiresAt: newExpiresAt });
   } catch (err) {
     console.error("[spotify/token]", err.response?.data ?? err.message);
 
