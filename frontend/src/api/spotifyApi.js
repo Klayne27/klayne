@@ -26,7 +26,9 @@ export const disconnectSpotifyApi = async () => {
 }
 
 const backendFetch = async (path) => {
-  const res = await fetch(`${BACKEND}${path}`)
+  const res = await fetch(`${BACKEND}${path}`, {
+    credentials: "include", // <--- ADD THIS LINE
+  })
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {
     throw Object.assign(new Error(data.error ?? `Spotify backend error ${res.status}`), {
@@ -37,7 +39,6 @@ const backendFetch = async (path) => {
   }
   return data
 }
-
 // ── Spotify Web API ───────────────────────────────────────────────────────────
 
 const spotifyFetch = async (path, token, options = {}) => {
