@@ -59,6 +59,7 @@ import PomodoroCountdown from "../features/pomodoro/components/PomodoroCountdown
 import NoteBubble from "../components/common/NoteBubble.jsx"
 import NoteModal from "../components/common/NoteModal.jsx"
 import PhotoOptionsModal from "../components/common/PhotoOptionsModal.jsx"
+import StudyHeatmap from "../components/common/StudyHeatmap.jsx"
 
 const formatStudyTime = (totalMinutes) => {
   const hours = Math.floor(totalMinutes / 60)
@@ -782,13 +783,13 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                   {/* ── Study activity heatmap ── */}
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center justify-between px-1">
-                      <div className="flex items-center gap-2">
+                      {/* <div className="flex items-center gap-2">
                         <BiHealth className="text-primary" size={18} />
                         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
                           Study Activity
                         </h3>
-                      </div>
-                      <div className="flex gap-4">
+                      </div> */}
+                      {/* <div className="flex gap-4">
                         <div className="flex flex-col items-end">
                           <span className="text-xs text-slate-500">Total Sessions</span>
                           <span className="text-sm font-bold">
@@ -801,10 +802,10 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                             {formatStudyTime(userProfile?.totalStudyDuration || 0)}
                           </span>
                         </div>
-                      </div>
+                      </div> */}
                     </div>
 
-                    <div className="overflow-x-auto">
+                    {/* <div className="overflow-x-auto">
                       <div className="min-w-[500px]">
                         <ReactCalendarHeatmap
                           startDate={new Date("2026-01-01")}
@@ -845,19 +846,20 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                           border="1px solid var(--fallback-b3,oklch(var(--b3)))"
                         />
                       </div>
-                    </div>
+                    </div> */}
+                    <StudyHeatmap studyHistory={userProfile?.studyHistory} joinedAt={userProfile?.createdAt} />
 
-                    <div className="flex justify-end gap-2 px-1">
-                      <span className="text-[10px] text-slate-500">Less</span>
-                      <div className="flex items-center gap-1">
-                        <div className="size-2 rounded-[2px] bg-[#161b22]" />
-                        <div className="size-2 rounded-[2px] bg-[#1e6334]" />
-                        <div className="size-2 rounded-[2px] bg-[#27813f]" />
-                        <div className="size-2 rounded-[2px] bg-[#36ad56]" />
-                        <div className="size-2 rounded-[2px] bg-[#42e46a]" />
-                      </div>
-                      <span className="text-[10px] text-slate-500">More</span>
-                    </div>
+                      {/* <div className="flex justify-end gap-2 px-1">
+                        <span className="text-[10px] text-slate-500">Less</span>
+                        <div className="flex items-center gap-1">
+                          <div className="size-2 rounded-[2px] bg-[#161b22]" />
+                          <div className="size-2 rounded-[2px] bg-[#1e6334]" />
+                          <div className="size-2 rounded-[2px] bg-[#27813f]" />
+                          <div className="size-2 rounded-[2px] bg-[#36ad56]" />
+                          <div className="size-2 rounded-[2px] bg-[#42e46a]" />
+                        </div>
+                        <span className="text-[10px] text-slate-500">More</span>
+                      </div> */}
                   </div>
                 </>
               )}
