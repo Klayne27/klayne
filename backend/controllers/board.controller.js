@@ -170,7 +170,6 @@ export const editBoardPost = async (req, res) => {
   }
 };
 
-// ── DELETE board post ───────────────────────────────────────────────────────────
 export const deleteBoardPost = async (req, res) => {
   try {
     const { id } = req.params;
@@ -179,32 +178,80 @@ export const deleteBoardPost = async (req, res) => {
     const post = await BoardPost.findById(id).populate("images");
     if (!post) return res.status(404).json({ error: "Board post not found." });
 
-    // Authorization check
     if (!post.user.equals(userId) && !req.user.isAdmin) {
       return res.status(403).json({ error: "Not authorized." });
     }
 
-    if (post.images && post.images.length > 0) {
+    // ── 1. Delete the post's own Cloudinary images ────────────────────────
+    if (post.images?.length > 0) {
       await Promise.all(
         post.images.map(async (img) => {
-          if (img.imageUrl) {
+          if (img.publicId) {
+            await cloudinary.uploader
+              .destroy(img.publicId)
+              .catch((e) =>
+                console.error(
+                  "Cloudinary destroy error (post img):",
+                  img.publicId,
+                  e.message,
+                ),
+              );
+          } else if (img.imageUrl) {
             const publicId = img.imageUrl.split("/").pop().split(".")[0];
-
-            try {
-              await cloudinary.uploader.destroy(publicId);
-            } catch (cloudErr) {
-              console.error("Cloudinary error for image:", publicId, cloudErr.message);
-            }
+            await cloudinary.uploader
+              .destroy(publicId)
+              .catch((e) =>
+                console.error(
+                  "Cloudinary destroy error (post img fallback):",
+                  publicId,
+                  e.message,
+                ),
+              );
           }
           return Image.deleteOne({ _id: img._id });
         }),
       );
     }
 
-    // 2. Cascade delete comments
+    // ── 2. Delete Cloudinary images attached to comments ──────────────────
+    // Fetch all Image docs whose parentDocument is one of this post's comments,
+    // then destroy them in Cloudinary before wiping the comments themselves.
+    const commentIds = await BoardComment.find({ boardPost: id })
+      .select("_id")
+      .lean()
+      .then((docs) => docs.map((d) => d._id));
+
+    if (commentIds.length > 0) {
+      const commentImages = await Image.find({
+        parentDocument: { $in: commentIds },
+      }).lean();
+
+      if (commentImages.length > 0) {
+        await Promise.all(
+          commentImages.map(async (img) => {
+            const publicId = img.publicId ?? img.imageUrl?.split("/").pop().split(".")[0];
+            if (publicId) {
+              await cloudinary.uploader
+                .destroy(publicId)
+                .catch((e) =>
+                  console.error(
+                    "Cloudinary destroy error (comment img):",
+                    publicId,
+                    e.message,
+                  ),
+                );
+            }
+          }),
+        );
+
+        await Image.deleteMany({ parentDocument: { $in: commentIds } });
+      }
+    }
+
+    // ── 3. Cascade delete comments ────────────────────────────────────────
     await BoardComment.deleteMany({ boardPost: id });
 
-    // 3. Finally delete the post
+    // ── 4. Delete the post ────────────────────────────────────────────────
     await BoardPost.deleteOne({ _id: id });
 
     res.status(200).json({ message: "Board post and all media deleted successfully." });

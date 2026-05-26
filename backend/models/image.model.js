@@ -17,6 +17,8 @@ const imageSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
+  publicId: { type: String, default: null },
+
   createdAt: { type: Date, default: Date.now },
 });
 
