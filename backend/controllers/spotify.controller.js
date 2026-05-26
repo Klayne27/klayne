@@ -114,7 +114,8 @@ const sendSpotifyApiError = (res, err, fallbackMessage) => {
 
   if (status === 403) {
     return res.status(403).json({
-      error: "Spotify blocked playlist access. Reconnect Spotify to approve playlist permissions.",
+      error:
+        "Spotify blocked playlist access. Reconnect Spotify to approve playlist permissions.",
       reauthorize: true,
       spotifyError: spotifyMessage ?? "Forbidden",
     });
@@ -246,8 +247,12 @@ export const getSpotifyPlaylistTracks = async (req, res) => {
           "items(track(id,name,duration_ms,uri,artists(name),album(images(url)))),total,next,offset,limit",
       });
     } catch (err) {
-      if (![400, 403].includes(err.response?.status)) throw err;
-      data = await spotifyApiGet(path, accessToken, { limit, offset, additional_types: "track" });
+      if (err.response?.status !== 400) throw err; // 403 should propagate immediately
+      data = await spotifyApiGet(path, accessToken, {
+        limit,
+        offset,
+        additional_types: "track",
+      });
     }
 
     res.json(data);
