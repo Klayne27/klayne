@@ -1152,21 +1152,19 @@ export const toggleVacationMode = async (req, res) => {
     }
 
     const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    if (!user) return res.status(404).json({ message: "User not found" });
 
     user.isVacationMode = isVacationMode;
 
-    // If turning vacation mode ON, set the start date.
     if (isVacationMode) {
+      // Turning ON — record when it started (used by streak gap excusal)
       user.vacationModeStartDate = new Date();
+    } else {
+      // Turning OFF manually — clear the start date
+      user.vacationModeStartDate = null;
     }
-    // IMPORTANT: Do not set it to null when turning it OFF here.
-    // The endStudySession controller will handle that when the vacation is "used".
 
     await user.save();
-
     res.json({
       message: "Vacation mode updated successfully",
       isVacationMode: user.isVacationMode,

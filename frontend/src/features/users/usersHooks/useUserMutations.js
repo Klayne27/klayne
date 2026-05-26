@@ -150,7 +150,6 @@ export const useFollow = () => {
             if (!isTargetPrivate) {
               newFollowing.push(userIdToFollow)
             }
-
           }
 
           return { ...oldData, following: newFollowing }
@@ -422,6 +421,7 @@ export const useVacationMode = () => {
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["vacationMode"] })
+      queryClient.invalidateQueries({ queryKey: userKeys.auth() })
     },
   })
 

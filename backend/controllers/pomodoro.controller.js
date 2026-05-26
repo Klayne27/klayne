@@ -120,6 +120,12 @@ export async function processStudySession({ userId, duration, taskId }) {
     user.weeklyStats.xpEarned += xpResult.xpEarned;
   }
 
+  const isFirstSessionToday = histIdx === -1;
+  if (user.isVacationMode && isFirstSessionToday) {
+    user.isVacationMode = false;
+    user.vacationModeStartDate = null;
+  }
+
   await user.save();
   await checkAndAwardBadges(user);
   const newUnlocks = await checkUnlocks(user);
@@ -176,19 +182,19 @@ const broadcastSessionStart = async (userId, activeSession) => {
   if (!userDoc || userDoc.isPomodoroPrivate) return;
 
   io.to("live_pomodoro").emit("live_session_started", {
-    userId:                userId.toString(),
-    username:              userDoc.username,
-    fullName:              userDoc.fullName,
-    profileImg:            userDoc.profileImg,
-    nameColor:             userDoc.nameColor,
-    equipped:              userDoc.equipped ?? null,
-    expectedEndTime:       activeSession.scheduledEndTime.getTime(),
-    startTime:             activeSession.startTime.getTime(),
-    sessionCount:          activeSession.sessionCount,
+    userId: userId.toString(),
+    username: userDoc.username,
+    fullName: userDoc.fullName,
+    profileImg: userDoc.profileImg,
+    nameColor: userDoc.nameColor,
+    equipped: userDoc.equipped ?? null,
+    expectedEndTime: activeSession.scheduledEndTime.getTime(),
+    startTime: activeSession.startTime.getTime(),
+    sessionCount: activeSession.sessionCount,
     // ── Match the getLiveSessions payload exactly ──────────────────────────
-    pomodoroLevel:         userDoc.pomodoroLevel         ?? 0,
-    totalStudyDuration:    userDoc.totalStudyDuration    ?? 0,
-    totalSessionsCompleted:userDoc.totalSessionsCompleted ?? 0,
+    pomodoroLevel: userDoc.pomodoroLevel ?? 0,
+    totalStudyDuration: userDoc.totalStudyDuration ?? 0,
+    totalSessionsCompleted: userDoc.totalSessionsCompleted ?? 0,
   });
 };
 
@@ -391,7 +397,10 @@ export const endSession = async (req, res) => {
         duration: clientDuration,
         taskId: taskId || null,
       });
-      emitToUser(userId, "pomodoroSessionCompleted", { result, validatedDuration: clientDuration });
+      emitToUser(userId, "pomodoroSessionCompleted", {
+        result,
+        validatedDuration: clientDuration,
+      });
       return res.status(200).json(result);
     }
     // ──────────────────────────────────────────────────────────────────────
@@ -405,18 +414,24 @@ export const endSession = async (req, res) => {
       });
     }
 
-    const elapsedMs      = now - activeSession.startTime;
+    const elapsedMs = now - activeSession.startTime;
     const elapsedMinutes = elapsedMs / 1000 / 60;
     const TOLERANCE_SECONDS = 15;
 
     if (elapsedMinutes < activeSession.plannedDuration - TOLERANCE_SECONDS / 60) {
       return res.status(400).json({
         error: "Session not complete yet.",
-        remainingSeconds: Math.max(0, Math.ceil((activeSession.scheduledEndTime - now) / 1000)),
+        remainingSeconds: Math.max(
+          0,
+          Math.ceil((activeSession.scheduledEndTime - now) / 1000),
+        ),
       });
     }
 
-    const deleted = await ActiveSession.findOneAndDelete({ _id: activeSession._id, user: userId });
+    const deleted = await ActiveSession.findOneAndDelete({
+      _id: activeSession._id,
+      user: userId,
+    });
     if (!deleted) {
       return res.status(404).json({ error: "No active session found." });
     }
@@ -428,7 +443,10 @@ export const endSession = async (req, res) => {
       return res.status(200).json({ message: "Break ended.", isBreak: true });
     }
 
-    const validatedDuration = Math.min(activeSession.plannedDuration, Math.ceil(elapsedMinutes));
+    const validatedDuration = Math.min(
+      activeSession.plannedDuration,
+      Math.ceil(elapsedMinutes),
+    );
     const result = await processStudySession({
       userId,
       duration: validatedDuration,
@@ -502,7 +520,6 @@ export const pauseSession = async (req, res) => {
   }
 };
 
-
 // ── DELETE /api/study/session/active ─────────────────────────────────────────
 export const cancelSession = async (req, res) => {
   try {
@@ -571,7 +588,7 @@ export const sessionHeartbeat = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
- 
+
 // ── GET /api/study/sessions/live ─────────────────────────────────────────────
 export const getLiveSessions = async (req, res) => {
   try {
@@ -615,7 +632,7 @@ export const getLiveSessions = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
- 
+
 // GET /api/study/server-time
 export const getServerTime = (_req, res) => {
   res.status(200).json({ serverTime: Date.now() });
