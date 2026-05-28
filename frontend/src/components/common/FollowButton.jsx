@@ -76,13 +76,12 @@ const FollowButton = ({
 
   return (
     <button
-      className={`flex items-center justify-center rounded-full border px-4 py-2 text-sm font-medium transition duration-200 disabled:opacity-50 md:min-w-[80px] md:text-center ${extraClass}`}
+      className={`flex items-center justify-center rounded-full border px-4 py-2 text-sm font-medium transition duration-200 disabled:opacity-50 md:min-w-[105px] md:text-center ${extraClass}`}
       onClick={handleFollowClick}
       onMouseEnter={
         !isTouchDevice && isCurrentlyFollowing ? () => setIsHoveringUnfollow(true) : undefined
       }
       onMouseLeave={!isTouchDevice ? () => setIsHoveringUnfollow(false) : undefined}
-      // disabled={isPending}
     >
       {label}
     </button>

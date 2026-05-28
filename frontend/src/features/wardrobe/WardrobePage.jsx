@@ -19,13 +19,11 @@ const TABS = ["rings", "fonts", "nameplates"]
 // ── Live Preview Panel ──────────────────────────────────────────────────────
 const LivePreview = ({ authUser, previewEquipped }) => {
   const ringConfig = WARDROBE_CONFIG[previewEquipped.ring]
-  const overlayConfig = WARDROBE_CONFIG[previewEquipped.overlay]
   const fontConfig = WARDROBE_CONFIG[previewEquipped.font]
   const nameplateClass = getNameplateClass(previewEquipped.nameplate)
 
   const fontFamily = fontConfig?.cssVars?.["--user-font"] || "inherit"
   const ringClass = ringConfig?.ringClass || ""
-  const overlayClass = overlayConfig?.overlayClass || ""
 
   return (
     <div className="flex flex-col gap-8">
@@ -38,7 +36,7 @@ const LivePreview = ({ authUser, previewEquipped }) => {
           className="group relative flex flex-col overflow-hidden rounded-2xl border border-accent bg-base-200 shadow-xl"
           style={{ fontFamily }}
         >
-          <div className={`relative h-28 w-full shrink-0 overflow-hidden ${overlayClass}`}>
+          <div className={`relative h-28 w-full shrink-0 overflow-hidden `}>
             <img
               src={authUser?.coverImg?.imageUrl || "/cover.png"}
               className="h-full w-full object-cover"

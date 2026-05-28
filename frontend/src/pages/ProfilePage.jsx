@@ -79,12 +79,6 @@ const formatHeatmapDate = (dateString) => {
   }).format(date)
 }
 
-const getOverlayClass = (wardrobeConfig, equippedOverlayKey) => {
-  if (!equippedOverlayKey || !wardrobeConfig[equippedOverlayKey]) return ""
-
-  return wardrobeConfig[equippedOverlayKey].overlayClass || ""
-}
-
 const ProfilePage = ({ feedType, setFeedType }) => {
   const openProfileImageModal = useAppStore((state) => state.openProfileImageModal)
 
@@ -96,7 +90,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
   const [showUnfollowModal, setShowUnfollowModal] = useState(false)
   const [showDeleteUserModal, setShowDeleteUserModal] = useState(false)
   const [userToUnfollow, setUserToUnfollow] = useState(null)
-  const [photoModal, setPhotoModal] = useState(null) // null | "profileImg" | "coverImg"
+  const [photoModal, setPhotoModal] = useState(null)
 
   const navigate = useNavigate()
 
@@ -131,8 +125,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
 
   // 2. Map them to your config values
   const fontVars = WARDROBE_CONFIG[equippedFont]?.cssVars || {}
-
-  // const activeOverlayClass = getOverlayClass(WARDROBE_CONFIG, userProfile?.equipped?.overlay)
 
   const getDatesInRange = (startDate, endDate) => {
     const dates = []
@@ -346,13 +338,11 @@ const ProfilePage = ({ feedType, setFeedType }) => {
       loadGoogleFont(config.googleFont)
     }
 
-    // Apply the variable to the profile container or root
     if (config?.cssVars) {
       const root = document.documentElement
       Object.entries(config.cssVars).forEach(([k, v]) => root.style.setProperty(k, v))
     }
 
-    // Cleanup: Reset the font variable when leaving the profile
     return () => {
       document.documentElement.style.removeProperty("--user-font")
     }
@@ -466,14 +456,11 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                       note={isNoteExpired ? null : noteToDisplay}
                       isOwn={isMyProfile}
                       onClick={(e) => {
-                        // 1. This prevents the parent's lightbox click from firing
                         e.stopPropagation()
 
                         if (isMyProfile) {
                           setIsNoteModalOpen(true)
                         }
-                        // Note: Expansion logic for other users is usually
-                        // handled INSIDE the NoteBubble component via internal state.
                       }}
                     />
                   )}
@@ -620,7 +607,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                 modalTitle={`Unmute @${userProfile?.username}?`}
                 message="Posts from this account will now be allowed in your Home timeline."
                 confirmButtonText="Unmute"
-                danger={false} // Blue/White theme
+                danger={false} 
                 isLoading={isUnmuting}
               />
             </div>
@@ -634,7 +621,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
         {showFullProfileContent && userProfile && (
           <>
             <div className="mt-3 flex flex-col gap-4 px-4">
-              {/* ── Basic info — always visible for non-blocked profiles ── */}
               <div className="flex flex-col">
                 <div className="flex items-center gap-1">
                   <span
@@ -657,22 +643,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                 </div>
                 <span className="break-all text-sm text-slate-500">@{userProfile?.username}</span>
                 <span className="my-1 text-sm">{userProfile?.bio}</span>
-                {/* {canSeeLiveSession && (
-                  <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5">
-                    <RiRadioButtonLine className="animate-pulse text-primary" size={12} />
-                    <span className="text-xs font-bold text-primary">
-                      {liveSession.type === "work" ? "Focus" : "Break"}
-                    </span>
-                    <PomodoroCountdown
-                      expectedEndTime={new Date(liveSession.expectedEndTime).getTime()}
-                      clockOffset={clockOffset}
-                      className="text-xs font-bold text-primary"
-                    />
-                    {isMyProfile && userProfile?.isPomodoroPrivate && (
-                      <span className="text-[10px] text-slate-500">(only you)</span>
-                    )}
-                  </div>
-                )} */}
               </div>
 
               <div className="flex flex-wrap gap-2">
@@ -779,93 +749,13 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                   </p>
                 </div>
               ) : (
-                <>
-                  {/* ── Study activity heatmap ── */}
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center justify-between px-1">
-                      {/* <div className="flex items-center gap-2">
-                        <BiHealth className="text-primary" size={18} />
-                        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                          Study Activity
-                        </h3>
-                      </div> */}
-                      {/* <div className="flex gap-4">
-                        <div className="flex flex-col items-end">
-                          <span className="text-xs text-slate-500">Total Sessions</span>
-                          <span className="text-sm font-bold">
-                            {formatCount(userProfile?.totalSessionsCompleted) || 0}
-                          </span>
-                        </div>
-                        <div className="flex flex-col items-end">
-                          <span className="text-xs text-slate-500">Total Time</span>
-                          <span className="text-sm font-bold">
-                            {formatStudyTime(userProfile?.totalStudyDuration || 0)}
-                          </span>
-                        </div>
-                      </div> */}
-                    </div>
-
-                    {/* <div className="overflow-x-auto">
-                      <div className="min-w-[500px]">
-                        <ReactCalendarHeatmap
-                          startDate={new Date("2026-01-01")}
-                          endDate={new Date("2026-12-31")}
-                          values={heatmapData}
-                          gutterSize={3}
-                          classForValue={(value) => {
-                            if (!value || !value.count) return "color-empty"
-                            return `color-scale-${Math.min(Math.ceil(value.count / 2), 4)}`
-                          }}
-                          tooltipDataAttrs={(value) => {
-                            const formattedDate = value?.date
-                              ? formatHeatmapDate(value.date)
-                              : "Unknown date"
-                            if (!value || !value.count) {
-                              return {
-                                "data-tooltip-id": "study-tooltip",
-                                "data-tooltip-content": `${formattedDate}: No activity recorded`,
-                              }
-                            }
-                            const timeLabel = formatStudyTime(value.duration || 0)
-                            const sessionLabel = value.count === 1 ? "session" : "sessions"
-                            return {
-                              "data-tooltip-id": "study-tooltip",
-                              "data-tooltip-content": `${formattedDate}: ${value.count} ${sessionLabel} (${timeLabel})`,
-                            }
-                          }}
-                        />
-                        <Tooltip
-                          id="study-tooltip"
-                          className="z-50 !opacity-100 shadow-xl"
-                          style={{
-                            backgroundColor: "var(--fallback-b2,oklch(var(--b2)))",
-                            color: "var(--fallback-bc,oklch(var(--bc)))",
-                            borderRadius: "12px",
-                            padding: "6px 12px",
-                          }}
-                          border="1px solid var(--fallback-b3,oklch(var(--b3)))"
-                        />
-                      </div>
-                    </div> */}
-                    <StudyHeatmap studyHistory={userProfile?.studyHistory} joinedAt={userProfile?.createdAt} />
-
-                      {/* <div className="flex justify-end gap-2 px-1">
-                        <span className="text-[10px] text-slate-500">Less</span>
-                        <div className="flex items-center gap-1">
-                          <div className="size-2 rounded-[2px] bg-[#161b22]" />
-                          <div className="size-2 rounded-[2px] bg-[#1e6334]" />
-                          <div className="size-2 rounded-[2px] bg-[#27813f]" />
-                          <div className="size-2 rounded-[2px] bg-[#36ad56]" />
-                          <div className="size-2 rounded-[2px] bg-[#42e46a]" />
-                        </div>
-                        <span className="text-[10px] text-slate-500">More</span>
-                      </div> */}
-                  </div>
-                </>
+                <StudyHeatmap
+                  studyHistory={userProfile?.studyHistory}
+                  joinedAt={userProfile?.createdAt}
+                />
               )}
             </div>
 
-            {/* ── Mute notice ── */}
             {!isMyProfile && isMuted && !isPrivateAndNotFollowing && (
               <div className="mt-4 px-4 py-3 transition">
                 <p className="text-sm text-slate-500">
@@ -880,7 +770,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               </div>
             )}
 
-            {/* ── Post tabs — hidden for locked profiles ── */}
             {!isPrivateAndNotFollowing && (
               <div className="mt-4 flex w-full border-b border-accent">
                 <div

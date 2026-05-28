@@ -25,7 +25,7 @@ const userSchema = new mongoose.Schema(
     googleId: {
       type: String,
       unique: true,
-      sparse: true, // Allow multiple null values
+      sparse: true, 
     },
     isCha: {
       type: Boolean,
@@ -41,7 +41,7 @@ const userSchema = new mongoose.Schema(
     },
     nameColor: {
       type: String,
-      default: null, // null = use default theme color
+      default: null, 
       match: [/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/, "Invalid hex color"],
     },
     isPrivate: {
@@ -100,10 +100,6 @@ const userSchema = new mongoose.Schema(
         _id: false,
       },
     ],
-    // forceBlackTheme: {
-    //   type: Boolean,
-    //   default: false,
-    // },
     profileImg: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Image",
@@ -137,20 +133,17 @@ const userSchema = new mongoose.Schema(
         default: [],
       },
     ],
-    // user.model.js — update inventory and equipped only
     inventory: {
       themes: [{ type: String }],
       fonts: [{ type: String }],
       rings: [{ type: String }],
-      // overlays: [{ type: String }],
-      nameplates: [{ type: String }], // NEW
+      nameplates: [{ type: String }],
     },
     equipped: {
       theme: { type: String, default: null },
       font: { type: String, default: null },
       ring: { type: String, default: null },
-      overlay: { type: String, default: null },
-      nameplate: { type: String, default: null }, // NEW
+      nameplate: { type: String, default: null },
     },
     isAdmin: {
       type: Boolean,
@@ -293,7 +286,7 @@ const userSchema = new mongoose.Schema(
       studyDuration: { type: Number, default: 0 },
       sessionsCompleted: { type: Number, default: 0 },
       xpEarned: { type: Number, default: 0 },
-      weekStart: { type: String, default: null }, // ISO string of the Monday this week started
+      weekStart: { type: String, default: null },
     },
     preferredBadge: {
       type: String,
@@ -307,7 +300,6 @@ const userSchema = new mongoose.Schema(
       sessionGoalCount: { type: Number, default: 0 },
       autoplay: { type: Boolean, default: true },
       isMuted: { type: Boolean, default: false },
-      volumeLevel: { type: Number, default: 0.5, min: 0.0, max: 1.0 }, // ADD THIS LINE
       skipBreaks: {
         type: Boolean,
         default: false,
@@ -327,9 +319,9 @@ const userSchema = new mongoose.Schema(
     },
     studyHistory: [
       {
-        date: { type: String, required: true }, // Format: "YYYY-MM-DD"
-        count: { type: Number, default: 0 }, // Number of sessions that day
-        duration: { type: Number, default: 0 }, // Total seconds studied that day
+        date: { type: String, required: true }, 
+        count: { type: Number, default: 0 },
+        duration: { type: Number, default: 0 }, 
       },
     ],
     isPomodoroPrivate: {
@@ -352,9 +344,8 @@ const userSchema = new mongoose.Schema(
       { type: mongoose.Schema.Types.ObjectId, ref: "Conversation", default: [] },
     ],
     isPublicChatMuted: { type: Boolean, default: false },
-    // pomodoroBackground: { type: String, default: null },
-    pomodoroBackgroundUrl: { type: String, default: null }, // custom Cloudinary URL
-    pomodoroBackgroundPublicId: { type: String, default: null }, // stored at upload for reliable deletion
+    pomodoroBackgroundUrl: { type: String, default: null },
+    pomodoroBackgroundPublicId: { type: String, default: null }, 
   },
   { timestamps: true },
 );

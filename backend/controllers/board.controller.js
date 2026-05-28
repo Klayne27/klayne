@@ -47,7 +47,6 @@ const commentPopulate = [
     },
   },
   {
-    // Populate boardPost just enough for the reply indicator
     path: "boardPost",
     select: "title user",
     populate: {
@@ -346,7 +345,6 @@ export const reactToBoardPost = async (req, res) => {
     const post = await BoardPost.findById(id);
     if (!post) return res.status(404).json({ error: "Board post not found." });
 
-    // Check if reaction exists (same logic as reactToMessage)
     const reactionExists = post.reactions.some(
       (r) => r.userId.toString() === userId.toString() && r.emoji === emoji,
     );
@@ -374,7 +372,7 @@ export const reactToBoardPost = async (req, res) => {
         populate: { path: "profileImg", select: "imageUrl" },
       })
       .populate({
-        path: "reactions.userId", // Populating the user info for the reaction
+        path: "reactions.userId", 
         select: "username fullName",
         populate: { path: "profileImg", select: "imageUrl" },
       })
@@ -434,7 +432,7 @@ export const getBoardComments = async (req, res) => {
 export const createBoardComment = async (req, res) => {
   try {
     const { id: boardPostId } = req.params;
-    const { content, parentCommentId, isReplyToPost } = req.body; // ADD isReplyToPost
+    const { content, parentCommentId, isReplyToPost } = req.body; 
     let { img } = req.body;
     const userId = req.user._id;
 
@@ -448,9 +446,8 @@ export const createBoardComment = async (req, res) => {
     );
     if (!post) return res.status(404).json({ error: "Board post not found." });
 
-    const postOwnerId = post.user._id; // extract ObjectId from populated user
+    const postOwnerId = post.user._id;
 
-    // Validate parentComment belongs to the same board post
     if (parentCommentId) {
       const parent = await BoardComment.findById(parentCommentId).populate(
         "user",
@@ -478,7 +475,7 @@ export const createBoardComment = async (req, res) => {
       content: content?.trim() || "",
       img: uploadedImgUrl,
       parentComment: parentCommentId || null,
-      isReplyToPost: !parentCommentId && !!isReplyToPost, // only set if no parent comment
+      isReplyToPost: !parentCommentId && !!isReplyToPost,
     });
 
     await newComment.save();
@@ -501,7 +498,7 @@ export const createBoardComment = async (req, res) => {
     if (postOwnerId.toString() !== userId.toString()) {
       await createAndSendBoardNotification({
         from: userId,
-        to: postOwnerId, // pass ObjectId, not the full user object
+        to: postOwnerId, 
         type: "boardComment",
         boardPostId: post._id,
         boardCommentId: newComment._id,
