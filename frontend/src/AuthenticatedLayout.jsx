@@ -78,7 +78,7 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
     <>
       <StyleWrapper />
 
-      <div className={`mx-auto flex min-h-screen flex-col bg-base-100 ${isPomodoroPage ? "" : "md:max-w-[1242px]"} md:flex-row`}>
+      <div className={`mx-auto flex min-h-screen flex-col bg-base-100 ${isPomodoroPage ? "" : "md:max-w-[1300px]"} md:flex-row`}>
         {!shouldHideSidePanels && (
           <Sidebar
             onOpenCreatePostModal={() => setShowCreatePostModal(true)}

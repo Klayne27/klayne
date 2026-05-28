@@ -12,7 +12,7 @@ const PostImagesGrid = ({ images = [] }) => {
   }
 
   const imgClass =
-    "h-full w-full object-cover cursor-pointer transition-opacity hover:opacity-90 select-none"
+    "h-full w-full cursor-pointer transition-opacity hover:opacity-90 select-none"
 
   // 1 Image: Maintain original max-h-80
   if (count === 1) {
@@ -38,7 +38,7 @@ const PostImagesGrid = ({ images = [] }) => {
             key={i}
             src={img.imageUrl}
             onClick={(e) => open(i, e)}
-            className={imgClass}
+            className={`${imgClass} object-cover`}
             loading="lazy"
             alt={`post image ${i + 1}`}
           />
