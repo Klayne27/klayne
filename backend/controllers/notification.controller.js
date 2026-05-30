@@ -23,7 +23,7 @@ export const getNotifications = async (req, res) => {
       })
       .populate({
         path: "postId",
-        select: "text img video mediaType user isVent isIC isAnonymous parentPost",
+        select: "text img video mediaType user isVent isStudy isAnonymous parentPost",
         populate: [
           {
             path: "user",

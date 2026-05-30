@@ -192,7 +192,7 @@ export const getPostReplies = async (req, res) => {
 export const createReply = async (req, res) => {
   try {
     const { parentId } = req.params;
-    const { text, isIC } = req.body;
+    const { text, isStudy } = req.body;
     let { img, video, imgs } = req.body;
     const userId = req.user._id;
 
@@ -288,7 +288,7 @@ if (!text && !img && !incomingImgs.length && !video) {
       hashtags: tags, // ADD
       parentPost: parentId,
       publishedAt: new Date(),
-      isIC: parent.isIC || isIC || false,
+      isStudy: parent.isStudy || isStudy || false,
       isVent: parent.isVent,
       isAnonymous: finalIsAnonymous,
     });
@@ -459,7 +459,7 @@ export const getAllPosts = async (req, res) => {
     // ── CHANGE: replace the two separate arrays with excludedUserIds ──────
     const initialMatchConditions = {
       isVent: { $ne: true },
-      isIC: { $ne: true },
+      isStudy: { $ne: true },
       parentPost: null,
       "deletedFor.user": { $ne: userId },
       ...scheduledPostConditions,
@@ -511,13 +511,13 @@ export const getAllPosts = async (req, res) => {
       {
         $match: {
           isVent: { $ne: true },
-          isIC: { $ne: true },
+          isStudy: { $ne: true },
           parentPost: null,
           "deletedFor.user": { $ne: userId },
           ...scheduledPostConditions,
           user: { $nin: excludedUserIds },
           "repostedFromPostData.isVent": { $ne: true },
-          "repostedFromPostData.isIC": { $ne: true },
+          "repostedFromPostData.isStudy": { $ne: true },
         },
       },
       { $match: initialMatchConditions },
@@ -564,13 +564,13 @@ export const getAllPosts = async (req, res) => {
       {
         $match: {
           isVent: { $ne: true },
-          isIC: { $ne: true },
+          isStudy: { $ne: true },
           parentPost: null,
           "deletedFor.user": { $ne: userId },
           ...scheduledPostConditions,
           user: { $nin: excludedUserIds },
           "repostedFromPostData.isVent": { $ne: true },
-          "repostedFromPostData.isIC": { $ne: true },
+          "repostedFromPostData.isStudy": { $ne: true },
         },
       },
       { $match: initialMatchConditions },
@@ -815,7 +815,7 @@ export const getICPosts = async (req, res) => {
     };
 
     const icMatchConditions = {
-      isIC: true,
+      isStudy: true,
       isVent: { $ne: true },
       parentPost: null,
       "deletedFor.user": { $ne: userId },
@@ -838,7 +838,7 @@ export const getICPosts = async (req, res) => {
       {
         $match: {
           isVent: { $ne: true },
-          isIC: true,
+          isStudy: true,
           "deletedFor.user": { $ne: userId },
           parentPost: null,
           ...scheduledPostConditions,
@@ -917,7 +917,7 @@ export const getICPosts = async (req, res) => {
       {
         $match: {
           isVent: { $ne: true },
-          isIC: true,
+          isStudy: true,
           "deletedFor.user": { $ne: userId },
           parentPost: null,
           ...scheduledPostConditions,
@@ -1835,7 +1835,7 @@ export const getUserPosts = async (req, res) => {
           { path: "images", select: "imageUrl" },
         ],
         select:
-          "text img video mediaType likes bookmarkedBy repostsCount isIC repostedBy createdAt user isScheduled scheduledAt image",
+          "text img video mediaType likes bookmarkedBy repostsCount isStudy repostedBy createdAt user isScheduled scheduledAt image",
       })
       .populate("image", "imageUrl")
       .populate("images", "imageUrl")
@@ -2051,7 +2051,7 @@ export const getUserReplies = async (req, res) => {
           publishedAt: 1,
           mentionedUsers: 1,
           editHistory: 1,
-          isIC: 1,
+          isStudy: 1,
           isAnonymous: 1,
           pollOptions: 1,
           pollTotalVotes: 1,
@@ -2484,7 +2484,7 @@ export const getScheduledPosts = async (req, res) => {
 
 export const createPost = async (req, res) => {
   try {
-    const { text, pollOptions, scheduledAt, isIC } = req.body;
+    const { text, pollOptions, scheduledAt, isStudy } = req.body;
     let { img, video, imgs } = req.body;
 
     const userId = req.user._id.toString();
@@ -2577,7 +2577,7 @@ if (!text && !img && !incomingImgs.length && !video) {
       isScheduled,
       scheduledAt: isScheduled ? new Date(scheduledAt) : null,
       publishedAt: new Date(),
-      isIC: isIC || false,
+      isStudy: isStudy || false,
     };
 
     if (pollOptions && pollOptions.length > 0) {
@@ -2658,7 +2658,7 @@ if (!text && !img && !incomingImgs.length && !video) {
       if (onlineUsersMap && io) {
         for (const [onlineUserId] of onlineUsersMap.entries()) {
           if (onlineUserId.toString() !== userId.toString()) {
-            if (newPost.isIC) {
+            if (newPost.isStudy) {
               await emitNewICPostCount(onlineUserId);
               await emitNewICUnreadDot(onlineUserId);
             } else {
@@ -3000,7 +3000,7 @@ export const repostPost = async (req, res) => {
 
     const isOriginalVent = originalPost.isVent;
     const isOriginalAnonymous = originalPost.isAnonymous;
-    const isOriginalIC = originalPost.isIC;
+    const isOriginalIC = originalPost.isStudy;
 
     const originalPostOwnerId = originalPost.user.toString();
     if (await isBlockedOrBlockedBy(userId, originalPostOwnerId)) {
@@ -3031,7 +3031,7 @@ export const repostPost = async (req, res) => {
         publishedAt: new Date(),
         isVent: isOriginalVent,
         isAnonymous: isOriginalAnonymous,
-        isIC: isOriginalIC,
+        isStudy: isOriginalIC,
         pollOptions: originalPost.pollOptions,
         pollTotalVotes: originalPost.pollTotalVotes,
         image: originalPost.image,

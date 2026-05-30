@@ -135,11 +135,13 @@ const postSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    isIC: {
-      type: Boolean,
-      default: false,
-      index: true,
-    },
+    // isIC: {
+    //   type: Boolean,
+    //   default: false,
+    //   index: true,
+    // },
+    isStudy: { type: Boolean, default: false, index: true },
+
     editHistory: [
       {
         text: String,
@@ -161,4 +163,3 @@ const postSchema = new mongoose.Schema(
 const Post = mongoose.model("Post", postSchema);
 
 export default Post;
-

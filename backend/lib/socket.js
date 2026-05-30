@@ -190,7 +190,7 @@ export async function emitNewPostCount(userId) {
       isScheduled: false,
       publishedAt: { $gt: lastReadTimestamp },
       isVent: { $ne: true },
-      isIC: { $ne: true },
+      isStudy: { $ne: true },
       parentPost: null, // ← replies excluded; reposts have parentPost: null so they count
     });
 
@@ -216,7 +216,7 @@ export async function emitNewICPostCount(userId) {
       user: { $ne: userIdObj },
       isScheduled: false,
       publishedAt: { $gt: lastReadTimestamp },
-      isIC: true,
+      isStudy: true,
       isVent: { $ne: true },
       parentPost: null, // ← same fix
     });
@@ -275,7 +275,7 @@ export async function emitNewICUnreadDot(userId) {
       user: { $ne: userIdObj },
       isScheduled: false,
       publishedAt: { $gt: lastReadTimestamp },
-      isIC: true,
+      isStudy: true,
       isVent: { $ne: true },
       parentPost: null, // 👈 Add this line to ignore replies
     });

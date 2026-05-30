@@ -1,10 +1,10 @@
 const BASE_URL = "/api/posts"
 
-export const createReplyApi = async ({ parentId, text, img, imgs, video, isIC, isAnonymous }) => {
+export const createReplyApi = async ({ parentId, text, img, imgs, video, isStudy, isAnonymous }) => {
   const res = await fetch(`${BASE_URL}/reply/${parentId}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text, img, imgs, video, isIC, isAnonymous }),
+    body: JSON.stringify({ text, img, imgs, video, isStudy, isAnonymous }),
   })
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || "Something went wrong")
@@ -82,11 +82,11 @@ export const getScheduledPostsApi = async () => {
   return data
 }
 
-export const createPostApi = async ({ text, img, imgs, video, pollOptions, scheduledAt, isIC }) => {
+export const createPostApi = async ({ text, img, imgs, video, pollOptions, scheduledAt, isStudy }) => {
   const res = await fetch(`${BASE_URL}/create`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text, img, imgs, video, pollOptions, scheduledAt, isIC }),
+    body: JSON.stringify({ text, img, imgs, video, pollOptions, scheduledAt, isStudy }),
   })
 
   const contentType = res.headers.get("content-type") ?? ""

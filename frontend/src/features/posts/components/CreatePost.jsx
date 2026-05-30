@@ -255,7 +255,7 @@ const handlePaste = usePasteHandler({
       // --- 1. Prepare postData ---
       let postData = {
         text: postInput,
-        isIC: feedType === "ic",
+        isStudy: feedType === "ic",
       }
 
       // --- 2. Handle Polls ---
