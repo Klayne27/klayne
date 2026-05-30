@@ -13,8 +13,7 @@ const POST_POPULATE = [
     path: "parentPost",
     populate: {
       path: "user",
-      select:
-        "username fullName",
+      select: "username fullName",
     },
   },
   { path: "image", select: "imageUrl" },
@@ -77,13 +76,8 @@ export const getPostsByHashtag = async (req, res) => {
 
     const query = {
       hashtags: tag,
-      isScheduled: false,
+      isScheduled: { $ne: true },
     };
-
-    // Only filter out replies when not explicitly including them
-    // if (!includeReplies) {
-    //   query.parentPost = null;
-    // }
 
     if (cursor) {
       query._id = { $lt: new mongoose.Types.ObjectId(cursor) };

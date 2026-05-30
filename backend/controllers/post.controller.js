@@ -213,10 +213,10 @@ export const createReply = async (req, res) => {
       }
     }
 
-const incomingImgs = Array.isArray(imgs) ? imgs : [];
-if (!text && !img && !incomingImgs.length && !video) {
-  return res.status(400).json({ error: "Reply must have text, image, or video." });
-}
+    const incomingImgs = Array.isArray(imgs) ? imgs : [];
+    if (!text && !img && !incomingImgs.length && !video) {
+      return res.status(400).json({ error: "Reply must have text, image, or video." });
+    }
 
     const { isGoldVerified } = req.user;
     if (video && !isGoldVerified) {
@@ -295,22 +295,22 @@ if (!text && !img && !incomingImgs.length && !video) {
 
     await newReply.save();
 
-if (uploadedImages.length > 0) {
-  const imageDocs = await Promise.all(
-    uploadedImages.map(({ url, publicId }) =>
-      new Image({
-        imageUrl: url,
-        parentDocument: newReply._id,
-        parentModel: "Post",
-        uploadedBy: userId,
-        publicId,
-      }).save(),
-    ),
-  );
-  newReply.image = imageDocs[0]._id;
-  newReply.images = imageDocs.map((d) => d._id);
-  await newReply.save();
-}
+    if (uploadedImages.length > 0) {
+      const imageDocs = await Promise.all(
+        uploadedImages.map(({ url, publicId }) =>
+          new Image({
+            imageUrl: url,
+            parentDocument: newReply._id,
+            parentModel: "Post",
+            uploadedBy: userId,
+            publicId,
+          }).save(),
+        ),
+      );
+      newReply.image = imageDocs[0]._id;
+      newReply.images = imageDocs.map((d) => d._id);
+      await newReply.save();
+    }
 
     // ── Sync hashtag counts ────────────────────────────────────────────────
     if (tags.length) {
@@ -351,8 +351,7 @@ if (uploadedImages.length > 0) {
         populate: { path: "profileImg", select: "imageUrl" },
       })
       .populate({ path: "image", select: "imageUrl" })
-        .populate({ path: "images", select: "imageUrl" }) // ← add
-
+      .populate({ path: "images", select: "imageUrl" }); // ← add
 
     let finalReply = populatedReply.toObject();
 
@@ -440,7 +439,7 @@ export const getAllPosts = async (req, res) => {
       text: 1,
       img: 1,
       image: 1,
-      images:1,
+      images: 1,
       video: 1,
       mediaType: 1,
       likes: 1,
@@ -1974,7 +1973,7 @@ export const getUserReplies = async (req, res) => {
         },
       },
       { $unwind: { path: "$image", preserveNullAndEmptyArrays: true } },
-            {
+      {
         $lookup: {
           from: "images",
           localField: "images",
@@ -2489,10 +2488,10 @@ export const createPost = async (req, res) => {
 
     const userId = req.user._id.toString();
 
-const incomingImgs = Array.isArray(imgs) ? imgs : [];
-if (!text && !img && !incomingImgs.length && !video) {
-  return res.status(400).json({ error: "Post must have text, image, or video." });
-}
+    const incomingImgs = Array.isArray(imgs) ? imgs : [];
+    if (!text && !img && !incomingImgs.length && !video) {
+      return res.status(400).json({ error: "Post must have text, image, or video." });
+    }
 
     const { isGoldVerified } = req.user;
 
@@ -2631,9 +2630,6 @@ if (!text && !img && !incomingImgs.length && !video) {
     // ── Sync hashtag counts BEFORE responding ─────────────────────────────
     // Previously this ran after res.json(), making it fire-and-forget and
     // ensuring the response never reflected the saved hashtags.
-    if (tags.length) {
-      await syncHashtagCounts(tags, []);
-    }
 
     const isAnonymousInteraction =
       newPost.isVent &&
@@ -2642,6 +2638,11 @@ if (!text && !img && !incomingImgs.length && !video) {
 
     if (!newPost.isScheduled) {
       await User.findByIdAndUpdate(userId, { $inc: { postsCount: 1 } });
+
+      // ── Sync hashtags only when the post is actually going live ──────────
+      if (tags.length) {
+        await syncHashtagCounts(tags, []);
+      }
 
       const notificationPromises = mentionedUsersIds.map((mentionedUserId) =>
         createAndSendNotification({
@@ -2652,7 +2653,6 @@ if (!text && !img && !incomingImgs.length && !video) {
           isAnonymousInteraction,
         }),
       );
-
       await Promise.all(notificationPromises);
 
       if (onlineUsersMap && io) {
@@ -3476,33 +3476,33 @@ export const createVentPost = async (req, res) => {
 
     const incomingSingleImg = img; // legacy single-image support
 
- if (incomingImgs.length > 0) {
-   const uploads = await Promise.all(
-     incomingImgs.map((b64) =>
-       cloudinary.uploader.upload(b64, { upload_preset: "ml_posts" }),
-     ),
-   );
-   uploadedImages = uploads.map((u) => ({ url: u.secure_url, publicId: u.public_id }));
-   uploadedImgUrl = uploadedImages[0].url; // keep legacy field populated
-   imgPublicId = uploadedImages[0].publicId;
-   mediaType = "image";
- } else if (incomingSingleImg) {
-   // legacy path — single base64 img
-   const uploadedResponse = await cloudinary.uploader.upload(incomingSingleImg, {
-     upload_preset: "ml_posts",
-   });
-   uploadedImgUrl = uploadedResponse.secure_url;
-   imgPublicId = uploadedResponse.public_id;
-   uploadedImages = [{ url: uploadedImgUrl, publicId: imgPublicId }];
-   mediaType = "image";
- } else if (video) {
-   const uploadedResponse = await cloudinary.uploader.upload(video, {
-     resource_type: "video",
-   });
-   uploadedVideoUrl = uploadedResponse.secure_url;
-   videoPublicId = uploadedResponse.public_id;
-   mediaType = "video";
- }
+    if (incomingImgs.length > 0) {
+      const uploads = await Promise.all(
+        incomingImgs.map((b64) =>
+          cloudinary.uploader.upload(b64, { upload_preset: "ml_posts" }),
+        ),
+      );
+      uploadedImages = uploads.map((u) => ({ url: u.secure_url, publicId: u.public_id }));
+      uploadedImgUrl = uploadedImages[0].url; // keep legacy field populated
+      imgPublicId = uploadedImages[0].publicId;
+      mediaType = "image";
+    } else if (incomingSingleImg) {
+      // legacy path — single base64 img
+      const uploadedResponse = await cloudinary.uploader.upload(incomingSingleImg, {
+        upload_preset: "ml_posts",
+      });
+      uploadedImgUrl = uploadedResponse.secure_url;
+      imgPublicId = uploadedResponse.public_id;
+      uploadedImages = [{ url: uploadedImgUrl, publicId: imgPublicId }];
+      mediaType = "image";
+    } else if (video) {
+      const uploadedResponse = await cloudinary.uploader.upload(video, {
+        resource_type: "video",
+      });
+      uploadedVideoUrl = uploadedResponse.secure_url;
+      videoPublicId = uploadedResponse.public_id;
+      mediaType = "video";
+    }
 
     const newPostData = {
       user: userId,

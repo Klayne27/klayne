@@ -1,6 +1,7 @@
 import Post from "../models/post.model.js";
 import User from "../models/user.model.js";
 import Notification from "../models/notification.model.js";
+import { syncHashtagCounts } from "../lib/utils/hashtagUtils.js";
 
 export const publishScheduledPosts = async (io, onlineUsersMap) => {
   try {
@@ -10,13 +11,12 @@ export const publishScheduledPosts = async (io, onlineUsersMap) => {
       scheduledAt: { $lte: now },
     }).populate("user", "-password -email");
 
-    if (postsToPublish.length === 0) {
-      return;
-    }
+    if (postsToPublish.length === 0) return;
 
     const postsToUpdate = [];
     const usersToUpdate = {};
     const notificationsToCreate = [];
+    const allHashtags = []; // ← collect hashtags across all publishing posts
 
     for (const post of postsToPublish) {
       postsToUpdate.push({
@@ -37,7 +37,7 @@ export const publishScheduledPosts = async (io, onlineUsersMap) => {
       }
       usersToUpdate[post.user._id] += 1;
 
-      if (post.mentionedUsers && post.mentionedUsers.length > 0) {
+      if (post.mentionedUsers?.length > 0) {
         for (const mentionedUserId of post.mentionedUsers) {
           if (mentionedUserId.toString() !== post.user._id.toString()) {
             notificationsToCreate.push({
@@ -48,6 +48,11 @@ export const publishScheduledPosts = async (io, onlineUsersMap) => {
             });
           }
         }
+      }
+
+      // Accumulate hashtags — only from posts that actually have them
+      if (post.hashtags?.length > 0) {
+        allHashtags.push(...post.hashtags);
       }
     }
 
@@ -65,7 +70,11 @@ export const publishScheduledPosts = async (io, onlineUsersMap) => {
       await Notification.insertMany(notificationsToCreate);
     }
 
-    // This part can still be a bottleneck if there are many online users.
+    // Sync hashtag counts for all newly published posts in one batch call
+    if (allHashtags.length > 0) {
+      await syncHashtagCounts(allHashtags, []);
+    }
+
     if (onlineUsersMap && io) {
       for (const post of postsToPublish) {
         for (const [onlineUserId, socketIdsSet] of onlineUsersMap.entries()) {
