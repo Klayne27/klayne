@@ -137,25 +137,19 @@ const HomePage = () => {
 
   return (
     <>
-      <div ref={mainFeedRef} className="template mr-auto min-h-screen flex-[4_4_0] border-accent md:border-x">
+      <div
+        ref={mainFeedRef}
+        className="template mr-auto min-h-screen flex-[4_4_0] border-accent md:border-x"
+      >
         <div
           className={`sticky top-0 w-full ${
             showUnfollowModal ? "z-0" : "z-10"
           } border-b border-accent bg-opacity-20 backdrop-blur-md transition-transform duration-300 ease-in-out ${isMobile && !showHeader ? "-translate-y-full" : "translate-y-0"}`}
         >
           <div className="flex">
+            {/* For You */}
             <div
-              className={`flex flex-1 cursor-pointer justify-center p-3 py-3.5 ${
-                !isTouchDevice
-                  ? "transition duration-300 hover:bg-secondary hover:bg-opacity-50"
-                  : ""
-              } ${
-                activeButtonId === "forYou"
-                  ? "bg-secondary bg-opacity-50 transition duration-300"
-                  : ""
-              } ${
-                isTouchDevice && activeButtonId !== "forYou" ? "transition duration-300" : ""
-              } ${feedType === "forYou" ? "font-bold" : "text-base-content/50"} `}
+              className={`flex flex-1 cursor-pointer justify-center p-3 py-3.5 ${!isTouchDevice ? "transition duration-300 hover:bg-secondary hover:bg-opacity-50" : ""} ${activeButtonId === "forYou" ? "bg-secondary bg-opacity-50 transition duration-300" : ""} ${isTouchDevice && activeButtonId !== "forYou" ? "transition duration-300" : ""} ${feedType === "forYou" ? "font-bold" : "text-base-content/50"}`}
               onClick={() => handleTabClick("forYou")}
               onTouchStart={() => handleTouchStart("forYou")}
               onTouchEnd={handleTouchEnd}
@@ -164,43 +158,33 @@ const HomePage = () => {
               <span className="relative text-sm">
                 For You
                 {newPostCount > 0 && (
-                  <div className="absolute -right-3 top-0 h-3 w-3 rounded-full border-2 border-black bg-primary"></div>
+                  <div className="absolute -right-3 top-0 h-3 w-3 rounded-full border-2 border-black bg-primary" />
+                )}
+                {feedType === "forYou" && (
+                  <div className="absolute -bottom-[14px] left-0 h-1 w-full rounded-full bg-primary" />
                 )}
               </span>
-              {feedType === "forYou" && (
-                <div className="absolute bottom-0 h-1 w-10 rounded-full bg-primary"></div>
-              )}
             </div>
+
+            {/* Following */}
             <div
-              className={`flex flex-1 cursor-pointer justify-center p-3 text-sm ${
-                !isTouchDevice
-                  ? "transition duration-300 hover:bg-secondary hover:bg-opacity-50"
-                  : ""
-              } ${
-                activeButtonId === "following"
-                  ? "bg-secondary bg-opacity-50 transition duration-300"
-                  : ""
-              } ${
-                isTouchDevice && activeButtonId !== "following" ? "transition duration-300" : ""
-              } ${feedType === "following" ? "font-bold" : "text-base-content/50"} `}
+              className={`flex flex-1 cursor-pointer justify-center p-3 text-sm ${!isTouchDevice ? "transition duration-300 hover:bg-secondary hover:bg-opacity-50" : ""} ${activeButtonId === "following" ? "bg-secondary bg-opacity-50 transition duration-300" : ""} ${isTouchDevice && activeButtonId !== "following" ? "transition duration-300" : ""} ${feedType === "following" ? "font-bold" : "text-base-content/50"}`}
               onClick={() => handleTabClick("following")}
               onTouchStart={() => handleTouchStart("following")}
               onTouchEnd={handleTouchEnd}
               onTouchCancel={handleTouchCancel}
             >
-              Following
-              {feedType === "following" && (
-                <div className="absolute bottom-0 h-1 w-10 rounded-full bg-primary"></div>
-              )}
+              <span className="relative text-sm">
+                Following
+                {feedType === "following" && (
+                  <div className="absolute -bottom-[14px] left-0 h-1 w-full rounded-full bg-primary" />
+                )}
+              </span>
             </div>
+
+            {/* Study */}
             <div
-              className={`flex flex-1 cursor-pointer justify-center p-3 ${
-                !isTouchDevice
-                  ? "transition duration-300 hover:bg-secondary hover:bg-opacity-50"
-                  : ""
-              } ${
-                activeButtonId === "ic" ? "bg-secondary bg-opacity-50" : ""
-              } ${feedType === "ic" ? "font-bold" : "text-base-content/50"}`}
+              className={`flex flex-1 cursor-pointer justify-center p-3 ${!isTouchDevice ? "transition duration-300 hover:bg-secondary hover:bg-opacity-50" : ""} ${activeButtonId === "ic" ? "bg-secondary bg-opacity-50" : ""} ${feedType === "ic" ? "font-bold" : "text-base-content/50"}`}
               onClick={() => handleTabClick("ic")}
               onTouchStart={() => handleTouchStart("ic")}
               onTouchEnd={handleTouchEnd}
@@ -208,26 +192,17 @@ const HomePage = () => {
               <span className="relative text-sm">
                 Study
                 {hasNewICPosts && (
-                  <div className="absolute -right-3 top-0 h-3 w-3 rounded-full border-2 border-black bg-primary"></div>
+                  <div className="absolute -right-3 top-0 h-3 w-3 rounded-full border-2 border-black bg-primary" />
+                )}
+                {feedType === "ic" && (
+                  <div className="absolute -bottom-[14px] left-0 h-1 w-full rounded-full bg-primary" />
                 )}
               </span>
-              {feedType === "ic" && (
-                <div className="absolute bottom-0 h-1 w-10 rounded-full bg-primary"></div>
-              )}
             </div>
 
+            {/* Rants */}
             <div
-              className={`flex flex-1 cursor-pointer justify-center p-3 ${
-                !isTouchDevice
-                  ? "transition duration-300 hover:bg-secondary hover:bg-opacity-50"
-                  : ""
-              } ${
-                activeButtonId === "venting"
-                  ? "bg-secondary bg-opacity-50 transition duration-300"
-                  : ""
-              } ${
-                isTouchDevice && activeButtonId !== "venting" ? "transition duration-300" : ""
-              } ${feedType === "venting" ? "font-bold" : "text-base-content/50"} `}
+              className={`flex flex-1 cursor-pointer justify-center p-3 ${!isTouchDevice ? "transition duration-300 hover:bg-secondary hover:bg-opacity-50" : ""} ${activeButtonId === "venting" ? "bg-secondary bg-opacity-50 transition duration-300" : ""} ${isTouchDevice && activeButtonId !== "venting" ? "transition duration-300" : ""} ${feedType === "venting" ? "font-bold" : "text-base-content/50"}`}
               onClick={() => handleTabClick("venting")}
               onTouchStart={() => handleTouchStart("venting")}
               onTouchEnd={handleTouchEnd}
@@ -236,12 +211,12 @@ const HomePage = () => {
               <span className="relative text-sm">
                 Rants
                 {hasNewVentPosts && (
-                  <div className="absolute -right-3 top-0 h-3 w-3 rounded-full border-2 border-black bg-primary"></div>
+                  <div className="absolute -right-3 top-0 h-3 w-3 rounded-full border-2 border-black bg-primary" />
+                )}
+                {feedType === "venting" && (
+                  <div className="absolute -bottom-[14px] left-0 h-1 w-full rounded-full bg-primary" />
                 )}
               </span>
-              {feedType === "venting" && (
-                <div className="absolute bottom-0 h-1 w-10 rounded-full bg-primary"></div>
-              )}
             </div>
           </div>
         </div>

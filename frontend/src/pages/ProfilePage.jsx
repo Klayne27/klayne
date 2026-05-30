@@ -607,7 +607,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                 modalTitle={`Unmute @${userProfile?.username}?`}
                 message="Posts from this account will now be allowed in your Home timeline."
                 confirmButtonText="Unmute"
-                danger={false} 
+                danger={false}
                 isLoading={isUnmuting}
               />
             </div>
@@ -781,10 +781,12 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                   onTouchEnd={handleTouchEnd}
                   onTouchCancel={handleTouchCancel}
                 >
-                  Posts
-                  {feedType === "posts" && (
-                    <div className="absolute bottom-0 h-1 w-10 rounded-full bg-primary" />
-                  )}
+                  <span className="relative">
+                    Posts
+                    {feedType === "posts" && (
+                      <div className="absolute -bottom-[12px] h-1 w-full rounded-full bg-primary" />
+                    )}
+                  </span>
                 </div>
                 <div
                   className={`relative flex flex-1 cursor-pointer justify-center p-3 transition duration-150 ${!isTouchDevice ? "hover:bg-secondary" : ""} ${
@@ -797,10 +799,12 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                   onTouchEnd={handleTouchEnd}
                   onTouchCancel={handleTouchCancel}
                 >
-                  Replies
-                  {feedType === "userReplies" && (
-                    <div className="absolute bottom-0 h-1 w-10 rounded-full bg-primary" />
-                  )}
+                  <span className="relative">
+                    Replies
+                    {feedType === "userReplies" && (
+                      <div className="absolute -bottom-[12px] h-1 w-full rounded-full bg-primary" />
+                    )}
+                  </span>
                 </div>
                 <div
                   className={`relative flex flex-1 cursor-pointer justify-center p-3 transition duration-150 ${!isTouchDevice ? "hover:bg-secondary" : ""} ${
@@ -813,10 +817,12 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                   onTouchEnd={handleTouchEnd}
                   onTouchCancel={handleTouchCancel}
                 >
-                  Media
-                  {feedType === "userMedia" && (
-                    <div className="absolute bottom-0 h-1 w-10 rounded-full bg-primary" />
-                  )}
+                  <span className="relative">
+                    Media
+                    {feedType === "userMedia" && (
+                      <div className="absolute -bottom-[12px] h-1 w-full rounded-full bg-primary" />
+                    )}
+                  </span>
                 </div>
                 <div
                   className={`relative flex flex-1 cursor-pointer justify-center p-3 transition duration-150 ${!isTouchDevice ? "hover:bg-secondary" : ""} ${
@@ -827,10 +833,12 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                   onTouchEnd={handleTouchEnd}
                   onTouchCancel={handleTouchCancel}
                 >
-                  Likes
-                  {feedType === "likes" && (
-                    <div className="absolute bottom-0 h-1 w-10 rounded-full bg-primary" />
-                  )}
+                  <span className="relative">
+                    Likes
+                    {feedType === "likes" && (
+                      <div className="absolute -bottom-[12px] h-1 w-full rounded-full bg-primary" />
+                    )}
+                  </span>
                 </div>
               </div>
             )}

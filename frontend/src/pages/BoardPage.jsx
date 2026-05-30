@@ -114,7 +114,7 @@ const BoardPage = () => {
   const showPostDetail = !isMobile || !!urlPostId
 
   return (
-    <div className="template mx-auto flex-1 md:border-x border-accent md:max-w-[1181px]">
+    <div className="template mx-auto flex-1 md:border-x border-accent md:max-w-[1300px]">
       {/* Header */}
       <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-accent bg-base-100 bg-opacity-80 px-4 py-3 backdrop-blur-md">
         {isMobile && (

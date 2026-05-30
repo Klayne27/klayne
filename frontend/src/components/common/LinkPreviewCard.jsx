@@ -170,7 +170,7 @@ const LinkPreviewCard = ({ url, onPreviewLoad, onLoad }) => {
           alt={title ?? "Video preview"}
           className="absolute inset-0 h-full w-full object-cover"
           loading="lazy"
-          onPreviewLoad={onLoad}
+          onLoad={onLoad}
         />
         <div className="absolute inset-0 bg-black/25" />
         <div className="absolute inset-0 flex items-center justify-center">
