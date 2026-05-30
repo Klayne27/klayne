@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 
-const PostSkeleton = ({ count = 3 }) => {
+const PostSkeleton = ({ count = 1 }) => {
   return (
     <>
       {Array.from({ length: count }).map((_, i) => (
