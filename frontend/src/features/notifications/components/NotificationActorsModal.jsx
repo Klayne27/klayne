@@ -2,8 +2,11 @@ import { Link } from "react-router-dom"
 import { IoClose } from "react-icons/io5"
 import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils"
 import UserFullName from "../../../components/common/UserFullname"
+import useLockBodyScroll from "../../../hooks/customHooks/useLockBodyScroll"
 
 const NotificationActorsModal = ({ isOpen, onClose, notification }) => {
+  useLockBodyScroll(isOpen)
+
   if (!isOpen || !notification) return null
 
   const actors = notification.actors || (notification.from ? [notification.from] : [])
@@ -23,11 +26,7 @@ const NotificationActorsModal = ({ isOpen, onClose, notification }) => {
       >
         <div className="flex items-center justify-between border-b border-accent px-4 py-3">
           <h3 className="text-lg font-bold">People</h3>
-          <button
-            className="btn btn-circle btn-ghost btn-sm"
-            onClick={onClose}
-            type="button"
-          >
+          <button className="btn btn-circle btn-ghost btn-sm" onClick={onClose} type="button">
             <IoClose size={24} />
           </button>
         </div>
@@ -50,7 +49,9 @@ const NotificationActorsModal = ({ isOpen, onClose, notification }) => {
                               "avatar",
                             )
                       }
-                      alt={isAnonActor ? "Anonymous profile" : `${actor?.username || "User"} profile`}
+                      alt={
+                        isAnonActor ? "Anonymous profile" : `${actor?.username || "User"} profile`
+                      }
                     />
                   </div>
                 </div>
