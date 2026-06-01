@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom"
 import { IoChatbubbleSharp, IoSettingsOutline } from "react-icons/io5"
-import { FaUser, FaHeart, FaRetweet, FaReply, FaWrench, FaUserCheck } from "react-icons/fa6"
+import { FaUser, FaHeart, FaRetweet, FaReply, FaUserCheck } from "react-icons/fa6"
 import { FaTrashCan } from "react-icons/fa6"
 import { formatPostDate } from "../utils/date"
 import { useAuthUser } from "../features/auth/authHooks/useAuthUser"
@@ -19,8 +19,9 @@ import { useSocket } from "../context/SocketContext"
 import FollowRequestsTab from "../features/notifications/components/FollowRequestsTab"
 
 const NotificationPage = () => {
-const [activeTab, setActiveTab] = useState("all") // "all" | "requests"
-const { followRequestCount } = useSocket()
+  const [activeTab, setActiveTab] = useState("all") // "all" | "requests"
+  const { followRequestCount } = useSocket()
+  const GROUPING_WINDOW_MS = 24 * 60 * 60 * 1000
 
   const { notifications, isLoading } = useGetNotifications()
   const { deleteNotification } = useDeleteNotification()
@@ -49,8 +50,69 @@ const { followRequestCount } = useSocket()
     return true
   })
 
+  const getNotificationTargetKey = (notification) => {
+    if (notification.postId?._id) return `post:${notification.postId._id}`
+    if (notification.boardCommentId?._id) return `board-comment:${notification.boardCommentId._id}`
+    if (notification.boardPostId?._id) return `board-post:${notification.boardPostId._id}`
+    if (notification.type === "follow") return "profile"
+    if (notification.type === "followRequestAccepted") return `user:${notification.from?._id}`
+    return notification._id
+  }
+
+  const groupedNotifications = (() => {
+    if (!filteredNotifications?.length) return []
+
+    const groupsByTarget = new Map()
+    const groups = []
+
+    filteredNotifications.forEach((notification) => {
+      const targetKey = `${notification.type}:${getNotificationTargetKey(notification)}`
+      const existingGroups = groupsByTarget.get(targetKey) || []
+      const notificationTime = new Date(notification.createdAt).getTime()
+      const existing = existingGroups.find(
+        (group) => Math.abs(group.anchorTimestamp - notificationTime) < GROUPING_WINDOW_MS,
+      )
+
+      if (!existing) {
+        const group = {
+          ...notification,
+          _id: `${targetKey}:${notification._id}`,
+          notificationIds: [notification._id],
+          notifications: [notification],
+          actors: notification.from ? [notification.from] : [],
+          createdAt: notification.createdAt,
+          anchorTimestamp: notificationTime,
+        }
+
+        existingGroups.push(group)
+        groupsByTarget.set(targetKey, existingGroups)
+        groups.push(group)
+        return
+      }
+
+      existing.notificationIds.push(notification._id)
+      existing.notifications.push(notification)
+
+      if (
+        notification.from &&
+        !existing.actors.some(
+          (actor) => actor?._id?.toString() === notification.from?._id?.toString(),
+        )
+      ) {
+        existing.actors.push(notification.from)
+      }
+
+      if (new Date(notification.createdAt) > new Date(existing.createdAt)) {
+        existing.createdAt = notification.createdAt
+      }
+    })
+
+    return groups.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+  })()
+
   const handleProfileClick = (e, username) => {
     e.stopPropagation()
+    if (!username) return
     navigate(`/profile/${username}`)
   }
 
@@ -81,6 +143,11 @@ const { followRequestCount } = useSocket()
     if (dropdownToggleRef.current) {
       dropdownToggleRef.current.blur()
     }
+  }
+
+  const handleDeleteNotificationGroup = (notification) => {
+    const notificationIds = notification.notificationIds || [notification._id]
+    notificationIds.forEach((notificationId) => deleteNotification(notificationId))
   }
 
   const getNotificationIcon = (type) => {
@@ -114,42 +181,98 @@ const { followRequestCount } = useSocket()
     }
   }
 
+  const getActorSummary = (notification) => {
+    const actors = notification.actors || (notification.from ? [notification.from] : [])
+    const firstActor = actors[0]
+    const firstName = notification.isAnonymousInteraction ? "Anonymous" : firstActor?.username
+    const extraCount = Math.max(actors.length - 1, 0)
+
+    if (!firstName) return "A user"
+    if (extraCount === 0) return `${notification.isAnonymousInteraction ? "" : "@"}${firstName}`
+
+    return `${notification.isAnonymousInteraction ? "" : "@"}${firstName} and ${extraCount} ${
+      extraCount === 1 ? "other" : "others"
+    }`
+  }
+
   const getNotificationMessage = (notification) => {
     const isAnon = notification.isAnonymousInteraction
     const displayUsername = isAnon ? "Anonymous" : notification.from?.username
+    const actorSummary = getActorSummary(notification)
 
     if (!displayUsername) return "A user"
 
-    const prefix = isAnon ? "" : "@"
-
     switch (notification.type) {
       case "follow":
-        return `${prefix}${displayUsername} followed you.`
+        return `${actorSummary} followed you.`
       case "like":
-        return `${prefix}${displayUsername} liked your post.`
+        return `${actorSummary} liked your post.`
       case "repost":
-        return `${prefix}${displayUsername} reposted your post.`
+        return `${actorSummary} reposted your post.`
       case "mention":
-        return `${prefix}${displayUsername} mentioned you in a post.`
+        return `${actorSummary} mentioned you in a post.`
       case "reply":
-        return `${prefix}${displayUsername} replied to your post.`
+        return `${actorSummary} replied to your post.`
       case "replyLike":
-        return `${prefix}${displayUsername} liked your reply.`
+        return `${actorSummary} liked your reply.`
       case "replyRepost":
-        return `${prefix}${displayUsername} reposted your reply.`
+        return `${actorSummary} reposted your reply.`
       case "replyReply":
-        return `${prefix}${displayUsername} replied to your reply.`
+        return `${actorSummary} replied to your reply.`
       case "replyMention":
-        return `${prefix}${displayUsername} mentioned you in a reply.`
+        return `${actorSummary} mentioned you in a reply.`
       case "boardComment":
-        return `@${displayUsername} commented on your board post.`
+        return `${actorSummary} commented on your board post.`
       case "boardReply":
-        return `@${displayUsername} replied to your board comment.`
+        return `${actorSummary} replied to your board comment.`
       case "followRequestAccepted":
-        return `@${displayUsername} accepted your follow request.`
+        return `${actorSummary} accepted your follow request.`
       default:
         return ""
     }
+  }
+
+  const renderActorAvatars = (notification) => {
+    const actors = notification.actors || (notification.from ? [notification.from] : [])
+    const visibleActors = actors.slice(0, 4)
+    const extraCount = Math.max(actors.length - visibleActors.length, 0)
+
+    return (
+      <div className="flex min-w-[44px] -space-x-3">
+        {visibleActors.map((actor, index) => {
+          const isAnonActor = notification.isAnonymousInteraction && index === 0
+
+          return (
+            <button
+              key={actor?._id || `${notification._id}-${index}`}
+              className="avatar cursor-pointer rounded-full ring-2 ring-base-100"
+              onClick={(e) => !isAnonActor && handleProfileClick(e, actor?.username)}
+              title={isAnonActor ? "Anonymous" : `@${actor?.username}`}
+              type="button"
+            >
+              <div className="w-10 rounded-full">
+                <img
+                  src={
+                    isAnonActor
+                      ? "/avatar-placeholder.png"
+                      : getOptimizedImageUrl(
+                          actor?.profileImg?.imageUrl || "/avatar-placeholder.png",
+                          "avatar",
+                        )
+                  }
+                  alt={isAnonActor ? "Anonymous profile" : `${actor?.username || "User"} profile`}
+                />
+              </div>
+            </button>
+          )
+        })}
+        {extraCount > 0 && (
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-base-300 text-xs font-bold ring-2 ring-base-100">
+            +{extraCount}
+          </div>
+        )}
+      </div>
+    )
   }
 
   const contentToDisplay = (notif) => {
@@ -227,14 +350,15 @@ const { followRequestCount } = useSocket()
                 ))}
               </div>
             )}
-            {filteredNotifications?.length === 0 && !isLoading && (
+            {groupedNotifications?.length === 0 && !isLoading && (
               <div className="p-4 text-center font-bold">No notifications 🤔</div>
             )}
-            {filteredNotifications?.map((notification) => {
-              const isGoldVerified = notification.from.isGoldVerified
-              const isVerified = notification.from.isVerified
+            {groupedNotifications?.map((notification) => {
+              const firstActor = notification.actors?.[0] || notification.from
+              const isGoldVerified = firstActor?.isGoldVerified
+              const isVerified = firstActor?.isVerified
               const isAnon = notification.isAnonymousInteraction
-              const isCha = notification.from.isCha
+              const isCha = firstActor?.isCha
 
               let imgToDisplay = null
 
@@ -256,26 +380,8 @@ const { followRequestCount } = useSocket()
                   </div>
                   <div className="flex w-full min-w-0 flex-col gap-2">
                     <div className="flex items-start gap-2">
-                      <div
-                        className="avatar cursor-pointer"
-                        onClick={(e) =>
-                          !isAnon ? handleProfileClick(e, notification.from?.username) : ""
-                        }
-                      >
-                        <div className="w-10 rounded-full">
-                          <img
-                            src={
-                              isAnon
-                                ? "/avatar-placeholder.png"
-                                : getOptimizedImageUrl(
-                                    notification.from?.profileImg?.imageUrl ||
-                                      "/avatar-placeholder.png",
-                                    "avatar",
-                                  )
-                            }
-                            alt="profile"
-                          />
-                        </div>
+                      <div className="flex-shrink-0">
+                        {renderActorAvatars(notification)}
                       </div>
 
                       <div className="flex min-w-0 flex-1 flex-col">
@@ -294,11 +400,11 @@ const { followRequestCount } = useSocket()
                         {isAnon ? "Anonymous" : notification.from?.fullName}
                       </span> */}
                           <UserFullName
-                            user={notification.from}
+                            user={firstActor}
                             isAnon={isAnon}
                             className={`min-w-0 truncate font-bold ${!isAnon ? "cursor-pointer hover:underline" : ""}`}
                             onClick={(e) =>
-                              !isAnon ? handleProfileClick(e, notification.from?.username) : null
+                              !isAnon ? handleProfileClick(e, firstActor?.username) : null
                             }
                           />
 
@@ -325,7 +431,7 @@ const { followRequestCount } = useSocket()
                       <div className="flex" onClick={(e) => e.stopPropagation()}>
                         <button
                           className="group rounded-full p-2 transition duration-200 hover:bg-red-600 hover:bg-opacity-15 hover:text-red-500"
-                          onClick={() => deleteNotification(notification._id)}
+                          onClick={() => handleDeleteNotificationGroup(notification)}
                         >
                           <FaTrashCan
                             className="cursor-pointer text-slate-500 transition duration-200 group-hover:text-red-600"
