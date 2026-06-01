@@ -19,7 +19,7 @@ const PublicChatHeader = () => {
   };
 
   return (
-    <div className="fixed top-0 z-[40] flex w-full items-center justify-between bg-base-200 bg-opacity-20 px-4 py-2 backdrop-blur-md md:w-[977px]">
+    <div className="fixed top-0 z-[40] flex w-full items-center justify-between bg-base-200 bg-opacity-20 px-4 py-2 backdrop-blur-md md:w-[1034px]">
       <div className="flex items-center gap-3">
         <div className="avatar">
           <button
