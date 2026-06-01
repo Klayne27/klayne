@@ -66,9 +66,6 @@ export const SocketContextProvider = ({ children }) => {
       }
 
       const newSocket = io(BASE_URL, {
-        query: {
-          userId: user._id,
-        },
         withCredentials: true,
       })
 

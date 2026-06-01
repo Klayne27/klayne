@@ -1,6 +1,7 @@
 import { Server } from "socket.io";
 import http from "http";
 import express from "express";
+import jwt from "jsonwebtoken";
 import Message from "../models/message.model.js";
 import Conversation from "../models/conversation.model.js";
 import mongoose from "mongoose";
@@ -38,6 +39,44 @@ export const onlineUsersMap = new Map();
 const socketUserMap = new Map();
 export const offlineStatusUsers = new Map(); // Key: userId, Value: true/false
 const disconnectTimers = new Map();
+
+function getCookieValue(cookieHeader, name) {
+  if (!cookieHeader) return null;
+
+  return cookieHeader
+    .split(";")
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(`${name}=`))
+    ?.slice(name.length + 1) ?? null;
+}
+
+async function getAuthenticatedSocketUser(socket) {
+  const token = getCookieValue(socket.handshake.headers?.cookie, "jwt");
+  if (!token) return null;
+
+  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  if (!decoded?.userId) return null;
+
+  return User.findById(decoded.userId)
+    .select("_id username isBannedInPublicChat")
+    .lean();
+}
+
+function isConversationMember(conversation, userId) {
+  const userIdString = userId?.toString();
+  if (!conversation || !userIdString) return false;
+
+  if (conversation.isGroup) {
+    return conversation.members?.some((member) => {
+      const memberId = member.user?._id ?? member.user;
+      return memberId?.toString() === userIdString;
+    });
+  }
+
+  return conversation.participants?.some(
+    (participantId) => participantId?.toString() === userIdString,
+  );
+}
 
 const io = new Server(server, {
   cors: {
@@ -708,10 +747,23 @@ export async function emitNoteDeleted(authorId) {
 export const PUBLIC_CHAT_ROOM = "public_chat_room";
 
 io.on("connection", async (socket) => {
-  const userId =
-    socket.handshake.auth?.userId ||
-    socket.handshake.query?.userId || // ← existing clients send via query
-    socket.data?.userId;
+  let authenticatedUser;
+  try {
+    authenticatedUser = await getAuthenticatedSocketUser(socket);
+  } catch (err) {
+    console.error("Socket authentication failed:", err.message);
+    socket.disconnect(true);
+    return;
+  }
+
+  if (!authenticatedUser) {
+    socket.disconnect(true);
+    return;
+  }
+
+  const userId = authenticatedUser._id.toString();
+  socket.userId = userId;
+  socket.username = authenticatedUser.username;
 
   socket.on("join_pomodoro_room", () => {
     socket.join("live_pomodoro");
@@ -731,26 +783,16 @@ io.on("connection", async (socket) => {
     socket.leave("live_pomodoro");
   });
 
-  if (
-    userId &&
-    typeof userId === "string" &&
-    userId.trim() !== "" &&
-    userId.toLowerCase() !== "undefined"
-  ) {
+  if (userId) {
     if (!onlineUsersMap.has(userId)) {
       onlineUsersMap.set(userId, new Set());
     }
     onlineUsersMap.get(userId).add(socket.id);
-    socket.userId = userId;
 
     userLastActive.set(userId, Date.now());
 
     try {
-      const user = await User.findById(userId)
-        .select("isBannedInPublicChat username")
-        .lean();
-
-      const username = user ? user.username : "Unknown User";
+      const username = authenticatedUser.username || "Unknown User";
 
       socketUserMap.set(socket.id, { userId, username });
 
@@ -761,7 +803,7 @@ io.on("connection", async (socket) => {
 
       console.log(`User connected: ${username} - ${userId}`);
 
-      if (user && user.isBannedInPublicChat) {
+      if (authenticatedUser.isBannedInPublicChat) {
         socket.isBannedInPublicChat = true; // Attach flag to socket for easier checks
         // Do NOT join PUBLIC_CHAT_ROOM if banned
 
@@ -811,13 +853,19 @@ io.on("connection", async (socket) => {
     io.emit("getOnlineUsers", getOnlineUserIds());
   });
 
-  socket.on("joinConversation", (conversationId) => {
-    if (conversationId) {
-      // Basic validation
-      socket.join(conversationId);
-      // console.log(
-      //   `Socket ${socket.id} (User ${socket.userId}) joined private conversation room: ${conversationId}`
-      // );
+  socket.on("joinConversation", async (conversationId) => {
+    if (!conversationId || !mongoose.Types.ObjectId.isValid(conversationId)) return;
+
+    try {
+      const conversation = await Conversation.findById(conversationId)
+        .select("participants members isGroup")
+        .lean();
+
+      if (!isConversationMember(conversation, socket.userId)) return;
+
+      socket.join(conversationId.toString());
+    } catch (err) {
+      console.error("Error joining conversation room:", err.message);
     }
   });
 
@@ -832,29 +880,23 @@ io.on("connection", async (socket) => {
 
   socket.on("typing", async ({ conversationId, isEditing }) => {
     const senderId = socket.userId;
-    if (!conversationId || !senderId) return;
+    if (!conversationId || !senderId || !mongoose.Types.ObjectId.isValid(conversationId)) return;
 
     try {
+      const conversation = await Conversation.findById(conversationId)
+        .select("participants members isGroup")
+        .lean();
+      if (!conversation) return;
+      if (!isConversationMember(conversation, senderId)) return;
+
       // Get or create the per-conversation typing map
       if (!typingUsersInConversation.has(conversationId)) {
         typingUsersInConversation.set(conversationId, new Map());
       }
       const typingMap = typingUsersInConversation.get(conversationId);
 
-      // Resolve username (cached on socket after first lookup)
-      if (!socket.username) {
-        const user = await User.findById(senderId).select("username").lean();
-        if (!user) return;
-        socket.username = user.username;
-      }
-
       // Always update (covers isEditing toggle too)
       typingMap.set(senderId, { username: socket.username, isEditing });
-
-      const conversation = await Conversation.findById(conversationId)
-        .select("participants members isGroup")
-        .lean();
-      if (!conversation) return;
 
       // Build recipient list — works for both DMs and groups
       const recipientIds = conversation.isGroup
@@ -894,7 +936,7 @@ io.on("connection", async (socket) => {
 
   socket.on("stopTyping", async ({ conversationId }) => {
     const senderId = socket.userId;
-    if (!conversationId || !senderId) return;
+    if (!conversationId || !senderId || !mongoose.Types.ObjectId.isValid(conversationId)) return;
 
     try {
       const typingMap = typingUsersInConversation.get(conversationId);
@@ -909,6 +951,7 @@ io.on("connection", async (socket) => {
         .select("participants members isGroup")
         .lean();
       if (!conversation) return;
+      if (!isConversationMember(conversation, senderId)) return;
 
       const recipientIds = conversation.isGroup
         ? conversation.members
@@ -945,14 +988,34 @@ io.on("connection", async (socket) => {
     }
   });
 
-  socket.on("userActiveInChat", ({ conversationId }) => {
-    userActiveChats.set(userId, conversationId ? conversationId.toString() : null);
-    emitUnreadMessageStatus(userId);
+  socket.on("userActiveInChat", async ({ conversationId }) => {
+    try {
+      if (!conversationId) {
+        userActiveChats.set(userId, null);
+        emitUnreadMessageStatus(userId);
+        return;
+      }
+
+      if (!mongoose.Types.ObjectId.isValid(conversationId)) return;
+
+      const conversation = await Conversation.findById(conversationId)
+        .select("participants members isGroup")
+        .lean();
+
+      if (!isConversationMember(conversation, socket.userId)) return;
+
+      userActiveChats.set(userId, conversationId.toString());
+      emitUnreadMessageStatus(userId);
+    } catch (err) {
+      console.error("Error updating active chat:", err.message);
+    }
   });
 
   socket.on("markMessagesAsSeen", async ({ conversationId }) => {
     try {
       const readerId = socket.userId;
+      if (!conversationId || !mongoose.Types.ObjectId.isValid(conversationId)) return;
+
       const conversationObjectId = new mongoose.Types.ObjectId(conversationId);
       const readerObjectId = new mongoose.Types.ObjectId(readerId);
 
@@ -961,6 +1024,7 @@ io.on("connection", async (socket) => {
         .lean();
 
       if (!conversation) return;
+      if (!isConversationMember(conversation, readerId)) return;
 
       if (conversation.isGroup) {
         const unseenCount = await Message.countDocuments({

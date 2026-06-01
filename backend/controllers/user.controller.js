@@ -75,29 +75,58 @@ export const getUserProfile = async (req, res) => {
       });
     }
 
-    const userObj = user.toObject();
+    const isOwner = currentUserId?.equals(user._id);
+    const isFollower = currentUserId
+      ? user.followers.some((id) => id.equals(currentUserId))
+      : false;
 
     const profileData = {
-      ...userObj,
-      // Only expose the raw requests array to the owner (for count)
-      followRequests: currentUserId?.equals(user._id)
-        ? userObj.followRequests
-        : undefined,
-      followRequestsCount: currentUserId?.equals(user._id)
-        ? user.followRequests.length
-        : undefined,
-      // Visitors only need these two booleans
+      _id: user._id,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      username: user.username,
+      fullName: user.fullName,
+      bio: user.bio,
+      link: user.link,
+      profileImg: user.profileImg,
+      coverImg: user.coverImg,
+      followers: user.followers,
+      following: user.following,
+      pinnedPosts: user.pinnedPosts,
+      isPrivate: user.isPrivate,
+      isLikedFeedPrivate: user.isLikedFeedPrivate,
+      isPomodoroPrivate: user.isPomodoroPrivate,
+      isCha: user.isCha,
+      isVerified: user.isVerified,
+      isGoldVerified: user.isGoldVerified,
+      nameColor: user.nameColor,
+      badges: user.badges,
+      preferredBadge: user.preferredBadge,
+      equipped: user.equipped,
+      levelOfEducation: user.levelOfEducation,
+      majorOrField: user.majorOrField,
+      relationshipStatus: user.relationshipStatus,
+      statusPreference: user.statusPreference,
+      note: user.note,
+      totalStudyDuration: user.totalStudyDuration,
+      studyStreak: user.studyStreak,
+      longestStudyStreak: user.longestStudyStreak,
+      totalSessionsCompleted: user.totalSessionsCompleted,
+      pomodoroXP: user.pomodoroXP,
+      pomodoroLevel: user.pomodoroLevel,
+      activeSession: user.isPomodoroPrivate && !isOwner ? null : user.activeSession,
+      studyHistory: user.isPomodoroPrivate && !isOwner && !isFollower
+        ? []
+        : user.studyHistory,
+      pomodoroBackgroundUrl: user.pomodoroBackgroundUrl,
+      followRequests: isOwner ? user.followRequests : undefined,
+      followRequestsCount: isOwner ? user.followRequests.length : undefined,
       hasRequestedFollow,
       isBlockedByYou,
       hasBlockedYou,
     };
 
     if (profileData.note) {
-      const isOwner = currentUserId && currentUserId.equals(user._id);
-      const isFollower = currentUserId
-        ? user.followers.some((id) => id.equals(currentUserId))
-        : false;
-
       if (user.isPrivate && !isOwner && !isFollower) {
         profileData.note = null;
       }

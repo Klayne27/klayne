@@ -15,6 +15,22 @@ import { sendPushNotification } from "../lib/utils/sendPush.js";
 
 const BASE_URL = process.env.RENDER_EXTERNAL_URL;
 
+function isConversationMember(conversation, userId) {
+  const userIdString = userId?.toString();
+  if (!conversation || !userIdString) return false;
+
+  if (conversation.isGroup) {
+    return conversation.members?.some((member) => {
+      const memberId = member.user?._id ?? member.user;
+      return memberId?.toString() === userIdString;
+    });
+  }
+
+  return conversation.participants?.some(
+    (participantId) => participantId?.toString() === userIdString,
+  );
+}
+
 // const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
 //   if (!currentUserId || !targetUserId) {
 //     return false;
@@ -849,6 +865,14 @@ export const reactToMessage = async (req, res) => {
       return res.status(404).json({ error: "Message not found" });
     }
 
+    const conversation = await Conversation.findById(message.conversationId)
+      .select("participants members isGroup")
+      .lean();
+
+    if (!isConversationMember(conversation, userId)) {
+      return res.status(403).json({ error: "Unauthorized access to conversation." });
+    }
+
     const messageSenderId = message.sender.toString();
     if (await isBlockedOrBlockedBy(userId, messageSenderId)) {
       return res.status(403).json({
@@ -913,9 +937,12 @@ export const reactToMessage = async (req, res) => {
       })
       .populate("image", "imageUrl");
 
-    const conversation = await Conversation.findById(populatedMessage.conversationId);
     if (conversation) {
-      conversation.participants.forEach((participantId) => {
+      const recipientIds = conversation.isGroup
+        ? conversation.members.map((member) => member.user)
+        : conversation.participants;
+
+      recipientIds.forEach((participantId) => {
         const receiverSocketIds = getReceiverSocketIds(participantId.toString());
         receiverSocketIds.forEach((socketId) => {
           io.to(socketId).emit("messageReacted", {
