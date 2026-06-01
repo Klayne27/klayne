@@ -4,6 +4,8 @@ Klayne is a full-stack social productivity app built with React, Express, MongoD
 
 The app is organized as a single repository: the Express API serves the Vite frontend in production, while development uses Vite's `/api` proxy to the backend.
 
+Klayne is fully responsive and mobile-friendly, with a layout that adapts across phone, tablet, and desktop screen sizes, touch-optimized interactions, a hide-on-scroll header, and a PWA install prompt for a native app-like experience on mobile.
+
 ## Features
 
 - Email/password authentication with JWT cookies, plus Google sign-in through Firebase Auth.
@@ -39,6 +41,10 @@ The app is organized as a single repository: the Express API serves the Vite fro
 | Study Leaderboard | Wardrobe |
 | --- | --- |
 | ![Klayne Pomodoro leaderboard](docs/screenshots/pomodoroleaderboard.png) | ![Klayne wardrobe page](docs/screenshots/wardrobepage.png) |
+
+| Wordle | Notifications |
+| --- | --- |
+| ![Klayne Wordle page](docs/screenshots/wordlepage.png) | ![Klayne notifications page](docs/screenshots/notificationspage.png) |
 
 ## Tech Stack
 
