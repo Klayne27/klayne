@@ -17,9 +17,11 @@ import {
 import UserFullName from "../components/common/UserFullname"
 import { useSocket } from "../context/SocketContext"
 import FollowRequestsTab from "../features/notifications/components/FollowRequestsTab"
+import NotificationActorsModal from "../features/notifications/components/NotificationActorsModal"
 
 const NotificationPage = () => {
   const [activeTab, setActiveTab] = useState("all") // "all" | "requests"
+  const [actorModalNotification, setActorModalNotification] = useState(null)
   const { followRequestCount } = useSocket()
   const GROUPING_WINDOW_MS = 24 * 60 * 60 * 1000
 
@@ -150,6 +152,15 @@ const NotificationPage = () => {
     notificationIds.forEach((notificationId) => deleteNotification(notificationId))
   }
 
+  const openActorModal = (e, notification) => {
+    e.stopPropagation()
+    setActorModalNotification(notification)
+  }
+
+  const closeActorModal = () => {
+    setActorModalNotification(null)
+  }
+
   const getNotificationIcon = (type) => {
     switch (type) {
       case "follow":
@@ -190,9 +201,19 @@ const NotificationPage = () => {
     if (!firstName) return "A user"
     if (extraCount === 0) return `${notification.isAnonymousInteraction ? "" : "@"}${firstName}`
 
-    return `${notification.isAnonymousInteraction ? "" : "@"}${firstName} and ${extraCount} ${
-      extraCount === 1 ? "other" : "others"
-    }`
+    return (
+      <>
+        {notification.isAnonymousInteraction ? "" : "@"}
+        {firstName} and{" "}
+        <button
+          className="font-semibold text-primary hover:underline"
+          onClick={(e) => openActorModal(e, notification)}
+          type="button"
+        >
+          {extraCount} {extraCount === 1 ? "other" : "others"}
+        </button>
+      </>
+    )
   }
 
   const getNotificationMessage = (notification) => {
@@ -204,29 +225,29 @@ const NotificationPage = () => {
 
     switch (notification.type) {
       case "follow":
-        return `${actorSummary} followed you.`
+        return <>{actorSummary} followed you.</>
       case "like":
-        return `${actorSummary} liked your post.`
+        return <>{actorSummary} liked your post.</>
       case "repost":
-        return `${actorSummary} reposted your post.`
+        return <>{actorSummary} reposted your post.</>
       case "mention":
-        return `${actorSummary} mentioned you in a post.`
+        return <>{actorSummary} mentioned you in a post.</>
       case "reply":
-        return `${actorSummary} replied to your post.`
+        return <>{actorSummary} replied to your post.</>
       case "replyLike":
-        return `${actorSummary} liked your reply.`
+        return <>{actorSummary} liked your reply.</>
       case "replyRepost":
-        return `${actorSummary} reposted your reply.`
+        return <>{actorSummary} reposted your reply.</>
       case "replyReply":
-        return `${actorSummary} replied to your reply.`
+        return <>{actorSummary} replied to your reply.</>
       case "replyMention":
-        return `${actorSummary} mentioned you in a reply.`
+        return <>{actorSummary} mentioned you in a reply.</>
       case "boardComment":
-        return `${actorSummary} commented on your board post.`
+        return <>{actorSummary} commented on your board post.</>
       case "boardReply":
-        return `${actorSummary} replied to your board comment.`
+        return <>{actorSummary} replied to your board comment.</>
       case "followRequestAccepted":
-        return `${actorSummary} accepted your follow request.`
+        return <>{actorSummary} accepted your follow request.</>
       default:
         return ""
     }
@@ -285,6 +306,11 @@ const NotificationPage = () => {
 
   return (
     <>
+      <NotificationActorsModal
+        isOpen={!!actorModalNotification}
+        notification={actorModalNotification}
+        onClose={closeActorModal}
+      />
       <div className="template mx-auto min-h-screen w-full flex-1 overflow-x-hidden border-accent md:max-w-3xl md:border-x lg:max-w-4xl">
         <div className="sticky top-0 z-10 flex items-center gap-2 border-accent bg-opacity-20 px-3 py-2 backdrop-blur-md md:gap-4 md:px-4 md:py-3.5">
           <button
