@@ -121,7 +121,7 @@ const handleComplete = (todoId, e) => {
         dueDateObj.getSeconds() !== 0)
 
   return (
-    <div className="relative overflow-hidden">
+    <div className="relative ">
       {" "}
       {/* Added overflow-hidden to contain the slide */}
       <li
