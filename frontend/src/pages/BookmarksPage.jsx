@@ -36,7 +36,7 @@ const BookmarksPage = () => {
 
   return (
     <>
-      <div className="min-h-screen flex-[4_4_0] border-accent template md:border-x">
+      <div className="template min-h-screen flex-[4_4_0] border-accent md:border-x">
         <div className="sticky top-0 z-10 flex items-center gap-2 border-accent bg-opacity-20 px-3 py-2 backdrop-blur-md md:gap-4 md:px-4 md:py-3.5">
           <button
             onClick={() => navigate(-1)}
@@ -61,7 +61,7 @@ const BookmarksPage = () => {
         </div>
 
         {isLoadingBookmarkedPosts && bookmarkedPosts?.length === 0 && (
-          <div className="flex h-full flex-col items-center justify-center">
+          <div className="flex flex-col justify-center">
             <PostSkeleton />
             <PostSkeleton />
             <PostSkeleton />
