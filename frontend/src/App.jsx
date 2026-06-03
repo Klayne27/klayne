@@ -2,8 +2,6 @@ import { Navigate, Route, Routes } from "react-router-dom"
 import { Suspense, lazy } from "react"
 import { useAuthUser } from "./features/auth/authHooks/useAuthUser"
 import { Toaster } from "react-hot-toast"
-// import ImageModal from "./components/common/ImageModal"
-// import ProfileImageModal from "./components/common/ProfileImageModal"
 import { useAppStore } from "./store/useAppStore"
 import { useEffect } from "react"
 import { usePWAInstall } from "./hooks/customHooks/usePWAInstall"
@@ -18,14 +16,10 @@ import { useLightboxStore } from "./store/useLightboxStore"
 
 const LoginPage = lazy(() => import("./pages/auth/LoginPage"))
 const SignupPage = lazy(() => import("./pages/auth/SignupPage"))
-// const ResetPasswordPage = lazy(() => import("./pages/auth/ResetPasswordPage"))
-// const ForgotPasswordPage = lazy(() => import("./pages/auth/ForgotPasswordPage"))
 const AuthenticatedLayout = lazy(() => import("./AuthenticatedLayout"))
 
 function App() {
   const { authUser, isLoading } = useAuthUser()
-  // const { selectedProfileImage, closeProfileImageModal, selectedImage, closeImageModal } =
-  //   useAppStore()
   const { deferredPrompt, isInstalled, installApp, isIOSDevice } = usePWAInstall()
 const { isOpen, images, currentIndex, closeLightbox, goNext, goPrev } = useLightboxStore()
 
@@ -90,14 +84,6 @@ const { isOpen, images, currentIndex, closeLightbox, goNext, goPrev } = useLight
         <Routes>
           <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
           <Route path="/signup" element={!authUser ? <SignupPage /> : <Navigate to="/" />} />
-          {/* <Route
-            path="/reset-password/:token"
-            element={!authUser ? <ResetPasswordPage /> : <Navigate to="/" />}
-          />
-          <Route
-            path="/forgot-password"
-            element={!authUser ? <ForgotPasswordPage /> : <Navigate to="/" />}
-          /> */}
 
           <Route
             path="/*"
@@ -123,14 +109,11 @@ const { isOpen, images, currentIndex, closeLightbox, goNext, goPrev } = useLight
           zIndex: 99999, // Ensure this is higher than your modal's z-index
         }}
         toastOptions={{
-          // This applies to all toasts
           style: {
             zIndex: 99999,
           },
         }}
       />
-      {/* <ImageModal src={selectedImage} onClose={closeImageModal} />
-      <ProfileImageModal src={selectedProfileImage} onClose={closeProfileImageModal} /> */}
       {isOpen && (
         <ImageLightbox
           images={images}

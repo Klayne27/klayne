@@ -80,7 +80,6 @@ const formatHeatmapDate = (dateString) => {
 }
 
 const ProfilePage = ({ feedType, setFeedType }) => {
-  const openProfileImageModal = useAppStore((state) => state.openProfileImageModal)
 
   const clockOffset = useServerTimeOffset()
 
@@ -297,13 +296,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
       getOrCreateConversation({ targetUserId: userProfile._id })
     } else {
       navigate(`/messages/${conversationStatus.conversationId}`)
-    }
-  }
-
-  const handleProfileImageClick = (imageUrl, event) => {
-    event.stopPropagation()
-    if (openProfileImageModal) {
-      openProfileImageModal(imageUrl)
     }
   }
 

@@ -54,7 +54,6 @@ const Post = ({
   hasLineAbove = false,
   index,
 }) => {
-  // const openImageModal = useAppStore((state) => state.openImageModal)
   const navigate = useNavigate()
   const { authUser } = useAuthUser()
   const { username, pid } = useParams()
