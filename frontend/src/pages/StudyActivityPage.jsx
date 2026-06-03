@@ -30,12 +30,6 @@ const StudyActivityPage = () => {
   const { activityFeed, isLoading, totalPages } = useGetStudyActivityFeed(page)
   const { theme } = useTheme()
 
-  // const handlePageChange = (newPage) => {
-  //   if (newPage >= 1 && newPage <= totalPages) {
-  //     setPage(newPage)
-  //     window.scrollTo({ top: 0, behavior: "smooth" })
-  //   }
-  // }
 
   const handlePageChange = (newPage) => setPage(newPage)
 
@@ -65,7 +59,6 @@ const StudyActivityPage = () => {
                 : "border-transparent text-slate-500 hover:text-slate-300"
             }`}
           >
-            {/* <RiRadioButtonLine className={activeTab === "live" ? "animate-pulse" : ""} /> */}
             Live Now
           </button>
           <button
@@ -76,7 +69,6 @@ const StudyActivityPage = () => {
                 : "border-transparent text-slate-500 hover:text-slate-300"
             }`}
           >
-            {/* <RiHistoryLine /> */}
             History
           </button>
         </div>

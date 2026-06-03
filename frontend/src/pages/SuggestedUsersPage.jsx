@@ -20,8 +20,7 @@ const SuggestedUsersPage = ({ mobile = false }) => {
   const navigate = useNavigate()
   const { authUser: currentUser } = useAuthUser()
   const { follow } = useFollow()
-  // const showUnfollowModal = useAppStore((s) => s.showUnfollowModal)
-  // const setShowUnfollowModal = useAppStore((s) => s.setShowUnfollowModal)
+
   const [userToUnfollow, setUserToUnfollow] = useState(null)
 
   const [showUnfollowModal, setShowUnfollowModal] = useState(false)

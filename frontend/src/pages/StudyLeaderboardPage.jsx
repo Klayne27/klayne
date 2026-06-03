@@ -75,15 +75,6 @@ function StudyLeaderboardPage() {
 
   const { leaderboard, totalPages, isLoading, currentWeekStart } = currentLeaderboard
 
-  // const handlePageChange = (newPage) => {
-  //   if (newPage >= 1 && newPage <= totalPages) setPage(newPage)
-  // }
-  // const handlePageChange = (newPage) => {
-  //   if (newPage >= 1 && newPage <= totalPages) {
-  //     setPage(newPage)
-  //     window.scrollTo({ top: 0, behavior: "smooth" })
-  //   }
-  // }
   const handlePageChange = (newPage) => setPage(newPage)
 
 
@@ -427,27 +418,7 @@ function StudyLeaderboardPage() {
                 {/* 2. Avatar with Crown */}
                 <Link to={`/profile/${entry?.username}`} className="relative flex-shrink-0">
                   <div className={` ${globalRank <= 3 ? "p-0.5" : ""}`}>
-                    {/* <div
-                      className={`w-10 rounded-full ring-offset-2 ring-offset-base-100 sm:w-12 ${
-                        globalRank === 1
-                          ? "ring-2 ring-amber-400"
-                          : globalRank === 2
-                            ? "ring-2 ring-slate-400"
-                            : globalRank === 3
-                              ? "ring-2 ring-yellow-700"
-                              : "ring-1 ring-base-300"
-                      }`}
-                    > */}
-                    {/* <img
-                        src={getOptimizedImageUrl(
-                          entry?.profileImg?.imageUrl || "/avatar-placeholder.png",
-                          "avatar",
-                        )}
-                        alt={entry.fullName}
-                        className="rounded-full"
-                      /> */}
                     <UserAvatar user={entry} size={"md"} />
-                    {/* </div> */}
                   </div>
                   {globalRank === 1 && (
                     <FaCrown
