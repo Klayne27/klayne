@@ -34,7 +34,6 @@ const WordleBoard = ({
           <div
             key={`${rowIndex}-${isShaking ? shakeRowKey : "stable"}`}
             className={`grid grid-cols-5 gap-1.5 ${isShaking ? "wordle-row-shake" : ""}`}
-            // The style prop with perspective and transformStyle has been removed
           >
             {row.map((tile, colIndex) => {
               const isTileRevealing = isRevealing

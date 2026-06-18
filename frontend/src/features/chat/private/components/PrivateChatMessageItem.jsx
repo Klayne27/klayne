@@ -157,7 +157,7 @@ const PrivateChatMessageItem = ({
     !!currentUser?.username &&
     new RegExp(`@${currentUser.username}(?:\\s|$|[^a-zA-Z0-9_])`).test(message.text ?? "")
 
-  const isRepliedTo = message.repliedTo?.sender._id === currentUser._id
+  const isRepliedTo = message?.repliedTo?.sender?._id === currentUser?._id
 
   const handleOpenViewReactionsModal = (e) => {
     e.stopPropagation()

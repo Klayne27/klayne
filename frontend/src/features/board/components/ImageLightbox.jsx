@@ -139,23 +139,6 @@ const ImageLightbox = ({ images, currentIndex, onClose, onPrev, onNext }) => {
           }`}
         />
 
-        {/* {!isZoomed && (
-          <div className="pointer-events-none absolute bottom-10 flex flex-col items-center">
-            {images.length > 1 && (
-              <p className="text-sm font-medium text-white/70">
-                {currentIndex + 1} / {images.length}
-              </p>
-            )}
-            <a
-              href={images[currentIndex].imageUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="pointer-events-auto text-xs text-white/40 hover:text-white hover:underline"
-            >
-              View original
-            </a>
-          </div>
-        )} */}
       </div>
     </div>
   )

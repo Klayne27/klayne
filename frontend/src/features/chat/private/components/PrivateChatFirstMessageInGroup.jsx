@@ -11,29 +11,29 @@ function PrivateChatFirstMessageInGroup({
   nicknameMap,
 }) {
   const groupParticipants = selectedConversation.participants
-  const senderId = message.sender._id
+  const senderId = message?.sender?._id
 
   const isUserAMember = groupParticipants.includes(senderId)
 
 
-  const displayName = resolveDisplayName(message.sender, nicknameMap)
+  const displayName = resolveDisplayName(message?.sender, nicknameMap)
 
   return (
     <>
-      {message.isFirstInGroup && (
+      {message?.isFirstInGroup && (
         <div className={`mb-0.5 flex items-center text-sm`}>
           {!isSentByCurrentUser && (
             <Link to={`/profile/${message.sender?.username}`}>
               <UserFullName
-                user={message.sender}
+                user={message?.sender}
                 nickname={displayName}
                 className={`mr-1 cursor-pointer font-semibold`}
-                style={message.sender.nameColor ? { color: message.sender.nameColor } : undefined}
+                style={message?.sender?.nameColor ? { color: message?.sender?.nameColor } : undefined}
                 
               />
             </Link>
           )}
-          <span className="mr-5 text-xs text-gray-500">{formatTime(message.createdAt)}</span>
+          <span className="mr-5 text-xs text-gray-500">{formatTime(message?.createdAt)}</span>
         </div>
       )}
     </>

@@ -345,7 +345,7 @@ export default function GroupSettingsPage() {
                   {/* Top row: avatar + name + role badge + action buttons */}
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex min-w-0 items-center gap-2">
-                      <Link to={`/profile/${user.username}`} className="shrink-0">
+                      <Link to={`/profile/${user?.username}`} className="shrink-0">
                         <img
                           src={getOptimizedImageUrl(
                             user?.profileImg?.imageUrl || "/avatar-placeholder.png",
