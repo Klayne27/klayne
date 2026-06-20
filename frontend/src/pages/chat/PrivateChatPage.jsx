@@ -24,7 +24,7 @@ const PrivateChatPage = () => {
     if (isLoadingConversations) return
 
     if (urlConversationId) {
-      const conversationFromUrl = conversations.find((c) => c._id === urlConversationId)
+      const conversationFromUrl = conversations.find((c) => c?._id === urlConversationId)
       setSelectedConversation(conversationFromUrl || null)
     } else {
       setSelectedConversation(null)

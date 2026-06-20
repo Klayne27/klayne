@@ -138,7 +138,7 @@ const PrivateChatMessageItem = ({
     selectedConversation?.isGroup &&
     selectedConversation?.members?.some(
       (member) =>
-        member.user._id.toString() === currentUser?._id.toString() &&
+        member.user?._id.toString() === currentUser?._id.toString() &&
         (member.role === "admin" || member.role === "owner"),
     )
 
