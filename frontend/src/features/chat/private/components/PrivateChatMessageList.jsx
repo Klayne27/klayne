@@ -82,7 +82,7 @@ const seenIndicators = useMemo(() => {
       if (!msg.seenBy?.length) continue
 
       for (const user of msg.seenBy) {
-        const uid = (user._id ?? user).toString()
+        const uid = (user?._id ?? user).toString()
         if (assignedUsers.has(uid)) continue
         assignedUsers.add(uid)
         if (!result[msg._id]) result[msg._id] = []

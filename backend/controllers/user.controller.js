@@ -23,6 +23,51 @@ import DevlogComment from "../models/devlogComment.model.js";
 import Devlog from "../models/devlog.model.js";
 import BoardPost from "../models/boardPost.model.js";
 import BoardComment from "../models/boardComment.model.js";
+import WordleAttempt from "../models/wordleAttempt.model.js";
+
+const cleanupDeletedUserGameAndGroupData = async (userId) => {
+  await Promise.all([
+    WordleAttempt.deleteMany({ user: userId }),
+    Conversation.updateMany(
+      {
+        isGroup: true,
+        $or: [
+          { "members.user": userId },
+          { participants: userId },
+          { "joinRequests.user": userId },
+          { hiddenFor: userId },
+        ],
+      },
+      {
+        $pull: {
+          members: { user: userId },
+          participants: userId,
+          joinRequests: { user: userId },
+          hiddenFor: userId,
+          "lastMessage.seenBy": userId,
+          "lastMessage.deletedFor": userId,
+          pinnedMessages: { pinnedBy: userId },
+        },
+      },
+    ),
+    Message.updateMany(
+      {
+        $or: [
+          { seenBy: userId },
+          { deletedFor: userId },
+          { "reactions.userId": userId },
+        ],
+      },
+      {
+        $pull: {
+          seenBy: userId,
+          deletedFor: userId,
+          reactions: { userId },
+        },
+      },
+    ),
+  ]);
+};
 
 export const getUserProfile = async (req, res) => {
   const { username } = req.params;
@@ -781,6 +826,7 @@ export const deleteUserAccount = async (req, res) => {
     await PublicChatMessage.deleteMany({ sender: userId });
     await BoardPost.deleteMany({ user: userId });
     await BoardComment.deleteMany({ user: userId });
+    await cleanupDeletedUserGameAndGroupData(userId);
 
     // --- STEP 6: ARRAY CLEANUP (Likes/Follows) ---
     await Post.updateMany(
@@ -806,6 +852,15 @@ export const deleteUserAccount = async (req, res) => {
         },
       },
     );
+
+    // --- STEP 7: DIRECT MESSAGES ---
+    const conversationsToDelete = await Conversation.find({
+      isGroup: false,
+      participants: userId,
+    });
+    const conversationIds = conversationsToDelete.map((conv) => conv._id);
+    await Message.deleteMany({ conversationId: { $in: conversationIds } });
+    await Conversation.deleteMany({ _id: { $in: conversationIds } });
 
     // Final Account Deletion
     if (userToDelete.firebaseUid) await admin.auth().deleteUser(userToDelete.firebaseUid);
@@ -1029,6 +1084,7 @@ export const adminDeleteUserAccount = async (req, res) => {
     await DevlogComment.deleteMany({ author: userIdToDelete });
     await BoardPost.deleteMany({ user: userIdToDelete });
     await BoardComment.deleteMany({ user: userIdToDelete });
+    await cleanupDeletedUserGameAndGroupData(userIdToDelete);
 
     // --- STEP F: ARRAY CLEANUP (Likes, Bookmarks, Follows, Blocks) ---
     await Post.updateMany(
@@ -1080,6 +1136,7 @@ export const adminDeleteUserAccount = async (req, res) => {
 
     // --- STEP G: MESSAGES & CONVERSATIONS ---
     const conversationsToDelete = await Conversation.find({
+      isGroup: false,
       participants: userIdToDelete,
     });
     const conversationIds = conversationsToDelete.map((conv) => conv._id);
