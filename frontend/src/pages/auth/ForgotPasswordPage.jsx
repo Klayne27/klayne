@@ -24,7 +24,6 @@ const ForgotPasswordPage = () => {
                 
         <img src="klaynelogo2.png" className="rounded-lg bg-gray-950 w-auto h-12" loading="lazy" />
        
-
         <h1 className="text-3xl font-bold">Forgot password?</h1>
         <p className="text-center text-sm text-gray-500">
           Enter your email and we'll send you a link to reset your password.
